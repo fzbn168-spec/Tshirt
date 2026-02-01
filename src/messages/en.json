@@ -43,7 +43,9 @@
     "sustainability": "Sustainability",
     "contact": "Contact",
     "contactUs": "Contact Us",
-    "address": "123 Fashion Street, Garment District, NY"
+    "address": "123 Fashion Street, Garment District, NY",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
   },
   "Products": {
     "categories": "Categories",
@@ -98,38 +100,47 @@
     }
   },
   "Process": {
-    "title": "How We Work",
-    "subtitle": "Our Manufacturing Process",
-    "description": "From concept to final delivery, we ensure transparency and quality at every step of the manufacturing journey.",
+    "title": "Manufacturing Process",
+    "description": "Our streamlined process ensures efficiency and quality from start to finish.",
     "steps": {
-      "consultation": "Consultation & Design",
-      "consultationDesc": "We work with you to understand your requirements, brand identity, and target market. Our design team creates technical sketches and mood boards.",
-      "sourcing": "Sourcing & Sampling",
-      "sourcingDesc": "We source the best fabrics and trims that match your quality and price requirements. Prototypes are created for your approval.",
-      "planning": "Production Planning",
-      "planningDesc": "Once samples are approved, we plan the production timeline, allocate resources, and ensure all materials are ready.",
-      "manufacturing": "Manufacturing",
-      "manufacturingDesc": "Our skilled workforce begins the cutting and sewing process using modern machinery to ensure precision and consistency.",
+      "design": "Design & Prototyping",
+      "sourcing": "Material Sourcing",
+      "production": "Production",
       "qc": "Quality Control",
-      "qcDesc": "Every garment undergoes rigorous inspection at multiple stages. We check for measurements, stitching, and overall finish.",
-      "delivery": "Logistics & Delivery",
-      "deliveryDesc": "We handle packaging, labeling, and export documentation. Your order is shipped via air or sea freight to your destination."
+      "shipping": "Global Shipping"
     }
   },
   "Sustainability": {
     "title": "Sustainability",
-    "description": "Fashion doesn't have to cost the earth. We are dedicated to reducing our environmental footprint and promoting ethical manufacturing.",
-    "commitment": "Our Commitment",
-    "commitmentSubtitle": "Building a Better Future",
-    "initiatives": {
-      "materials": "Eco-friendly Materials",
-      "materialsDesc": "We prioritize the use of organic cotton, recycled polyester, and biodegradable fabrics. Our sourcing team constantly researches new sustainable alternatives.",
-      "water": "Water Conservation",
-      "waterDesc": "Our dyeing and finishing facilities utilize advanced water treatment and recycling systems to minimize water usage and pollution.",
-      "waste": "Waste Reduction",
-      "wasteDesc": "We implement zero-waste cutting techniques and recycle textile scraps. Our goal is to achieve zero landfill waste by 2030.",
-      "labor": "Fair Labor Practices",
-      "laborDesc": "We are committed to providing safe working conditions and fair wages. Our factories are regularly audited for social compliance."
-    }
+    "description": "We are committed to sustainable manufacturing practices that protect our planet.",
+    "eco": "Eco-friendly Materials",
+    "ethical": "Ethical Labor",
+    "waste": "Zero Waste Initiatives"
+  },
+  "Privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last Updated",
+    "intro": "At FashionExport, we take your privacy seriously. This Privacy Policy explains how we collect, use, and protect your personal information when you use our website.",
+    "dataCollectionTitle": "Information We Collect",
+    "dataCollectionText": "We collect information you provide directly to us, such as when you fill out a contact form, request a quote, or communicate with us. This may include your name, email address, phone number, and company details.",
+    "dataUsageTitle": "How We Use Your Information",
+    "dataUsageText": "We use the information we collect to provide, maintain, and improve our services, to respond to your inquiries, and to communicate with you about our products and services.",
+    "contactTitle": "Contact Us",
+    "contactText": "If you have any questions about this Privacy Policy, please contact us at contact@fashionexport.com."
+  },
+  "Terms": {
+    "title": "Terms of Service",
+    "lastUpdated": "Last Updated",
+    "intro": "Please read these Terms of Service carefully before using the FashionExport website operated by us.",
+    "usageTitle": "Conditions of Use",
+    "usageText": "We will provide their services to you, which are subject to the conditions stated below in this document. Every time you visit this website, use its services or make a purchase, you accept the following conditions.",
+    "intellectualPropertyTitle": "Intellectual Property",
+    "intellectualPropertyText": "Content published on this website (digital downloads, images, texts, graphics, logos) is the property of FashionExport and/or its content creators and protected by international copyright laws.",
+    "liabilityTitle": "Limitation of Liability",
+    "liabilityText": "FashionExport shall not be held liable for any damages that may arise from your use or inability to use the materials on this website."
+  },
+  "CookieConsent": {
+    "message": "We use cookies to enhance your experience. By continuing to visit this site you agree to our use of cookies.",
+    "accept": "Got it"
   }
 }

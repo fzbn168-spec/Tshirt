@@ -43,7 +43,9 @@
     "sustainability": "可持续发展",
     "contact": "联系",
     "contactUs": "联系我们",
-    "address": "123 Fashion Street, Garment District, NY"
+    "address": "123 Fashion Street, Garment District, NY",
+    "privacy": "隐私政策",
+    "terms": "服务条款"
   },
   "Products": {
     "categories": "分类",
@@ -98,38 +100,47 @@
     }
   },
   "Process": {
-    "title": "工作流程",
-    "subtitle": "我们的制造流程",
-    "description": "从概念到最终交付，我们在制造旅程的每一步都确保透明度和质量。",
+    "title": "制造流程",
+    "description": "我们的流程确保从开始到结束的高效和质量。",
     "steps": {
-      "consultation": "咨询与设计",
-      "consultationDesc": "我们与您合作，了解您的需求、品牌形象和目标市场。我们的设计团队制作技术草图和情绪板。",
-      "sourcing": "采购与打样",
-      "sourcingDesc": "我们采购符合您质量和价格要求的最优质面料和辅料。制作原型供您批准。",
-      "planning": "生产计划",
-      "planningDesc": "样品获批后，我们规划生产时间表，分配资源，并确保所有材料准备就绪。",
-      "manufacturing": "生产制造",
-      "manufacturingDesc": "我们熟练的工人使用现代机械开始裁剪和缝制过程，确保精度和一致性。",
+      "design": "设计与打样",
+      "sourcing": "面料采购",
+      "production": "批量生产",
       "qc": "质量控制",
-      "qcDesc": "每件服装在多个阶段都经过严格检查。我们检查尺寸、缝线和整体完成度。",
-      "delivery": "物流与交付",
-      "deliveryDesc": "我们处理包装、标签和出口文件。您的订单通过空运或海运发往目的地。"
+      "shipping": "全球发货"
     }
   },
   "Sustainability": {
     "title": "可持续发展",
-    "description": "时尚不必以牺牲地球为代价。我们致力于减少环境足迹并推广道德制造。",
-    "commitment": "我们的承诺",
-    "commitmentSubtitle": "共建美好未来",
-    "initiatives": {
-      "materials": "环保材料",
-      "materialsDesc": "我们优先使用有机棉、再生聚酯和可生物降解面料。我们的采购团队不断研究新的可持续替代品。",
-      "water": "水资源保护",
-      "waterDesc": "我们的印染和后整理设施利用先进的水处理和回收系统，最大限度地减少用水和污染。",
-      "waste": "减少浪费",
-      "wasteDesc": "我们实施零浪费裁剪技术并回收纺织废料。我们的目标是到2030年实现零填埋浪费。",
-      "labor": "公平劳工实践",
-      "laborDesc": "我们致力于提供安全的工作条件和公平的工资。我们的工厂定期接受社会合规审计。"
-    }
+    "description": "我们致力于保护地球的可持续制造实践。",
+    "eco": "环保材料",
+    "ethical": "道德劳工",
+    "waste": "零浪费计划"
+  },
+  "Privacy": {
+    "title": "隐私政策",
+    "lastUpdated": "最后更新",
+    "intro": "在 FashionExport，我们非常重视您的隐私。本隐私政策解释了我们在您使用我们的网站时如何收集、使用和保护您的个人信息。",
+    "dataCollectionTitle": "我们收集的信息",
+    "dataCollectionText": "我们会收集您直接提供给我们的信息，例如当您填写联系表单、请求报价或与我们沟通时。这可能包括您的姓名、电子邮件地址、电话号码和公司详细信息。",
+    "dataUsageTitle": "我们如何使用您的信息",
+    "dataUsageText": "我们使用收集的信息来提供、维护和改进我们的服务，回复您的咨询，并与您沟通有关我们的产品和服务的信息。",
+    "contactTitle": "联系我们",
+    "contactText": "如果您对本隐私政策有任何疑问，请联系我们：contact@fashionexport.com。"
+  },
+  "Terms": {
+    "title": "服务条款",
+    "lastUpdated": "最后更新",
+    "intro": "在使用由我们运营的 FashionExport 网站之前，请仔细阅读这些服务条款。",
+    "usageTitle": "使用条件",
+    "usageText": "我们将为您提供服务，该服务受本文件规定的条件约束。每次您访问本网站、使用其服务或进行购买时，即表示您接受以下条件。",
+    "intellectualPropertyTitle": "知识产权",
+    "intellectualPropertyText": "本网站上发布的内容（数字下载、图像、文本、图形、徽标）是 FashionExport 和/或其内容创作者的财产，受国际版权法保护。",
+    "liabilityTitle": "责任限制",
+    "liabilityText": "FashionExport 不对因您使用或无法使用本网站上的材料而可能产生的任何损害负责。"
+  },
+  "CookieConsent": {
+    "message": "我们使用 Cookie 来提升您的体验。继续访问本网站即表示您同意我们使用 Cookie。",
+    "accept": "知道了"
   }
 }
