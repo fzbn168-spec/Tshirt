@@ -1,3 +1,4 @@
+
 import { Link } from '@/i18n/routing';
 import { Shirt, Facebook, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -98,16 +99,29 @@ export default function Footer() {
                     {t('address')}
                   </li>
                   <li className="flex items-center gap-2 text-sm leading-6 text-gray-300">
-                    <Phone className="h-4 w-4 shrink-0" />
-                    +1 (555) 123-4567
-                  </li>
-                  <li className="flex items-center gap-2 text-sm leading-6 text-gray-300">
                     <Mail className="h-4 w-4 shrink-0" />
                     contact@fashionexport.com
+                  </li>
+                  <li className="flex items-center gap-2 text-sm leading-6 text-gray-300">
+                    <Phone className="h-4 w-4 shrink-0" />
+                    +1 (555) 123-4567
                   </li>
                 </ul>
               </div>
             </div>
+          </div>
+        </div>
+        <div className="mt-16 border-t border-white/10 pt-8 sm:mt-20 lg:mt-24 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-xs leading-5 text-gray-400">
+            &copy; {new Date().getFullYear()} FashionExport. All rights reserved.
+          </p>
+          <div className="flex gap-6">
+            <Link href="/privacy" className="text-xs leading-5 text-gray-400 hover:text-white">
+              {t('privacy')}
+            </Link>
+            <Link href="/terms" className="text-xs leading-5 text-gray-400 hover:text-white">
+              {t('terms')}
+            </Link>
           </div>
         </div>
       </div>

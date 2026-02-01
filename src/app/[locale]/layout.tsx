@@ -57,6 +57,7 @@ export default async function LocaleLayout({
           <Header />
           <main className="flex-grow">{children}</main>
           <Footer />
+          <CookieConsent />
         </NextIntlClientProvider>
       </body>
     </html>
