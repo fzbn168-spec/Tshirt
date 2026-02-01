@@ -1,0 +1,131 @@
+{
+  "Navigation": {
+    "home": "首页",
+    "products": "产品中心",
+    "about": "关于我们",
+    "contact": "联系我们",
+    "quote": "获取报价"
+  },
+  "Hero": {
+    "title": "高端服装制造专家",
+    "subtitle": "我们为全球品牌提供高质量的服装制造和出口服务。从设计到交付，我们是您值得信赖的时尚合作伙伴。",
+    "explore": "浏览产品",
+    "contact": "联系我们"
+  },
+  "Features": {
+    "title": "为什么选择我们",
+    "subtitle": "助力您的时尚品牌规模化发展",
+    "quality": "质量保证",
+    "qualityDesc": "在生产的每个阶段进行严格的质量控制，确保零缺陷。",
+    "logistics": "全球物流",
+    "logisticsDesc": "高效的运输解决方案，覆盖50多个国家，支持实时追踪。",
+    "materials": "优质面料",
+    "materialsDesc": "从认证供应商处采购最优质的面料和辅料。"
+  },
+  "Categories": {
+    "title": "按类别浏览",
+    "browseAll": "浏览所有类别"
+  },
+  "Footer": {
+    "description": "优质服装制造商和出口商。连接全球时尚品牌与顶级制造。",
+    "products": "产品",
+    "men": "男装",
+    "women": "女装",
+    "kids": "童装",
+    "accessories": "配饰",
+    "company": "公司",
+    "about": "关于我们",
+    "process": "制造流程",
+    "sustainability": "可持续发展",
+    "contact": "联系",
+    "contactUs": "联系我们",
+    "address": "123 Fashion Street, Garment District, NY"
+  },
+  "Products": {
+    "categories": "分类",
+    "all": "全部",
+    "men": "男装",
+    "women": "女装",
+    "kids": "童装",
+    "accessories": "配饰",
+    "breadcrumb": "产品中心",
+    "details": "产品详情",
+    "highlights": "产品亮点",
+    "inquire": "咨询此产品",
+    "moq": "起订量",
+    "material": "材质"
+  },
+  "Contact": {
+    "title": "联系我们",
+    "subtitle": "联系我们的团队进行咨询和报价。",
+    "formTitle": "发送消息",
+    "name": "姓名",
+    "email": "邮箱",
+    "company": "公司",
+    "phone": "电话",
+    "message": "留言",
+    "submit": "发送消息",
+    "submitting": "发送中...",
+    "success": "感谢您的咨询！我们会尽快回复您。",
+    "info": {
+      "address": "123 Fashion Street, New York, NY 10018",
+      "phone": "+1 (555) 123-4567",
+      "email": "contact@fashionexport.com"
+    }
+  },
+  "About": {
+    "title": "关于我们",
+    "description": "FashionExport 是一家顶级服装制造商，致力于实现您的时尚愿景。自2009年以来，我们一直是众多成功全球时尚品牌背后的合作伙伴。",
+    "stats": {
+      "experience": "年行业经验",
+      "countries": "服务国家",
+      "capacity": "月产能",
+      "clients": "满意客户"
+    },
+    "values": {
+      "quality": "卓越品质",
+      "qualityDesc": "我们在生产的每个阶段都保持最高的质量控制标准，确保每件服装都符合国际标准。",
+      "customer": "客户至上",
+      "customerDesc": "客户是我们的合作伙伴。我们与品牌密切合作，了解他们的愿景并交付超出预期的产品。",
+      "global": "全球触达",
+      "globalDesc": "凭借强大的物流网络，我们确保产品及时送达全球任何角落。",
+      "heritage": "工匠传承",
+      "heritageDesc": "建立在工艺传承之上，我们将传统技术与现代科技相结合。"
+    }
+  },
+  "Process": {
+    "title": "工作流程",
+    "subtitle": "我们的制造流程",
+    "description": "从概念到最终交付，我们在制造旅程的每一步都确保透明度和质量。",
+    "steps": {
+      "consultation": "咨询与设计",
+      "consultationDesc": "我们与您合作，了解您的需求、品牌形象和目标市场。我们的设计团队制作技术草图和情绪板。",
+      "sourcing": "采购与打样",
+      "sourcingDesc": "我们采购符合您质量和价格要求的最优质面料和辅料。制作原型供您批准。",
+      "planning": "生产计划",
+      "planningDesc": "样品获批后，我们规划生产时间表，分配资源，并确保所有材料准备就绪。",
+      "manufacturing": "生产制造",
+      "manufacturingDesc": "我们熟练的工人使用现代机械开始裁剪和缝制过程，确保精度和一致性。",
+      "qc": "质量控制",
+      "qcDesc": "每件服装在多个阶段都经过严格检查。我们检查尺寸、缝线和整体完成度。",
+      "delivery": "物流与交付",
+      "deliveryDesc": "我们处理包装、标签和出口文件。您的订单通过空运或海运发往目的地。"
+    }
+  },
+  "Sustainability": {
+    "title": "可持续发展",
+    "description": "时尚不必以牺牲地球为代价。我们致力于减少环境足迹并推广道德制造。",
+    "commitment": "我们的承诺",
+    "commitmentSubtitle": "共建美好未来",
+    "initiatives": {
+      "materials": "环保材料",
+      "materialsDesc": "我们优先使用有机棉、再生聚酯和可生物降解面料。我们的采购团队不断研究新的可持续替代品。",
+      "water": "水资源保护",
+      "waterDesc": "我们的印染和后整理设施利用先进的水处理和回收系统，最大限度地减少用水和污染。",
+      "waste": "减少浪费",
+      "wasteDesc": "我们实施零浪费裁剪技术并回收纺织废料。我们的目标是到2030年实现零填埋浪费。",
+      "labor": "公平劳工实践",
+      "laborDesc": "我们致力于提供安全的工作条件和公平的工资。我们的工厂定期接受社会合规审计。"
+    }
+  }
+}

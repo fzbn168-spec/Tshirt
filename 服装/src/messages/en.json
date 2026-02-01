@@ -1,0 +1,131 @@
+{
+  "Navigation": {
+    "home": "Home",
+    "products": "Products",
+    "about": "About Us",
+    "contact": "Contact",
+    "quote": "Get a Quote"
+  },
+  "Hero": {
+    "title": "Premium Apparel Manufacturing",
+    "subtitle": "We provide high-quality garment manufacturing and export services to global brands. From design to delivery, we are your trusted partner in fashion.",
+    "explore": "Explore Products",
+    "contact": "Contact Us"
+  },
+  "Features": {
+    "title": "Why Choose Us",
+    "subtitle": "Everything you need to scale your fashion brand",
+    "quality": "Quality Assurance",
+    "qualityDesc": "Strict quality control at every stage of production ensuring zero defects.",
+    "logistics": "Global Logistics",
+    "logisticsDesc": "Efficient shipping solutions to over 50 countries with real-time tracking.",
+    "materials": "Premium Materials",
+    "materialsDesc": "Sourcing the finest fabrics and accessories from certified suppliers."
+  },
+  "Categories": {
+    "title": "Shop by Category",
+    "browseAll": "Browse all categories"
+  },
+  "Footer": {
+    "description": "Premium quality apparel manufacturer and exporter. Connecting global fashion brands with top-tier manufacturing.",
+    "products": "Products",
+    "men": "Men's Wear",
+    "women": "Women's Wear",
+    "kids": "Kid's Wear",
+    "accessories": "Accessories",
+    "company": "Company",
+    "about": "About Us",
+    "process": "Manufacturing Process",
+    "sustainability": "Sustainability",
+    "contact": "Contact",
+    "contactUs": "Contact Us",
+    "address": "123 Fashion Street, Garment District, NY"
+  },
+  "Products": {
+    "categories": "Categories",
+    "all": "All",
+    "men": "Men",
+    "women": "Women",
+    "kids": "Kids",
+    "accessories": "Accessories",
+    "breadcrumb": "Products",
+    "details": "Details",
+    "highlights": "Highlights",
+    "inquire": "Inquire about this product",
+    "moq": "MOQ",
+    "material": "Material"
+  },
+  "Contact": {
+    "title": "Contact Us",
+    "subtitle": "Get in touch with our team for inquiries and quotes.",
+    "formTitle": "Send us a message",
+    "name": "Name",
+    "email": "Email",
+    "company": "Company",
+    "phone": "Phone",
+    "message": "Message",
+    "submit": "Send Message",
+    "submitting": "Sending...",
+    "success": "Thank you for your inquiry! We will get back to you soon.",
+    "info": {
+      "address": "123 Fashion Street, New York, NY 10018",
+      "phone": "+1 (555) 123-4567",
+      "email": "contact@fashionexport.com"
+    }
+  },
+  "About": {
+    "title": "About Us",
+    "description": "FashionExport is a premier garment manufacturer dedicated to bringing your fashion vision to life. Since 2009, we have been the silent partner behind many successful global fashion brands.",
+    "stats": {
+      "experience": "Years of Experience",
+      "countries": "Countries Served",
+      "capacity": "Monthly Capacity",
+      "clients": "Happy Clients"
+    },
+    "values": {
+      "quality": "Excellence in Quality",
+      "qualityDesc": "We maintain the highest standards of quality control at every stage of production, ensuring that every garment meets international standards.",
+      "customer": "Customer Focus",
+      "customerDesc": "Our clients are our partners. We work closely with brands to understand their vision and deliver products that exceed expectations.",
+      "global": "Global Reach",
+      "globalDesc": "With a robust logistics network, we ensure timely delivery of products to any corner of the globe.",
+      "heritage": "Heritage",
+      "heritageDesc": "Built on a legacy of craftsmanship, we combine traditional techniques with modern technology."
+    }
+  },
+  "Process": {
+    "title": "How We Work",
+    "subtitle": "Our Manufacturing Process",
+    "description": "From concept to final delivery, we ensure transparency and quality at every step of the manufacturing journey.",
+    "steps": {
+      "consultation": "Consultation & Design",
+      "consultationDesc": "We work with you to understand your requirements, brand identity, and target market. Our design team creates technical sketches and mood boards.",
+      "sourcing": "Sourcing & Sampling",
+      "sourcingDesc": "We source the best fabrics and trims that match your quality and price requirements. Prototypes are created for your approval.",
+      "planning": "Production Planning",
+      "planningDesc": "Once samples are approved, we plan the production timeline, allocate resources, and ensure all materials are ready.",
+      "manufacturing": "Manufacturing",
+      "manufacturingDesc": "Our skilled workforce begins the cutting and sewing process using modern machinery to ensure precision and consistency.",
+      "qc": "Quality Control",
+      "qcDesc": "Every garment undergoes rigorous inspection at multiple stages. We check for measurements, stitching, and overall finish.",
+      "delivery": "Logistics & Delivery",
+      "deliveryDesc": "We handle packaging, labeling, and export documentation. Your order is shipped via air or sea freight to your destination."
+    }
+  },
+  "Sustainability": {
+    "title": "Sustainability",
+    "description": "Fashion doesn't have to cost the earth. We are dedicated to reducing our environmental footprint and promoting ethical manufacturing.",
+    "commitment": "Our Commitment",
+    "commitmentSubtitle": "Building a Better Future",
+    "initiatives": {
+      "materials": "Eco-friendly Materials",
+      "materialsDesc": "We prioritize the use of organic cotton, recycled polyester, and biodegradable fabrics. Our sourcing team constantly researches new sustainable alternatives.",
+      "water": "Water Conservation",
+      "waterDesc": "Our dyeing and finishing facilities utilize advanced water treatment and recycling systems to minimize water usage and pollution.",
+      "waste": "Waste Reduction",
+      "wasteDesc": "We implement zero-waste cutting techniques and recycle textile scraps. Our goal is to achieve zero landfill waste by 2030.",
+      "labor": "Fair Labor Practices",
+      "laborDesc": "We are committed to providing safe working conditions and fair wages. Our factories are regularly audited for social compliance."
+    }
+  }
+}
