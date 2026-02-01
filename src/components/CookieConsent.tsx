@@ -13,6 +13,7 @@ export default function CookieConsent() {
     // Check if user has already consented
     const consented = localStorage.getItem('cookie-consent');
     if (!consented) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsVisible(true);
     }
   }, []);
