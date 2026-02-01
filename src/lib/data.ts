@@ -16,7 +16,7 @@ const productsEn: Product[] = [
     name: 'Classic Navy Blue Suit',
     category: 'men',
     price: 'Contact for Price',
-    image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+    image: '/images/product-1.jpg',
     description: 'Premium wool blend suit featuring a modern slim fit cut. Perfect for business and formal occasions. Available in various sizes and custom measurements.',
     features: ['Premium Wool Blend', 'Modern Slim Fit', 'Breathable Lining', 'Wrinkle Resistant'],
     moq: '50 Sets',
