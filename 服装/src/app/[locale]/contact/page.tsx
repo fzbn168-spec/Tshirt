@@ -100,6 +100,15 @@ export default function ContactPage() {
                     </div>
                 ) : (
                   <>
+                    {errorMessage && (
+                        <div className="rounded-md bg-red-50 p-4 mb-6">
+                            <div className="flex">
+                                <div className="ml-3">
+                                    <h3 className="text-sm font-medium text-red-800">{errorMessage}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
                         <div>
                             <label htmlFor="name" className="block text-sm font-semibold leading-6 text-gray-900">
