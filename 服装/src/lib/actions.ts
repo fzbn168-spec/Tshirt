@@ -45,7 +45,7 @@ export async function sendEmail(data: ContactFormData) {
         <h3>Message:</h3>
         <p style="white-space: pre-wrap;">${message}</p>
       `,
-      reply_to: email,
+      replyTo: email,
     });
 
     return { success: true };

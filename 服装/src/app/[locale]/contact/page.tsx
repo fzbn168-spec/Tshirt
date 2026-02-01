@@ -6,13 +6,9 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
-type FormData = {
-  name: string;
-  email: string;
-  company: string;
-  phone: string;
-  message: string;
-};
+import { sendEmail, ContactFormData } from '@/lib/actions';
+
+type FormData = ContactFormData;
 
 export default function ContactPage() {
   const t = useTranslations('Contact');
@@ -20,6 +16,7 @@ export default function ContactPage() {
   const productInquiry = searchParams.get('product');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const {
     register,
@@ -36,11 +33,20 @@ export default function ContactPage() {
 
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    console.log(data);
-    setIsSubmitting(false);
-    setIsSuccess(true);
+    setErrorMessage(null);
+    
+    try {
+      const result = await sendEmail(data);
+      if (result.success) {
+        setIsSuccess(true);
+      } else {
+        setErrorMessage(result.error || 'Something went wrong');
+      }
+    } catch (error) {
+      setErrorMessage('An unexpected error occurred');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
