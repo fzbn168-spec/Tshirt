@@ -2,14 +2,22 @@
 
 This project is built with Next.js 16. The recommended deployment method is using Vercel, but it can also be hosted on any server that supports Node.js.
 
+## Environment Variables
+
+This project requires the following environment variables to be set in your deployment environment (Vercel, .env file, etc.):
+
+- `RESEND_API_KEY`: Your Resend API Key for sending emails. Get it at [resend.com](https://resend.com).
+- `NEXT_PUBLIC_BASE_URL`: (Optional) The public URL of your website (e.g., `https://your-domain.com`) for SEO.
+
 ## Option 1: Vercel (Recommended)
 
 The easiest way to deploy is to use the [Vercel Platform](https://vercel.com/new).
 
 1. Push your code to a Git repository (GitHub, GitLab, or Bitbucket).
 2. Import the project into Vercel.
-3. Vercel will automatically detect Next.js and configure the build settings.
-4. Click **Deploy**.
+3. **Add Environment Variables**: In the Vercel project settings, add `RESEND_API_KEY` and `NEXT_PUBLIC_BASE_URL`.
+4. Vercel will automatically detect Next.js and configure the build settings.
+5. Click **Deploy**.
 
 ## Option 2: Self-Hosted (Node.js Server)
 
