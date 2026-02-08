@@ -35,6 +35,20 @@ if [ -z "$domains" ]; then
   export DOMAIN_NAME=$domains
 fi
 
+# 自动处理 www 前缀
+if [[ "$domains" != www.* ]]; then
+  # 如果输入的是 root domain (例如 example.com)，则自动添加 www.example.com
+  cert_domains="$domains,www.$domains"
+  nginx_domains="$domains www.$domains"
+else
+  # 如果已经带了 www，则提取 root domain
+  root_domain="${domains:4}"
+  cert_domains="$root_domain,$domains"
+  nginx_domains="$root_domain $domains"
+fi
+
+echo "将在证书中包含以下域名: $cert_domains"
+
 if [ -z "$email" ]; then
   read -p "请输入您的邮箱 (用于 SSL 证书通知): " email
 fi
@@ -56,7 +70,7 @@ fi
 
 # 从模板准备 Nginx 配置
 echo "### 生成 Nginx 配置文件 ..."
-sed "s/\${DOMAIN_NAME}/$domains/g" nginx/conf.d/app.conf.template > nginx/conf.d/app.conf
+sed "s/\${DOMAIN_NAME}/$nginx_domains/g" nginx/conf.d/app.conf.template > nginx/conf.d/app.conf
 
 echo "### 创建临时证书以启动 Nginx ..."
 path="/etc/letsencrypt/live/$domains"
@@ -89,7 +103,7 @@ esac
 $COMPOSE_CMD -f docker-compose.prod.yml run --rm --entrypoint "\
   certbot certonly --webroot -w /var/www/certbot \
     $email_arg \
-    -d $domains \
+    -d $cert_domains \
     --rsa-key-size $rsa_key_size \
     --agree-tos \
     --force-renewal" certbot
