@@ -3,7 +3,7 @@ services:
     container_name: soletrade-backend
     build: ./backend
     environment:
-      - DATABASE_URL=file:./prod.db
+      - DATABASE_URL=file:/app/data/prod.db
       - JWT_SECRET=${JWT_SECRET}
       - FRONTEND_URL=https://${DOMAIN_NAME}
       - BACKEND_URL=https://${DOMAIN_NAME}
@@ -12,7 +12,7 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
     volumes:
-      - ./backend/prisma:/app/prisma
+      - ./backend/data:/app/data
       - ./backend/uploads:/app/uploads
     restart: always
     networks:

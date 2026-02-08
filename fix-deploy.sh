@@ -7,17 +7,10 @@ NC='\033[0m'
 
 echo -e "${GREEN}=== 开始修复部署 ===${NC}"
 
-# 1. 修复 prod.db 可能被 Docker 误创建为文件夹的问题
-if [ -d "backend/prisma/prod.db" ]; then
-    echo -e "${RED}发现 prod.db 是文件夹，正在删除...${NC}"
-    rm -rf backend/prisma/prod.db
-fi
-
-if [ ! -f "backend/prisma/prod.db" ]; then
-    echo -e "${GREEN}创建空的 prod.db 文件...${NC}"
-    mkdir -p backend/prisma
-    touch backend/prisma/prod.db
-fi
+# 1. 准备数据库目录
+echo -e "${GREEN}准备数据库目录 backend/data...${NC}"
+mkdir -p backend/data
+chmod 777 backend/data
 
 # 2. 清理 Docker 缓存 (修复 parent snapshot does not exist 错误)
 echo -e "${GREEN}正在清理 Docker 缓存 (这可能需要几分钟)...${NC}"
