@@ -265,6 +265,46 @@
       "actions": "Actions",
       "update": "Update",
       "saving": "Saving..."
+    },
+    "companies": {
+      "allCustomers": "All Customers",
+      "myCustomers": "My Customers",
+      "filterByRep": "Filter by Sales Rep",
+      "salesRep": "Sales Rep",
+      "unassigned": "Unassigned",
+      "viewLicense": "View License",
+      "noDocuments": "No documents"
     }
+  },
+  "Product": {
+    "inStock": "In Stock",
+    "sku": "SKU",
+    "verified": "Verified Supplier",
+    "location": "Guangzhou, China",
+    "pairs": "Pairs",
+    "loginToView": "Login to View Price",
+    "wholesaleOnly": "Wholesale pricing is available for members only",
+    "volumePricing": "Volume Pricing",
+    "price": "Price",
+    "stock": "Stock",
+    "available": "Available",
+    "outOfStock": "Out of Stock",
+    "selectOptions": "Select Options",
+    "addToRfq": "Add to RFQ",
+    "addedToCart": "Added to RFQ Cart",
+    "loginToAdd": "Login to Add to RFQ",
+    "selectOption": "Select option"
+  },
+  "Settings": {
+    "title": "Settings",
+    "subtitle": "Manage your personal preferences and account settings.",
+    "preferences": "Preferences",
+    "language": "Language",
+    "currency": "Currency",
+    "languageDesc": "Choose the language you want to use in the interface.",
+    "currencyDesc": "Choose the currency you want to see prices in.",
+    "account": "Account Settings",
+    "changePassword": "Change Password",
+    "notifications": "Notification Settings"
   }
 }

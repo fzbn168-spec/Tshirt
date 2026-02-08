@@ -265,6 +265,46 @@
       "actions": "操作",
       "update": "更新",
       "saving": "保存中..."
+    },
+    "companies": {
+      "allCustomers": "所有客户",
+      "myCustomers": "我的客户",
+      "filterByRep": "按销售代表筛选",
+      "salesRep": "销售代表",
+      "unassigned": "未分配",
+      "viewLicense": "查看执照",
+      "noDocuments": "无文档"
     }
+  },
+  "Product": {
+    "inStock": "现货",
+    "sku": "SKU",
+    "verified": "认证供应商",
+    "location": "中国广州",
+    "pairs": "双",
+    "loginToView": "登录查看价格",
+    "wholesaleOnly": "批发价格仅对会员可见",
+    "volumePricing": "阶梯价格",
+    "price": "价格",
+    "stock": "库存",
+    "available": "可用",
+    "outOfStock": "缺货",
+    "selectOptions": "选择规格",
+    "addToRfq": "加入询价单",
+    "addedToCart": "已加入询价单",
+    "loginToAdd": "登录后加入询价单",
+    "selectOption": "选择选项"
+  },
+  "Settings": {
+    "title": "设置",
+    "subtitle": "管理您的个人偏好和账户设置。",
+    "preferences": "偏好设置",
+    "language": "语言",
+    "currency": "货币",
+    "languageDesc": "选择您希望在界面中使用的语言。",
+    "currencyDesc": "选择您希望看到的价格货币。",
+    "account": "账户设置",
+    "changePassword": "修改密码",
+    "notifications": "通知设置"
   }
 }

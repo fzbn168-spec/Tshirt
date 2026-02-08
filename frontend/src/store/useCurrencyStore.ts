@@ -20,7 +20,8 @@ export const useCurrencyStore = create<CurrencyStore>()(
 
       fetchRates: async () => {
         try {
-          const res = await fetch('http://localhost:3001/exchange-rates');
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+          const res = await fetch(`${API_URL}/exchange-rates`);
           if (res.ok) {
             const data = await res.json();
             // Convert array [{currency: 'EUR', rate: 0.9}] to object {EUR: 0.9}

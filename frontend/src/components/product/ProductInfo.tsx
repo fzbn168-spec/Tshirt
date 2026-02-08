@@ -1,5 +1,6 @@
 import { BadgeCheck, Info, Lock } from 'lucide-react';
 import { Link } from '@/navigation';
+import { useTranslations } from 'next-intl';
 
 interface TieredPrice {
   minQty: number;
@@ -15,22 +16,24 @@ interface ProductInfoProps {
 }
 
 export function ProductInfo({ title, skuCode, description, prices, isAuth = false }: ProductInfoProps) {
+  const t = useTranslations('Product');
+
   return (
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-2 mb-2">
           <span className="text-sm font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded dark:bg-blue-900/30">
-            In Stock
+            {t('inStock')}
           </span>
-          <span className="text-sm text-zinc-500">SKU: {skuCode}</span>
+          <span className="text-sm text-zinc-500">{t('sku')}: {skuCode}</span>
         </div>
         <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">{title}</h1>
         
         <div className="flex items-center gap-2 mt-2 text-sm text-zinc-500">
           <BadgeCheck className="w-4 h-4 text-green-600" />
-          <span>Verified Supplier</span>
+          <span>{t('verified')}</span>
           <span className="mx-2">•</span>
-          <span>Guangzhou, China</span>
+          <span>{t('location')}</span>
         </div>
       </div>
 
@@ -43,7 +46,7 @@ export function ProductInfo({ title, skuCode, description, prices, isAuth = fals
                 {index !== prices.length - 1 && (
                   <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[1px] h-8 bg-zinc-200 dark:bg-zinc-700 hidden md:block" />
                 )}
-                <span className="text-sm text-zinc-500 mb-1">{tier.minQty}+ Pairs</span>
+                <span className="text-sm text-zinc-500 mb-1">{tier.minQty}+ {t('pairs')}</span>
                 <span className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
                   ${tier.price.toFixed(2)}
                 </span>
@@ -53,9 +56,9 @@ export function ProductInfo({ title, skuCode, description, prices, isAuth = fals
         ) : (
           <div className="flex flex-col items-center justify-center py-6 text-zinc-500">
             <Lock className="w-8 h-8 mb-3 opacity-40" />
-            <p className="font-medium mb-3 text-zinc-900 dark:text-zinc-100">Wholesale pricing is available for members only</p>
+            <p className="font-medium mb-3 text-zinc-900 dark:text-zinc-100">{t('wholesaleOnly')}</p>
             <Link href="/login" className="text-sm bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-colors">
-              Login to View Price
+              {t('loginToView')}
             </Link>
           </div>
         )}

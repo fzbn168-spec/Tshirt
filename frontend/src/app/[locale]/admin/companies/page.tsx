@@ -54,7 +54,8 @@ export default function CompaniesPage() {
 
   const fetchSalesReps = async () => {
     try {
-      const res = await fetch('http://localhost:3001/platform/sales-reps', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/platform/sales-reps`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -79,7 +80,8 @@ export default function CompaniesPage() {
         params.append('salesRepId', selectedSalesRepFilter);
       }
 
-      const res = await fetch(`http://localhost:3001/platform/companies?${params.toString()}`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/platform/companies?${params.toString()}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -109,7 +111,8 @@ export default function CompaniesPage() {
 
   const handleAssignSalesRep = async (companyId: string, salesRepId: string) => {
     try {
-      const res = await fetch(`http://localhost:3001/platform/companies/${companyId}/sales-rep`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/platform/companies/${companyId}/sales-rep`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -132,7 +135,8 @@ export default function CompaniesPage() {
 
   const handleStatusUpdate = async (id: string, status: 'APPROVED' | 'REJECTED') => {
     try {
-      const res = await fetch(`http://localhost:3001/platform/companies/${id}/status`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/platform/companies/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -183,7 +187,7 @@ export default function CompaniesPage() {
                   : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
               }`}
             >
-              All Customers
+              {t('companies.allCustomers')}
             </button>
             <button
               onClick={() => setViewMode('MY')}
@@ -193,7 +197,7 @@ export default function CompaniesPage() {
                   : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
               }`}
             >
-              My Customers
+              {t('companies.myCustomers')}
             </button>
           </div>
 
@@ -205,7 +209,7 @@ export default function CompaniesPage() {
                 onChange={(e) => setSelectedSalesRepFilter(e.target.value)}
                 className="pl-9 pr-4 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm appearance-none min-w-[180px]"
               >
-                <option value="">Filter by Sales Rep</option>
+                <option value="">{t('companies.filterByRep')}</option>
                 {salesReps.map(rep => (
                   <option key={rep.id} value={rep.id}>{rep.fullName || rep.email}</option>
                 ))}
@@ -222,7 +226,7 @@ export default function CompaniesPage() {
               <th className="px-6 py-3 font-medium text-zinc-500">{t('table.companyName')}</th>
               <th className="px-6 py-3 font-medium text-zinc-500">{t('table.contactEmail')}</th>
               <th className="px-6 py-3 font-medium text-zinc-500">{t('table.status')}</th>
-              <th className="px-6 py-3 font-medium text-zinc-500">Sales Rep</th>
+              <th className="px-6 py-3 font-medium text-zinc-500">{t('companies.salesRep')}</th>
               <th className="px-6 py-3 font-medium text-zinc-500">{t('table.documents')}</th>
               <th className="px-6 py-3 font-medium text-zinc-500">{t('table.stats')}</th>
               <th className="px-6 py-3 font-medium text-zinc-500">{t('table.registered')}</th>
@@ -259,7 +263,7 @@ export default function CompaniesPage() {
                       onChange={(e) => handleAssignSalesRep(company.id, e.target.value)}
                       className="bg-transparent border-none text-sm focus:ring-0 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded px-2 py-1 -ml-2"
                     >
-                      <option value="">Unassigned</option>
+                      <option value="">{t('companies.unassigned')}</option>
                       {salesReps.map(rep => (
                         <option key={rep.id} value={rep.id}>{rep.fullName || rep.email}</option>
                       ))}
@@ -274,10 +278,10 @@ export default function CompaniesPage() {
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:underline text-sm"
                     >
-                      View License
+                      {t('companies.viewLicense')}
                     </a>
                   ) : (
-                    <span className="text-zinc-400 text-sm">No documents</span>
+                    <span className="text-zinc-400 text-sm">{t('companies.noDocuments')}</span>
                   )}
                 </td>
                 <td className="px-6 py-4 text-zinc-500">

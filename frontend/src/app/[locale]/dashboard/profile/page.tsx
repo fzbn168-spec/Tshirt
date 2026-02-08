@@ -31,7 +31,8 @@ export default function ProfilePage() {
 
   const fetchProfile = async () => {
     try {
-      const res = await axios.get('http://localhost:3001/companies/profile', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await axios.get(`${API_URL}/companies/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = res.data;
@@ -59,7 +60,8 @@ export default function ProfilePage() {
     setSaving(true);
     setMessage('');
     try {
-      await axios.patch('http://localhost:3001/companies/profile', formData, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      await axios.patch(`${API_URL}/companies/profile`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessage(t('updateSuccess'));

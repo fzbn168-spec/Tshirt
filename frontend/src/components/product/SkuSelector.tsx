@@ -5,6 +5,7 @@ import { ShoppingBag, Check, Lock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useCartStore } from '@/store/useCartStore';
+import { useTranslations } from 'next-intl';
 
 interface SkuSelectorProps {
   productId: string;
@@ -26,6 +27,7 @@ export function SkuSelector({
   isAuth = false
 }: SkuSelectorProps) {
   const router = useRouter();
+  const t = useTranslations('Product');
   const addItem = useCartStore(state => state.addItem);
   const [selectedValues, setSelectedValues] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
@@ -127,7 +129,7 @@ export function SkuSelector({
     });
 
     // Reset or show feedback
-    alert('Added to RFQ Cart');
+    alert(t('addedToCart'));
   };
 
   // If no attributes, show simple quantity selector for base product (if applicable)
@@ -150,7 +152,7 @@ export function SkuSelector({
                         {attrName}: <span className="text-zinc-500 font-normal">
                             {selectedValues[attr.id] 
                                 ? parseJson(values.find((v: any) => v.id === selectedValues[attr.id])?.value || '') 
-                                : 'Select option'}
+                                : t('selectOption')}
                         </span>
                     </h3>
                     <div className="flex flex-wrap gap-3">
@@ -184,7 +186,7 @@ export function SkuSelector({
       {/* Tiered Price Table */}
       {isAuth && tierPrices.length > 0 && (
         <div className="bg-zinc-50 dark:bg-zinc-900 rounded-md p-3 text-sm">
-          <div className="font-medium mb-2 text-zinc-700 dark:text-zinc-300">Volume Pricing</div>
+          <div className="font-medium mb-2 text-zinc-700 dark:text-zinc-300">{t('volumePricing')}</div>
           <div className="grid grid-cols-2 gap-2">
              <div className="text-zinc-500">1+</div>
              <div className="text-right">${Number(matchingSku.price).toFixed(2)}</div>
@@ -201,7 +203,7 @@ export function SkuSelector({
       {/* Price & Stock Display */}
       <div className="flex items-end justify-between">
           <div>
-            <div className="text-sm text-zinc-500 mb-1">Price</div>
+            <div className="text-sm text-zinc-500 mb-1">{t('price')}</div>
             {isAuth ? (
               <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
                   {matchingSku ? `$${currentPrice.toFixed(2)}` : `$${Number(basePrice).toFixed(2)}+`}
@@ -209,15 +211,15 @@ export function SkuSelector({
             ) : (
               <div className="flex items-center gap-2 text-zinc-500 py-1">
                  <Lock className="w-5 h-5" />
-                 <span className="font-medium text-lg">Login to view price</span>
+                 <span className="font-medium text-lg">{t('loginToView')}</span>
               </div>
             )}
           </div>
           {matchingSku && (
               <div className="text-right">
-                  <div className="text-sm text-zinc-500 mb-1">Stock</div>
+                  <div className="text-sm text-zinc-500 mb-1">{t('stock')}</div>
                   <div className={cn("font-medium", matchingSku.stock > 0 ? "text-green-600" : "text-red-600")}>
-                      {matchingSku.stock > 0 ? `${matchingSku.stock} Available` : 'Out of Stock'}
+                      {matchingSku.stock > 0 ? `${matchingSku.stock} ${t('available')}` : t('outOfStock')}
                   </div>
               </div>
           )}
@@ -249,12 +251,12 @@ export function SkuSelector({
             {isAuth ? (
               <>
                 <ShoppingBag className="w-5 h-5" />
-                {matchingSku ? (matchingSku.stock > 0 ? 'Add to RFQ' : 'Out of Stock') : 'Select Options'}
+                {matchingSku ? (matchingSku.stock > 0 ? t('addToRfq') : t('outOfStock')) : t('selectOptions')}
               </>
             ) : (
               <>
                 <Lock className="w-5 h-5" />
-                Login to Add to RFQ
+                {t('loginToAdd')}
               </>
             )}
           </button>
