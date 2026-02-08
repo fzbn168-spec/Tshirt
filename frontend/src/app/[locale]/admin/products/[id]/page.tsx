@@ -10,7 +10,8 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
 
   useEffect(() => {
     if (token && params.id) {
-      fetch(`http://localhost:3001/products/${params.id}`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      fetch(`${API_URL}/products/${params.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(res => res.json())

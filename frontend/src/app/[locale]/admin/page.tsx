@@ -23,11 +23,10 @@ export default function AdminDashboardPage() {
           <p className="text-zinc-600">{t('orderDesc')}</p>
         </Link>
         
-        {/* Placeholder for future modules */}
-        <div className="block p-6 bg-zinc-50 border rounded-lg opacity-50">
-           <h2 className="text-xl font-semibold mb-2">{t('productMgmt')}</h2>
+        <Link href="/admin/products" className="block p-6 bg-white border rounded-lg hover:shadow-md transition-shadow">
+           <h2 className="text-xl font-semibold mb-2 text-green-600">{t('productMgmt')}</h2>
            <p className="text-zinc-600">{t('productDesc')}</p>
-        </div>
+        </Link>
       </div>
     </div>
   );

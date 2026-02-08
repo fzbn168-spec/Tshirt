@@ -36,7 +36,8 @@ export default function ProductsPage() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch('http://localhost:3001/products', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/products`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -58,7 +59,8 @@ export default function ProductsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm(t('deleteConfirm'))) return;
     try {
-      const res = await fetch(`http://localhost:3001/products/${id}`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/products/${id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`

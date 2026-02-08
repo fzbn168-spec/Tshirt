@@ -38,8 +38,9 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
   ]);
 
   useEffect(() => {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
     // Fetch attributes
-    fetch('http://localhost:3001/attributes', {
+    fetch(`${API_URL}/attributes`, {
       headers: { Authorization: `Bearer ${token}` }
     })
     .then(res => res.json())
@@ -236,9 +237,10 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
         }))
       };
 
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       const url = isEdit 
-        ? `http://localhost:3001/products/${initialData.id}`
-        : 'http://localhost:3001/products';
+        ? `${API_URL}/products/${initialData.id}`
+        : `${API_URL}/products`;
       
       const method = isEdit ? 'PATCH' : 'POST';
 
