@@ -71,6 +71,38 @@
     "creatingAccount": "Creating account...",
     "hasAccount": "Already have an account?"
   },
+  "Dashboard": {
+    "sidebar": {
+      "enterpriseConsole": "Enterprise Console",
+      "overview": "Overview (EN)",
+      "profile": "Company Profile",
+      "inquiries": "My Inquiries",
+      "orders": "Orders",
+      "subAccounts": "Sub-accounts",
+      "attributes": "Attributes",
+      "settings": "Settings",
+      "logout": "Sign Out"
+    },
+    "stats": {
+      "activeInquiries": "Active Inquiries",
+      "pendingOrders": "Pending Orders",
+      "totalOrders": "Total Orders"
+    },
+    "sections": {
+      "recentInquiries": "Recent Inquiries",
+      "notifications": "Notifications",
+      "viewAll": "View All"
+    },
+    "notifications": {
+      "catalogTitle": "New Product Catalog Available",
+      "catalogDesc": "The Spring/Summer 2026 collection is now available for browsing.",
+      "maintenanceTitle": "System Maintenance",
+      "maintenanceDesc": "Scheduled maintenance on Feb 15th, 02:00 UTC."
+    },
+    "status": {
+      "pendingQuote": "Pending Quote"
+    }
+  },
   "Footer": {
     "description": "Your trusted B2B partner for high-quality footwear and apparel wholesale. Connecting global buyers with premium manufacturing.",
     "sourcing": "Sourcing",
@@ -221,6 +253,18 @@
       "quotedSuccess": "Status updated to QUOTED!",
       "shippingSuccess": "Shipping Created Successfully!",
       "error": "Error occurred"
+    },
+    "exchangeRates": {
+      "title": "Exchange Rates",
+      "subtitle": "Manage supported currencies and their exchange rates (relative to USD).",
+      "addCurrency": "Add New Currency",
+      "refresh": "Refresh Rates",
+      "code": "Currency Code",
+      "rate": "Exchange Rate",
+      "ratePlaceholder": "e.g. 7.2",
+      "actions": "Actions",
+      "update": "Update",
+      "saving": "Saving..."
     }
   }
 }

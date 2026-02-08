@@ -71,6 +71,38 @@
     "creatingAccount": "创建账户中...",
     "hasAccount": "已有账户？"
   },
+  "Dashboard": {
+    "sidebar": {
+      "enterpriseConsole": "企业控制台",
+      "overview": "概览 (CN)",
+      "profile": "公司资料",
+      "inquiries": "我的询价",
+      "orders": "订单",
+      "subAccounts": "子账号",
+      "attributes": "属性管理",
+      "settings": "设置",
+      "logout": "退出登录"
+    },
+    "stats": {
+      "activeInquiries": "活跃询价",
+      "pendingOrders": "待处理订单",
+      "totalOrders": "总订单"
+    },
+    "sections": {
+      "recentInquiries": "最近询价",
+      "notifications": "通知",
+      "viewAll": "查看全部"
+    },
+    "notifications": {
+      "catalogTitle": "新产品目录可用",
+      "catalogDesc": "2026 春/夏系列现已开放浏览。",
+      "maintenanceTitle": "系统维护",
+      "maintenanceDesc": "计划于 UTC 时间 2 月 15 日 02:00 进行维护。"
+    },
+    "status": {
+      "pendingQuote": "待报价"
+    }
+  },
   "Footer": {
     "description": "您值得信赖的优质鞋服批发 B2B 合作伙伴。连接全球买家与优质制造工厂。",
     "sourcing": "采购",
@@ -221,6 +253,18 @@
       "quotedSuccess": "状态已更新为已报价！",
       "shippingSuccess": "发货创建成功！",
       "error": "发生错误"
+    },
+    "exchangeRates": {
+      "title": "汇率设置",
+      "subtitle": "管理支持的货币及其汇率（相对于美元）。",
+      "addCurrency": "添加新货币",
+      "refresh": "刷新汇率",
+      "code": "货币代码",
+      "rate": "汇率",
+      "ratePlaceholder": "例如 7.2",
+      "actions": "操作",
+      "update": "更新",
+      "saving": "保存中..."
     }
   }
 }
