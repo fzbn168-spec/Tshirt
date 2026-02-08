@@ -1,0 +1,216 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useAuthStore } from '@/store/useAuthStore';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { PaymentModal } from '@/components/orders/PaymentModal';
+
+interface OrderItem {
+  id: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+interface Order {
+  id: string;
+  orderNo: string;
+  totalAmount: number;
+  currency: string;
+  status: string;
+  createdAt: string;
+  items: OrderItem[];
+  inquiry?: {
+    inquiryNo: string;
+  };
+}
+
+export default function OrdersPage() {
+  const { token, isAuthenticated } = useAuthStore();
+  const router = useRouter();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch('http://localhost:3001/orders', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setOrders(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch orders', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [isAuthenticated, token, router]);
+
+  if (loading) {
+    return <div className="p-8">Loading orders...</div>;
+  }
+
+  const openPayModal = (order: Order) => {
+    setSelectedOrder(order);
+    setIsPayModalOpen(true);
+  };
+
+  const handlePaymentSubmit = async (method: string, proofUrl?: string) => {
+    if (!selectedOrder) return;
+
+    try {
+        const res = await fetch('http://localhost:3001/payments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                orderId: selectedOrder.id,
+                amount: Number(selectedOrder.totalAmount),
+                method,
+                proofUrl
+            })
+        });
+        
+        if (res.ok) {
+            // Refresh orders
+            // Note: If WIRE, status might not change immediately, but we can refetch or just alert
+            alert('Payment Submitted Successfully!');
+            
+            // Refetch to be sure
+            const fetchRes = await fetch('http://localhost:3001/orders', {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (fetchRes.ok) {
+                setOrders(await fetchRes.json());
+            }
+        } else {
+            alert('Payment Failed');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Payment Error');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">My Orders</h1>
+      </div>
+
+      <div className="rounded-md border bg-white dark:bg-zinc-950">
+        <div className="relative w-full overflow-auto">
+          <table className="w-full caption-bottom text-sm">
+            <thead className="[&_tr]:border-b">
+              <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Order No</th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Date</th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Source</th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Total Amount</th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Status</th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Action</th>
+              </tr>
+            </thead>
+            <tbody className="[&_tr:last-child]:border-0">
+              {orders.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-4 text-center text-muted-foreground">
+                    No orders found.
+                  </td>
+                </tr>
+              ) : (
+                orders.map((order) => (
+                  <tr key={order.id} className="border-b transition-colors hover:bg-muted/50">
+                    <td className="p-4 align-middle font-medium">{order.orderNo}</td>
+                    <td className="p-4 align-middle">
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="p-4 align-middle">
+                      {order.inquiry ? (
+                        <span className="text-blue-600">RFQ: {order.inquiry.inquiryNo}</span>
+                      ) : (
+                        <span className="text-zinc-500">Direct</span>
+                      )}
+                    </td>
+                    <td className="p-4 align-middle font-medium">
+                      {order.currency} {Number(order.totalAmount).toFixed(2)}
+                    </td>
+                    <td className="p-4 align-middle">
+                      <StatusBadge status={order.status} />
+                    </td>
+                    <td className="p-4 align-middle flex items-center gap-2">
+                      <Link
+                        href={`/dashboard/orders/${order.id}`}
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-3"
+                      >
+                        View
+                      </Link>
+                      {order.status === 'PENDING_PAYMENT' && (
+                          <button
+                            onClick={() => openPayModal(order)}
+                            className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 h-8 px-3"
+                          >
+                            Pay Now
+                          </button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {selectedOrder && (
+        <PaymentModal 
+            isOpen={isPayModalOpen}
+            onClose={() => setIsPayModalOpen(false)}
+            onSubmit={handlePaymentSubmit}
+            amount={Number(selectedOrder.totalAmount)}
+            currency={selectedOrder.currency}
+        />
+      )}
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    PENDING_PAYMENT: 'bg-yellow-100 text-yellow-800',
+    PROCESSING: 'bg-blue-100 text-blue-800',
+    SHIPPED: 'bg-purple-100 text-purple-800',
+    COMPLETED: 'bg-green-100 text-green-800',
+    CANCELLED: 'bg-red-100 text-red-800',
+  };
+
+  const label = status.replace(/_/g, ' ');
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
+        styles[status] || 'bg-gray-100 text-gray-800'
+      }`}
+    >
+      {label}
+    </span>
+  );
+}

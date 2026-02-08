@@ -1,0 +1,364 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// 1. 商品分类 (Category)
+model Category {
+  id        String     @id @default(uuid())
+  slug      String     @unique
+  name      String     // JSON string: {"en": "Men Shoes", "zh": "男鞋"}
+  
+  // 自关联实现多级分类
+  parentId  String?    
+  parent    Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryHierarchy")
+  
+  products  Product[]
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+// 1.5 商品属性 (Attribute)
+model Attribute {
+  id        String   @id @default(uuid())
+  name      String   // JSON string: {"en": "Color", "zh": "颜色"}
+  code      String   @unique // e.g., "color", "size"
+  type      String   @default("text") // text, color, image
+  
+  values    AttributeValue[]
+  productAttributes ProductAttribute[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AttributeValue {
+  id          String    @id @default(uuid())
+  attributeId String
+  attribute   Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  
+  value       String    // JSON string: {"en": "Red", "zh": "红色"}
+  meta        String?   // e.g., "#FF0000" for color
+  
+  skuValues   SkuAttributeValue[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ProductAttribute {
+  id          String    @id @default(uuid())
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  attributeId String
+  attribute   Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, attributeId])
+}
+
+model SkuAttributeValue {
+  id               String         @id @default(uuid())
+  skuId            String
+  sku              Sku            @relation(fields: [skuId], references: [id], onDelete: Cascade)
+  
+  attributeValueId String
+  attributeValue   AttributeValue @relation(fields: [attributeValueId], references: [id], onDelete: Cascade)
+
+  @@unique([skuId, attributeValueId])
+}
+
+// 2. 商品主表 (SPU - Standard Product Unit)
+model Product {
+  id            String   @id @default(uuid())
+  
+  // 关联分类
+  categoryId    String   
+  category      Category @relation(fields: [categoryId], references: [id])
+
+  // 多语言内容
+  title         String   // JSON string: {"en": "Hiking Boots", "zh": "登山靴"}
+  description   String   // JSON string
+  
+  // 媒体
+  images        String   // JSON string: ["url1", "url2"]
+
+  // 基础信息
+  basePrice     Decimal
+  specsTemplate String   // JSON string: {"colors": ["Red"], "sizes": ["40", "41"]}
+  
+  isPublished   Boolean  @default(false)
+  
+  // 关联 SKU
+  skus          Sku[]
+  
+  // 关联询价条目
+  inquiryItems  InquiryItem[]
+  
+  // 关联订单明细
+  orderItems    OrderItem[]
+  
+  // 关联属性
+  attributes    ProductAttribute[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// 11. 发货记录 (Shipping)
+model Shipping {
+  id            String   @id @default(uuid())
+  orderId       String
+  order         Order    @relation(fields: [orderId], references: [id])
+  
+  trackingNo    String
+  carrier       String   // DHL, UPS, FedEx
+  shippedAt     DateTime @default(now())
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// 3. 库存量单位 (SKU - Stock Keeping Unit)
+model Sku {
+  id        String   @id @default(uuid())
+  
+  productId String   
+  product   Product  @relation(fields: [productId], references: [id])
+
+  skuCode   String   @unique // 商家编码: HB-RED-40
+  
+  // 具体规格值
+  specs     String   // JSON string: {"color": "Red", "size": "40"}
+  
+  // B2B 交易属性
+  price     Decimal  // 具体批发价
+  moq       Int      @default(1) // 最小起订量
+  stock     Int      @default(0)
+  leadTime  String?  // e.g. "7-14 days"
+  tierPrices String? // JSON string: [{"minQty": 100, "price": 9.5}]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // 关联询价条目
+  inquiryItems InquiryItem[]
+
+  // 关联订单明细
+  orderItems   OrderItem[]
+
+  // 关联属性值
+  attributeValues SkuAttributeValue[]
+}
+
+// 4. 企业客户 (Company)
+model Company {
+  id            String   @id @default(uuid())
+  name          String
+  taxId         String?
+  address       String?
+  contactEmail  String   @unique
+  phone         String?
+  logo          String?
+  website       String?
+  description   String?
+  documents     String?  // JSON string: [{"type": "license", "url": "..."}]
+  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  
+  salesRepId    String?
+  salesRep      User?    @relation("SalesRepCompanies", fields: [salesRepId], references: [id])
+
+  users         User[]
+  inquiries     Inquiry[]
+  orders        Order[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// 5. 用户 (User) - 支持子账户
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  fullName      String?
+  role          String   @default("MEMBER") // ADMIN, MEMBER, PLATFORM_ADMIN
+  
+  companyId     String?   
+  company       Company?  @relation(fields: [companyId], references: [id])
+
+  managedCompanies Company[] @relation("SalesRepCompanies")
+
+  orders        Order[]
+  notifications Notification[]
+  messages      InquiryMessage[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// 6. 询价单 (Inquiry)
+model Inquiry {
+  id            String        @id @default(uuid())
+  inquiryNo     String        @unique // RFQ-2024-001
+  
+  companyId     String?       // 可为空，支持匿名询价（注册前）
+  company       Company?      @relation(fields: [companyId], references: [id])
+  
+  // 联系人信息 (快照)
+  contactName   String
+  contactEmail  String
+  notes         String?
+  
+  status        String        @default("PENDING") // PENDING, QUOTED, ORDERED, CLOSED
+  
+  items         InquiryItem[]
+  messages      InquiryMessage[]
+
+  orders        Order[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+// 7. 询价单明细 (InquiryItem)
+model InquiryItem {
+  id            String   @id @default(uuid())
+  
+  inquiryId     String   
+  inquiry       Inquiry  @relation(fields: [inquiryId], references: [id])
+  
+  productId     String   
+  product       Product  @relation(fields: [productId], references: [id])
+  
+  skuId         String?  // 可选，如果用户只选了产品没选具体规格
+  sku           Sku?     @relation(fields: [skuId], references: [id])
+  
+  // 快照信息，防止商品删除后丢失
+  productName   String
+  skuSpecs      String?  // "Color: Red, Size: 42"
+  
+  quantity      Int
+  targetPrice   Decimal? // 期望价格
+  quotedPrice   Decimal? // 报价价格
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// 8. 订单 (Order)
+model Order {
+  id          String      @id @default(uuid())
+  orderNo     String      @unique // ORD-2024-001
+  
+  companyId   String
+  company     Company     @relation(fields: [companyId], references: [id])
+  
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+
+  // Optional: Link to Inquiry
+  inquiryId   String?     @unique
+  inquiry     Inquiry?    @relation(fields: [inquiryId], references: [id])
+
+  status      String      @default("PENDING_PAYMENT") 
+  // PENDING_PAYMENT, PAID, PROCESSING, SHIPPED, COMPLETED, CANCELLED
+
+  totalAmount Decimal
+  currency    String      @default("USD")
+
+  items       OrderItem[]
+  shippings   Shipping[]
+  payments    Payment[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+// 9. 订单明细 (OrderItem)
+model OrderItem {
+  id          String   @id @default(uuid())
+  
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id])
+  
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  
+  skuId       String?
+  sku         Sku?     @relation(fields: [skuId], references: [id])
+  
+  // Snapshot
+  productName String
+  skuSpecs    String?
+  
+  quantity    Int
+  unitPrice   Decimal
+  totalPrice  Decimal
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// 10. 支付记录 (Payment)
+model Payment {
+  id            String   @id @default(uuid())
+  orderId       String
+  order         Order    @relation(fields: [orderId], references: [id])
+  
+  amount        Decimal
+  method        String   // WIRE, PAYPAL, STRIPE
+  transactionId String?
+  proofUrl      String?  // Offline payment proof
+  status        String   // PENDING, COMPLETED, FAILED
+  
+  paidAt        DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// 12. 通知 (Notification)
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String?  // If null, could be system-wide or admin-targeted (logic handled in app)
+  user      User?    @relation(fields: [userId], references: [id])
+
+  type      String   // SYSTEM, INQUIRY, ORDER
+  title     String
+  content   String
+  isRead    Boolean  @default(false)
+  
+  // Link to related entity
+  referenceId   String? // e.g. inquiryId or orderId
+  referenceType String? // e.g. "INQUIRY", "ORDER"
+
+  createdAt DateTime @default(now())
+}
+
+model InquiryMessage {
+  id        String   @id @default(uuid())
+  inquiryId String
+  inquiry   Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model ExchangeRate {
+  id        String   @id @default(uuid())
+  currency  String   @unique
+  rate      Decimal
+  updatedAt DateTime @updatedAt
+}

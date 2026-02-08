@@ -1,0 +1,9 @@
+Phase,Agent_Role,Tech_Implementation,Workflow_Value
+开发阶段 (Development),架构师智能体 (Architect),Trae / ChatGPT-4o,需求拆解、Schema设计、API定义
+开发阶段 (Development),结对编程智能体 (Coding),Trae / Copilot,代码补全、生成样板代码、单元测试
+开发阶段 (Development),Code Review 智能体,CodeRabbit / GitHub Actions,自动代码审查、安全扫描、优化建议
+开发阶段 (Development),Mock 数据智能体,Faker.js + LLM Script,生成逼真的 B2B SKU 测试数据
+运行阶段 (Runtime),多语言导购智能体 (Sales AI),Vercel AI SDK (Next.js),24/7 客户接待、意图识别、商品推荐
+运行阶段 (Runtime),智能报价分析师 (RFQ Analyst),LangChain (Node.js),解析 Excel/PDF 询价单、自动匹配库存、生成报价草稿
+运行阶段 (Runtime),SEO 内容专家 (Content AI),Strapi CMS + LLM,自动生成多语言 SEO 文章、产品描述优化
+运行阶段 (Runtime),B2B 征信审核员 (Risk AI),Python Script + Search API,自动查询企业背景、评估买家信用、辅助审核

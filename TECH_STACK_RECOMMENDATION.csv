@@ -1,0 +1,11 @@
+Category,Item,Reasoning
+核心技术栈 - 前端,Next.js + Tailwind + Shadcn/UI,"SEO友好(SSR/SSG); 高性能(图片/字体优化); 生态统一(React)"
+核心技术栈 - 后端,NestJS (Node.js),"企业级架构(模块化); 语言统一(TS全链路); 高性能(高并发I/O)"
+核心技术栈 - 数据库,PostgreSQL + Prisma ORM,"JSONB支持(适合SKU属性); 开发体验好(TypeSafe)"
+核心技术栈 - 部署,Vercel + Docker + Supabase/AWS,"全球加速(Edge Network); CI/CD自动化"
+关键依赖包 - i18n,next-intl,"支持路由级多语言，兼容SSR，SEO友好"
+关键依赖包 - Utils,zod,"数据验证，全栈复用Schema"
+关键依赖包 - State,zustand,"轻量级状态管理"
+关键依赖包 - Fetch,tanstack/react-query,"数据请求与缓存管理"
+关键依赖包 - UI,lucide-react,"现代化SVG图标库"
+关键依赖包 - Utils,xlsx,"Excel处理(批量询价/报价导出)"
