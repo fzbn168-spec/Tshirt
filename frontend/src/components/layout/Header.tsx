@@ -56,11 +56,11 @@ export function Header() {
 
         {/* Desktop Nav */}
         <nav className="hidden lg:flex items-center gap-8 text-sm font-medium">
-          <Link href="/category/men" className="hover:text-blue-600 transition-colors">{tNav('men')}</Link>
-          <Link href="/category/women" className="hover:text-blue-600 transition-colors">{tNav('women')}</Link>
-          <Link href="/category/kids" className="hover:text-blue-600 transition-colors">{tNav('kids')}</Link>
-          <Link href="/category/apparel" className="hover:text-blue-600 transition-colors">{tNav('apparel')}</Link>
-          <Link href="/new-arrivals" className="text-blue-600">{tNav('newArrivals')}</Link>
+          <Link href="/products?search=Men" className="hover:text-blue-600 transition-colors">{tNav('men')}</Link>
+          <Link href="/products?search=Women" className="hover:text-blue-600 transition-colors">{tNav('women')}</Link>
+          <Link href="/products?search=Kids" className="hover:text-blue-600 transition-colors">{tNav('kids')}</Link>
+          <Link href="/products?search=Apparel" className="hover:text-blue-600 transition-colors">{tNav('apparel')}</Link>
+          <Link href="/products?sort=newest" className="text-blue-600">{tNav('newArrivals')}</Link>
         </nav>
 
         {/* Icons / Actions */}
