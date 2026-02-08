@@ -38,16 +38,18 @@ fi
 # 自动处理 www 前缀
 if [[ "$domains" != www.* ]]; then
   # 如果输入的是 root domain (例如 example.com)，则自动添加 www.example.com
+  primary_domain="$domains"
   cert_domains="$domains,www.$domains"
   nginx_domains="$domains www.$domains"
 else
   # 如果已经带了 www，则提取 root domain
-  root_domain="${domains:4}"
-  cert_domains="$root_domain,$domains"
-  nginx_domains="$root_domain $domains"
+  primary_domain="${domains:4}"
+  cert_domains="$primary_domain,$domains"
+  nginx_domains="$primary_domain $domains"
 fi
 
 echo "将在证书中包含以下域名: $cert_domains"
+echo "主域名 (证书路径): $primary_domain"
 
 if [ -z "$email" ]; then
   read -p "请输入您的邮箱 (用于 SSL 证书通知): " email
@@ -70,11 +72,13 @@ fi
 
 # 从模板准备 Nginx 配置
 echo "### 生成 Nginx 配置文件 ..."
-sed "s/\${DOMAIN_NAME}/$nginx_domains/g" nginx/conf.d/app.conf.template > nginx/conf.d/app.conf
+sed -e "s/\${SERVER_NAMES}/$nginx_domains/g" \
+    -e "s/\${PRIMARY_DOMAIN}/$primary_domain/g" \
+    nginx/conf.d/app.conf.template > nginx/conf.d/app.conf
 
 echo "### 创建临时证书以启动 Nginx ..."
-path="/etc/letsencrypt/live/$domains"
-mkdir -p "$data_path/conf/live/$domains"
+path="/etc/letsencrypt/live/$primary_domain"
+mkdir -p "$data_path/conf/live/$primary_domain"
 $COMPOSE_CMD -f docker-compose.prod.yml run --rm --entrypoint "\
   openssl req -x509 -nodes -newkey rsa:$rsa_key_size -days 1\
     -keyout '$path/privkey.pem' \
@@ -88,9 +92,9 @@ echo
 
 echo "### 删除临时证书 ..."
 $COMPOSE_CMD -f docker-compose.prod.yml run --rm --entrypoint "\
-  rm -Rf /etc/letsencrypt/live/$domains && \
-  rm -Rf /etc/letsencrypt/archive/$domains && \
-  rm -Rf /etc/letsencrypt/renewal/$domains.conf" certbot
+  rm -Rf /etc/letsencrypt/live/$primary_domain && \
+  rm -Rf /etc/letsencrypt/archive/$primary_domain && \
+  rm -Rf /etc/letsencrypt/renewal/$primary_domain.conf" certbot
 echo
 
 echo "### 申请 Let's Encrypt 证书 ..."
