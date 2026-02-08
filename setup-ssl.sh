@@ -118,6 +118,7 @@ $COMPOSE_CMD -f docker-compose.prod.yml run --rm --entrypoint "\
     -d $cert_domains \
     --rsa-key-size $rsa_key_size \
     --agree-tos \
+    --no-eff-email \
     --force-renewal" certbot
 echo
 
