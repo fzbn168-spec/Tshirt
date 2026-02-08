@@ -35,11 +35,15 @@ export default function AdminInquiryDetailPage() {
   const t = useTranslations('Admin');
 
   useEffect(() => {
-    fetch(`http://localhost:3001/inquiries/${id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.json())
-      .then(data => {
+    const fetchInquiry = async () => {
+      try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        // Use Admin endpoint
+        const res = await fetch(`${API_URL}/platform/inquiries/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
           setInquiry(data);
           // Initialize quotes
           const initialQuotes: Record<string, string> = {};
@@ -47,8 +51,12 @@ export default function AdminInquiryDetailPage() {
               if (item.quotedPrice) initialQuotes[item.id] = item.quotedPrice;
           });
           setQuotes(initialQuotes);
-      })
-      .catch(console.error);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchInquiry();
   }, [id, token]);
 
   const handleQuoteChange = (itemId: string, val: string) => {
@@ -69,7 +77,9 @@ export default function AdminInquiryDetailPage() {
       }));
 
       try {
-        const res = await fetch(`http://localhost:3001/inquiries/${id}`, {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        // Use Admin endpoint for update
+        const res = await fetch(`${API_URL}/platform/inquiries/${id}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',

@@ -20,18 +20,22 @@ export default function AdminInquiriesPage() {
   const t = useTranslations('Admin');
 
   useEffect(() => {
-    fetch('http://localhost:3001/inquiries', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.json())
-      .then(data => {
-         // Filter or sort if needed. Assuming API returns all for admin.
-         // If API limits by company for admin, we might need a specific admin endpoint or verify roles.
-         // Based on core memories, findAll ensures company isolation but Admin sees all?
-         // Let's assume PLATFORM_ADMIN sees all.
-         setInquiries(Array.isArray(data) ? data : data.data || []);
-      })
-      .catch(err => console.error(err));
+    const fetchInquiries = async () => {
+      try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        // Use Admin endpoint
+        const res = await fetch(`${API_URL}/platform/inquiries`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setInquiries(Array.isArray(data) ? data : data.data || []);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchInquiries();
   }, [token]);
 
   return (

@@ -30,8 +30,9 @@ export default function UsersPage() {
 
   const fetchUsers = async () => {
     try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       console.log('Fetching users...');
-      const res = await fetch('http://localhost:3001/users', {
+      const res = await fetch(`${API_URL}/users`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -65,7 +66,8 @@ export default function UsersPage() {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:3001/users', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -91,7 +93,8 @@ export default function UsersPage() {
     if (!confirm('Are you sure you want to delete this user?')) return;
     
     try {
-      const res = await fetch(`http://localhost:3001/users/${id}`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/users/${id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`

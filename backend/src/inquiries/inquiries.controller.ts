@@ -36,16 +36,14 @@ export class InquiriesController {
     @Body() createInquiryDto: CreateInquiryDto,
     @Req() req: RequestWithUser,
   ) {
-    // Note: If no guard is used, req.user is undefined.
-    // If we want to support optional auth, we need a custom guard.
-    // For now, we allow public access.
+    // Public access allowed, but attach user info if available
     const companyId = req.user?.role === 'PLATFORM_ADMIN' ? undefined : req.user?.companyId;
     return this.inquiriesService.create(createInquiryDto, companyId || undefined);
   }
 
   @Post('import')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('MEMBER', 'ADMIN', 'PLATFORM_ADMIN')
+  @Roles('MEMBER', 'ADMIN')
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Import inquiries from Excel' })
   @ApiConsumes('multipart/form-data')
@@ -92,12 +90,13 @@ export class InquiriesController {
 
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('MEMBER', 'ADMIN', 'PLATFORM_ADMIN')
-  @ApiOperation({ summary: 'Get all inquiries' })
+  @Roles('MEMBER', 'ADMIN')
+  @ApiOperation({ summary: 'Get my inquiries' })
   findAll(@Req() req: RequestWithUser) {
-    const companyId =
-      req.user.role === 'PLATFORM_ADMIN' ? undefined : req.user.companyId;
-    return this.inquiriesService.findAll(companyId || undefined);
+    if (!req.user.companyId) {
+      throw new BadRequestException('User must belong to a company');
+    }
+    return this.inquiriesService.findAll(req.user.companyId);
   }
 
   @Get(':id')
@@ -105,36 +104,37 @@ export class InquiriesController {
   @Roles('MEMBER', 'ADMIN', 'PLATFORM_ADMIN')
   @ApiOperation({ summary: 'Get inquiry by ID' })
   findOne(@Param('id') id: string, @Req() req: RequestWithUser) {
-    const companyId =
-      req.user.role === 'PLATFORM_ADMIN' ? undefined : req.user.companyId;
+    const companyId = req.user.role === 'PLATFORM_ADMIN' ? undefined : req.user.companyId;
     return this.inquiriesService.findOne(id, companyId || undefined);
   }
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('MEMBER', 'ADMIN', 'PLATFORM_ADMIN')
+  @Roles('MEMBER', 'ADMIN')
   @ApiOperation({ summary: 'Update inquiry' })
   update(
     @Param('id') id: string,
     @Body() updateInquiryDto: UpdateInquiryDto,
     @Req() req: RequestWithUser,
   ) {
-    const companyId =
-      req.user.role === 'PLATFORM_ADMIN' ? undefined : req.user.companyId;
+    if (!req.user.companyId) {
+       throw new BadRequestException('User must belong to a company');
+    }
     return this.inquiriesService.update(
       id,
       updateInquiryDto,
-      companyId || undefined,
+      req.user.companyId,
     );
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('MEMBER', 'ADMIN', 'PLATFORM_ADMIN')
+  @Roles('MEMBER', 'ADMIN')
   remove(@Param('id') id: string, @Req() req: RequestWithUser) {
-    const companyId =
-      req.user.role === 'PLATFORM_ADMIN' ? undefined : req.user.companyId;
-    return this.inquiriesService.remove(id, companyId || undefined);
+    if (!req.user.companyId) {
+       throw new BadRequestException('User must belong to a company');
+    }
+    return this.inquiriesService.remove(id, req.user.companyId);
   }
 
   @Post(':id/messages')
