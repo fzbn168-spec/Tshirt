@@ -22,6 +22,9 @@ RUN npm run build
 # Compile seed script to JS (avoid ts-node in production)
 RUN npx tsc prisma/seed.ts --module commonjs --target ES2023 --moduleResolution node --esModuleInterop --skipLibCheck
 
+# Compile admin creation script
+RUN npx tsc scripts/create-admin.ts --module commonjs --target ES2023 --moduleResolution node --esModuleInterop --skipLibCheck --outDir dist/scripts
+
 # Stage 2: Production
 FROM node:20-alpine AS runner
 

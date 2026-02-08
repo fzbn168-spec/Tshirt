@@ -4,8 +4,9 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = 'boss@example.com';
-  const password = 'password123';
+  const email = process.argv[2] || 'boss@example.com';
+  const password = process.argv[3] || 'password123';
+  const fullName = process.argv[4] || 'Platform Admin';
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const user = await prisma.user.upsert({
@@ -17,7 +18,7 @@ async function main() {
     create: {
       email,
       passwordHash: hashedPassword,
-      fullName: 'Platform Admin',
+      fullName,
       role: 'PLATFORM_ADMIN',
     },
   });
