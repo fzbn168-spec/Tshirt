@@ -36,7 +36,7 @@ export function Footer() {
               <li><Link href="#" className="hover:text-blue-600">{t('rfq')}</Link></li>
               <li>
                 <a 
-                    href="http://localhost:3001/products/catalog/pdf" 
+                    href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/products/catalog/pdf`}
                     target="_blank" 
                     className="flex items-center gap-2 hover:text-blue-600 font-medium text-blue-600/80"
                 >
@@ -80,7 +80,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-zinc-200 dark:border-zinc-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-zinc-500">
-          <p>{t('copyright')}</p>
+          <p>{t('copyright')} <span className="opacity-50 text-xs ml-2">v1.1.0</span></p>
           <div className="flex gap-6">
             <Link href="#" className="hover:text-zinc-900">{t('privacy')}</Link>
             <Link href="#" className="hover:text-zinc-900">{t('terms')}</Link>
