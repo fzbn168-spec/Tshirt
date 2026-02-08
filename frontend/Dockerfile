@@ -6,14 +6,19 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
+# Install dependencies (ensure devDependencies are installed for build)
 RUN npm ci
 
 # Copy source code
 COPY . .
 
+# IMPORTANT: Ensure prisma directory is copied BEFORE generate
+COPY prisma ./prisma/
+
+# Generate Prisma Client (Explicitly)
+RUN npx prisma generate
+
 # Build application
-ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # Stage 2: Production
@@ -22,22 +27,16 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create system user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Copy necessary files
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-# Switch to non-root user
-USER nextjs
+# Copy necessary files from builder
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/dist ./dist
+# Copy prisma schema for runtime migrations
+COPY --from=builder /app/prisma ./prisma
 
 # Expose port
-EXPOSE 3000
+EXPOSE 3001
 
 # Start application
-CMD ["node", "server.js"]
+CMD ["npm", "run", "start:prod"]
