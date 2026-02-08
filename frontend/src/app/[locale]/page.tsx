@@ -111,38 +111,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured Products (Mock) */}
+      {/* Featured Products (Real) */}
       <section className="py-16 bg-zinc-50 dark:bg-zinc-900/50">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold mb-8">{t('trending')}</h2>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((item) => (
-              <div key={item} className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="aspect-square bg-zinc-100 relative">
-                  {/* Placeholder Image */}
-                  <div className="absolute inset-0 flex items-center justify-center text-zinc-300">
-                    Product Image
-                  </div>
-                </div>
-                <div className="p-4">
-                  <div className="text-xs text-zinc-500 mb-1">Men's Running</div>
-                  <h3 className="font-medium text-lg mb-2">Ultra-Light Breathable Runner</h3>
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <div className="text-sm text-zinc-500">{t('moqLabel')}: 20 Pairs</div>
-                      <div className="font-bold text-blue-600">$12.50 - $15.00</div>
-                    </div>
-                    <button className="p-2 bg-zinc-100 rounded-full hover:bg-blue-50 text-blue-600 transition-colors">
-                      <ArrowRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <FeaturedProducts />
         </div>
       </section>
     </div>
   );
 }
+
+// Separate component for data fetching
+import { FeaturedProducts } from './_components/FeaturedProducts';
