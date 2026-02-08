@@ -21,6 +21,8 @@ interface Product {
 
 export function ProductGrid() {
   const searchParams = useSearchParams();
+  // Using process.env.NEXT_PUBLIC_API_URL is handled by build time replacement in production
+  // But we provide a fallback for local dev if env is missing
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
   // Construct query string

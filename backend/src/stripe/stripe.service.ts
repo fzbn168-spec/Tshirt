@@ -19,14 +19,20 @@ export class StripeService {
   async createPaymentIntent(amount: number, currency: string, metadata?: Record<string, string>) {
     if (!this.stripe) {
       // Return a mock response for development without keys
-      return {
-        clientSecret: 'mock_client_secret_' + Date.now(),
-        id: 'mock_pi_' + Date.now(),
-        status: 'requires_payment_method', // simulate real status
-        amount,
-        currency,
-        mock: true
-      };
+      // Only allow mock in development environment for security
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('StripeService: Using mock payment intent (dev only)');
+        return {
+          clientSecret: 'mock_client_secret_' + Date.now(),
+          id: 'mock_pi_' + Date.now(),
+          status: 'requires_payment_method', // simulate real status
+          amount,
+          currency,
+          mock: true
+        };
+      } else {
+        throw new InternalServerErrorException('Stripe configuration missing in production');
+      }
     }
 
     try {

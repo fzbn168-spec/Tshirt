@@ -16,12 +16,14 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const t = useTranslations('Dashboard.sidebar');
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout, isAuthenticated } = useAuthStore();
@@ -44,13 +46,13 @@ export default function DashboardLayout({
   }
 
   const navigation = [
-    { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Company Profile', href: '/dashboard/profile', icon: Building2 },
-    { name: 'My Inquiries', href: '/dashboard/inquiries', icon: FileText },
-    { name: 'Orders', href: '/dashboard/orders', icon: Package },
-    { name: 'Sub-accounts', href: '/dashboard/users', icon: Users },
-    ...(user?.role === 'ADMIN' || user?.role === 'PLATFORM_ADMIN' ? [{ name: 'Attributes', href: '/dashboard/attributes', icon: Tags }] : []),
-    { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+    { name: t('overview'), href: '/dashboard', icon: LayoutDashboard },
+    { name: t('profile'), href: '/dashboard/profile', icon: Building2 },
+    { name: t('inquiries'), href: '/dashboard/inquiries', icon: FileText },
+    { name: t('orders'), href: '/dashboard/orders', icon: Package },
+    { name: t('subAccounts'), href: '/dashboard/users', icon: Users },
+    ...(user?.role === 'ADMIN' || user?.role === 'PLATFORM_ADMIN' ? [{ name: t('attributes'), href: '/dashboard/attributes', icon: Tags }] : []),
+    { name: t('settings'), href: '/dashboard/settings', icon: Settings },
   ];
 
   return (
@@ -60,7 +62,7 @@ export default function DashboardLayout({
         <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
           <Link href="/" className="text-xl font-bold tracking-tight">
             SOLE<span className="text-blue-600">TRADE</span>
-            <span className="text-xs font-normal text-zinc-500 block mt-1">Enterprise Console</span>
+            <span className="text-xs font-normal text-zinc-500 block mt-1">{t('enterpriseConsole')}</span>
           </Link>
         </div>
 
@@ -69,7 +71,7 @@ export default function DashboardLayout({
             const isActive = pathname === item.href;
             return (
               <Link
-                key={item.name}
+                key={item.href}
                 href={item.href}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
@@ -100,7 +102,7 @@ export default function DashboardLayout({
             className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors dark:hover:bg-red-900/20"
           >
             <LogOut className="w-4 h-4" />
-            Sign Out
+            {t('logout')}
           </button>
         </div>
       </aside>

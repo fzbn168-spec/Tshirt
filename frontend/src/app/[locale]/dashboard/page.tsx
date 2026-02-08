@@ -1,11 +1,13 @@
 import { ArrowUpRight, Clock, FileText, Package } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 export default function DashboardPage() {
+  const t = useTranslations('Dashboard');
   const stats = [
-    { name: 'Active Inquiries', value: '12', icon: FileText, change: '+2 this week', color: 'text-blue-600 bg-blue-50' },
-    { name: 'Pending Orders', value: '3', icon: Clock, change: '1 awaiting payment', color: 'text-orange-600 bg-orange-50' },
-    { name: 'Total Orders', value: '45', icon: Package, change: '+15% vs last month', color: 'text-green-600 bg-green-50' },
+    { name: t('stats.activeInquiries'), value: '12', icon: FileText, change: '+2 this week', color: 'text-blue-600 bg-blue-50' },
+    { name: t('stats.pendingOrders'), value: '3', icon: Clock, change: '1 awaiting payment', color: 'text-orange-600 bg-orange-50' },
+    { name: t('stats.totalOrders'), value: '45', icon: Package, change: '+15% vs last month', color: 'text-green-600 bg-green-50' },
   ];
 
   return (
@@ -33,9 +35,9 @@ export default function DashboardPage() {
         {/* Recent Inquiries */}
         <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-sm">
           <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-            <h2 className="font-semibold">Recent Inquiries</h2>
+            <h2 className="font-semibold">{t('sections.recentInquiries')}</h2>
             <Link href="/dashboard/inquiries" className="text-sm text-blue-600 hover:underline flex items-center gap-1">
-              View All <ArrowUpRight className="w-4 h-4" />
+              {t('sections.viewAll')} <ArrowUpRight className="w-4 h-4" />
             </Link>
           </div>
           <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -44,7 +46,7 @@ export default function DashboardPage() {
                 <div className="flex justify-between items-start mb-1">
                   <div className="font-medium text-sm">RFQ-2024-00{i}</div>
                   <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 font-medium">
-                    Pending Quote
+                    {t('status.pendingQuote')}
                   </span>
                 </div>
                 <div className="text-sm text-zinc-500 mb-2">
@@ -61,21 +63,21 @@ export default function DashboardPage() {
         {/* System Notifications */}
         <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-sm">
           <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
-            <h2 className="font-semibold">Notifications</h2>
+            <h2 className="font-semibold">{t('sections.notifications')}</h2>
           </div>
           <div className="p-6 space-y-6">
             <div className="flex gap-4">
               <div className="w-2 h-2 mt-2 rounded-full bg-blue-600 shrink-0" />
               <div>
-                <div className="text-sm font-medium mb-1">New Product Catalog Available</div>
-                <p className="text-xs text-zinc-500">The Spring/Summer 2026 collection is now available for browsing.</p>
+                <div className="text-sm font-medium mb-1">{t('notifications.catalogTitle')}</div>
+                <p className="text-xs text-zinc-500">{t('notifications.catalogDesc')}</p>
               </div>
             </div>
             <div className="flex gap-4">
               <div className="w-2 h-2 mt-2 rounded-full bg-zinc-300 shrink-0" />
               <div>
-                <div className="text-sm font-medium mb-1">System Maintenance</div>
-                <p className="text-xs text-zinc-500">Scheduled maintenance on Feb 15th, 02:00 UTC.</p>
+                <div className="text-sm font-medium mb-1">{t('notifications.maintenanceTitle')}</div>
+                <p className="text-xs text-zinc-500">{t('notifications.maintenanceDesc')}</p>
               </div>
             </div>
           </div>

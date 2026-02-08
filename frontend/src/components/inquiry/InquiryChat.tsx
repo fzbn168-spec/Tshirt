@@ -29,7 +29,8 @@ export function InquiryChat({ inquiryId }: InquiryChatProps) {
 
   const fetchMessages = async () => {
     try {
-      const res = await fetch(`http://localhost:3001/inquiries/${inquiryId}/messages`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/inquiries/${inquiryId}/messages`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -64,7 +65,8 @@ export function InquiryChat({ inquiryId }: InquiryChatProps) {
 
     setIsLoading(true);
     try {
-      const res = await fetch(`http://localhost:3001/inquiries/${inquiryId}/messages`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/inquiries/${inquiryId}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
