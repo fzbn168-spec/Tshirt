@@ -11,6 +11,14 @@ else
   COMPOSE_CMD="docker-compose"
 fi
 
+# 启用错误检测
+set -e
+
+# 停止旧服务 (避免端口冲突)
+echo "### 停止旧服务 ..."
+$COMPOSE_CMD down 2>/dev/null || true
+$COMPOSE_CMD -f docker-compose.prod.yml down 2>/dev/null || true
+
 # 加载 .env
 if [ -f .env ]; then
   # 简单读取 .env 中的变量
