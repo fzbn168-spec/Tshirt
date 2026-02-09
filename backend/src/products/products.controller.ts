@@ -37,7 +37,7 @@ export class ProductsController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('PLATFORM_ADMIN')
+  @Roles('PLATFORM_ADMIN', 'ADMIN')
   create(@Body() createProductDto: CreateProductDto) {
     return this.productsService.create(createProductDto);
   }
@@ -75,21 +75,21 @@ export class ProductsController {
 
   @Post(':id/skus')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('PLATFORM_ADMIN')
+  @Roles('PLATFORM_ADMIN', 'ADMIN')
   addSku(@Param('id') id: string, @Body() createSkuDto: any) {
     return this.productsService.addSku(id, createSkuDto);
   }
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('PLATFORM_ADMIN')
+  @Roles('PLATFORM_ADMIN', 'ADMIN')
   update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
     return this.productsService.update(id, updateProductDto);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('PLATFORM_ADMIN')
+  @Roles('PLATFORM_ADMIN', 'ADMIN')
   remove(@Param('id') id: string) {
     return this.productsService.remove(id);
   }
