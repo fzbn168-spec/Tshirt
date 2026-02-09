@@ -33,7 +33,68 @@ async function main() {
   
   if (!existingCategory) {
     console.log('Seeding initial product data...');
-    
+
+    // 0. Seeding Attributes
+    const existingColor = await prisma.attribute.findFirst({ where: { code: 'color' } });
+    if (!existingColor) {
+      console.log('Seeding Attributes...');
+      
+      // Color
+      await prisma.attribute.create({
+        data: {
+          name: JSON.stringify({ en: "Color", zh: "颜色" }),
+          code: "color",
+          type: "color",
+          values: {
+            create: [
+              { value: JSON.stringify({ en: "Red", zh: "红色" }), meta: "#FF0000" },
+              { value: JSON.stringify({ en: "Blue", zh: "蓝色" }), meta: "#0000FF" },
+              { value: JSON.stringify({ en: "Black", zh: "黑色" }), meta: "#000000" },
+              { value: JSON.stringify({ en: "White", zh: "白色" }), meta: "#FFFFFF" }
+            ]
+          }
+        }
+      });
+
+      // Size
+      await prisma.attribute.create({
+        data: {
+          name: JSON.stringify({ en: "Size", zh: "尺码" }),
+          code: "size",
+          type: "text",
+          values: {
+            create: [
+              { value: JSON.stringify({ en: "S", zh: "S" }) },
+              { value: JSON.stringify({ en: "M", zh: "M" }) },
+              { value: JSON.stringify({ en: "L", zh: "L" }) },
+              { value: JSON.stringify({ en: "XL", zh: "XL" }) },
+              { value: JSON.stringify({ en: "40", zh: "40" }) },
+              { value: JSON.stringify({ en: "41", zh: "41" }) },
+              { value: JSON.stringify({ en: "42", zh: "42" }) },
+              { value: JSON.stringify({ en: "43", zh: "43" }) }
+            ]
+          }
+        }
+      });
+
+      // Material
+      await prisma.attribute.create({
+        data: {
+          name: JSON.stringify({ en: "Material", zh: "材质" }),
+          code: "material",
+          type: "text",
+          values: {
+            create: [
+              { value: JSON.stringify({ en: "Cotton", zh: "棉" }) },
+              { value: JSON.stringify({ en: "Polyester", zh: "聚酯纤维" }) },
+              { value: JSON.stringify({ en: "Leather", zh: "真皮" }) }
+            ]
+          }
+        }
+      });
+      console.log('Created Attributes: Color, Size, Material');
+    }
+
     // 1. Create Categories
     const menShoes = await prisma.category.create({
       data: {
@@ -52,48 +113,6 @@ async function main() {
 
     console.log('Created Categories');
 
-    // 1.5 Create Attributes
-    console.log('Seeding Attributes...');
-    
-    // Color Attribute
-    const colorAttr = await prisma.attribute.create({
-      data: {
-        name: JSON.stringify({ en: "Color", zh: "颜色", es: "Color" }),
-        code: "color",
-        type: "color",
-        values: {
-          create: [
-            { value: JSON.stringify({ en: "Red", zh: "红色", es: "Rojo" }), meta: "#FF0000" },
-            { value: JSON.stringify({ en: "Army Green", zh: "军绿", es: "Verde militar" }), meta: "#4B5320" },
-            { value: JSON.stringify({ en: "Black", zh: "黑色", es: "Negro" }), meta: "#000000" },
-            { value: JSON.stringify({ en: "White", zh: "白色", es: "Blanco" }), meta: "#FFFFFF" },
-            { value: JSON.stringify({ en: "Blue", zh: "蓝色", es: "Azul" }), meta: "#0000FF" },
-          ]
-        }
-      }
-    });
-
-    // Size Attribute
-    const sizeAttr = await prisma.attribute.create({
-      data: {
-        name: JSON.stringify({ en: "Size", zh: "尺码", es: "Talla" }),
-        code: "size",
-        type: "text",
-        values: {
-          create: [
-            { value: JSON.stringify({ en: "40", zh: "40", es: "40" }) },
-            { value: JSON.stringify({ en: "41", zh: "41", es: "41" }) },
-            { value: JSON.stringify({ en: "42", zh: "42", es: "42" }) },
-            { value: JSON.stringify({ en: "43", zh: "43", es: "43" }) },
-            { value: JSON.stringify({ en: "44", zh: "44", es: "44" }) },
-            { value: JSON.stringify({ en: "45", zh: "45", es: "45" }) },
-          ]
-        }
-      }
-    });
-    
-    console.log('Created Attributes: Color, Size');
-
     // 2. Create Product (Fixed UUID to match Frontend Mock)
     const product = await prisma.product.create({
       data: {
@@ -111,48 +130,25 @@ async function main() {
     console.log('Created Product');
 
     // 3. Create SKUs
-    // Find attributes first to get IDs (in case we didn't just create them)
-    const colorAttribute = await prisma.attribute.findUnique({ where: { code: 'color' }, include: { values: true } });
-    const sizeAttribute = await prisma.attribute.findUnique({ where: { code: 'size' }, include: { values: true } });
+    const colors = ['Red', 'Army Green', 'Black'];
+    const sizes = ['40', '41', '42', '43', '44', '45'];
 
-    if (colorAttribute && sizeAttribute) {
-      for (const color of colorAttribute.values) {
-        // Only use 3 colors to match mock
-        const colorName = JSON.parse(color.value).en;
-        if (!['Red', 'Army Green', 'Black'].includes(colorName)) continue;
-
-        for (const size of sizeAttribute.values) {
-          const sizeName = JSON.parse(size.value).en;
-          
-          await prisma.sku.create({
-            data: {
-              productId: product.id,
-              skuCode: `HB-${colorName.substring(0, 3).toUpperCase()}-${sizeName}`,
-              specs: JSON.stringify({ color: colorName, size: sizeName }),
-              price: 45.00,
-              moq: 10,
-              stock: Math.floor(Math.random() * 100) + 10,
-              attributeValues: {
-                create: [
-                  { attributeValueId: color.id },
-                  { attributeValueId: size.id }
-                ]
-              }
-            },
-          });
-        }
+    for (const color of colors) {
+      for (const size of sizes) {
+        await prisma.sku.create({
+          data: {
+            productId: product.id,
+            skuCode: `HB-${color.substring(0, 3).toUpperCase()}-${size}`,
+            specs: JSON.stringify({ color, size }),
+            price: 45.00,
+            moq: 10,
+            stock: Math.floor(Math.random() * 100) + 10,
+          },
+        });
       }
-      
-      // Link attributes to product
-      await prisma.productAttribute.createMany({
-        data: [
-          { productId: product.id, attributeId: colorAttribute.id },
-          { productId: product.id, attributeId: sizeAttribute.id }
-        ]
-      });
     }
 
-    console.log('Created SKUs and linked Attributes');
+    console.log('Created SKUs');
   } else {
     console.log('Product data already exists, skipping.');
   }
