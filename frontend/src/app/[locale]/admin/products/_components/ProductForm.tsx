@@ -31,6 +31,7 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
   
   // Attribute Management
   const [availableAttributes, setAvailableAttributes] = useState<any[]>([]);
+  const [isLoadingAttributes, setIsLoadingAttributes] = useState(false);
   const [categories, setCategories] = useState<any[]>([]); // Categories State
   const [selectedAttributes, setSelectedAttributes] = useState<any[]>([]); // Array of attribute objects
   const [selectedValues, setSelectedValues] = useState<{[key: string]: string[]}>({}); // attributeId -> valueIds[]
@@ -64,12 +65,14 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
     
     if (token) {
         // Fetch attributes
+        setIsLoadingAttributes(true);
         fetch(`${API_URL}/attributes`, {
             headers: { Authorization: `Bearer ${token}` }
         })
         .then(res => res.json())
         .then(data => setAvailableAttributes(data))
-        .catch(err => console.error("Failed to fetch attributes", err));
+        .catch(err => console.error("Failed to fetch attributes", err))
+        .finally(() => setIsLoadingAttributes(false));
 
         // Fetch categories
         fetch(`${API_URL}/products/categories`, {
@@ -461,7 +464,9 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
                   disabled={availableAttributes.length === 0}
                 >
                   <option value="" disabled>
-                    {availableAttributes.length === 0 ? "Loading attributes..." : "Select Attribute to Add..."}
+                    {isLoadingAttributes 
+                      ? "Loading attributes..." 
+                      : (availableAttributes.length === 0 ? "No attributes found" : "Select Attribute to Add...")}
                   </option>
                   {availableAttributes.map(attr => (
                     <option key={attr.id} value={attr.id} disabled={!!selectedAttributes.find(sa => sa.id === attr.id)}>
