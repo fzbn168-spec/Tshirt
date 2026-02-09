@@ -49,6 +49,8 @@ export class ProductsController {
     @Query('minPrice') minPrice?: string,
     @Query('maxPrice') maxPrice?: string,
     @Query('attributes') attributesStr?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
     let attributes: Record<string, string[]> | undefined;
     if (attributesStr) {
@@ -59,12 +61,18 @@ export class ProductsController {
       }
     }
 
+    const pageNum = page ? Math.max(1, parseInt(page)) : 1;
+    const limitNum = limit ? Math.max(1, parseInt(limit)) : 50; // Default 50 items per page
+    const skip = (pageNum - 1) * limitNum;
+
     return this.productsService.findAll({ 
       search, 
       categoryId, 
       minPrice: minPrice ? Number(minPrice) : undefined, 
       maxPrice: maxPrice ? Number(maxPrice) : undefined,
-      attributes
+      attributes,
+      skip,
+      take: limitNum
     });
   }
 

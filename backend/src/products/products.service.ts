@@ -140,8 +140,10 @@ export class ProductsService {
     minPrice?: number;
     maxPrice?: number;
     attributes?: Record<string, string[]>; // { attrId: [valId1, valId2] }
+    skip?: number;
+    take?: number;
   }) {
-    const { search, categoryId, minPrice, maxPrice, attributes } = params || {};
+    const { search, categoryId, minPrice, maxPrice, attributes, skip, take } = params || {};
     
     const where: any = {};
 
@@ -181,27 +183,34 @@ export class ProductsService {
       };
     }
 
-    return this.prisma.product.findMany({
-      where,
-      include: {
-        skus: {
-          include: {
-            attributeValues: {
-              include: { attributeValue: true },
+    const [total, items] = await Promise.all([
+      this.prisma.product.count({ where }),
+      this.prisma.product.findMany({
+        where,
+        include: {
+          skus: {
+            include: {
+              attributeValues: {
+                include: { attributeValue: true },
+              },
             },
           },
-        },
-        attributes: {
-          include: {
-            attribute: {
-              include: { values: true }
-            }
+          attributes: {
+            include: {
+              attribute: {
+                include: { values: true }
+              }
+            },
           },
+          category: true,
         },
-        category: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      })
+    ]);
+
+    return { total, items };
   }
 
   async findOne(id: string) {

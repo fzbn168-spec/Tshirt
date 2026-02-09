@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Plus, Pencil, Trash2, Package } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from '@/navigation';
 import { useTranslations } from 'next-intl';
 
@@ -30,21 +30,33 @@ interface Product {
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
   const [isLoading, setIsLoading] = useState(true);
   const { token } = useAuthStore();
   const t = useTranslations('Admin');
 
   const fetchProducts = async () => {
     try {
+      setIsLoading(true);
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${API_URL}/products?sort=createdAt&order=desc`, {
+      const res = await fetch(`${API_URL}/products?sort=createdAt&order=desc&page=${page}&limit=${limit}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
       if (!res.ok) throw new Error('Failed to fetch products');
       const data = await res.json();
-      setProducts(data);
+      
+      // Handle response structure change (array vs { items, total })
+      if (Array.isArray(data)) {
+         setProducts(data);
+         setTotal(data.length);
+      } else {
+         setProducts(data.items || []);
+         setTotal(data.total || 0);
+      }
     } catch (err: any) {
       console.error(err.message);
     } finally {
@@ -53,8 +65,12 @@ export default function ProductsPage() {
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, [token]);
+    if (token) {
+        fetchProducts();
+    }
+  }, [token, page]);
+
+  const totalPages = Math.ceil(total / limit);
 
   const handleDelete = async (id: string) => {
     if (!window.confirm(t('deleteConfirm'))) return;
@@ -205,6 +221,32 @@ export default function ProductsPage() {
             })}
           </tbody>
         </table>
+        
+        {/* Pagination Controls */}
+        <div className="px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+            <div className="text-sm text-zinc-500">
+                Showing {products.length} of {total} products
+            </div>
+            <div className="flex gap-2">
+                <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="p-2 border border-zinc-200 dark:border-zinc-700 rounded-md disabled:opacity-50 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                >
+                    <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="px-4 py-2 text-sm font-medium">
+                    Page {page} of {Math.max(1, totalPages)}
+                </span>
+                <button
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                    className="p-2 border border-zinc-200 dark:border-zinc-700 rounded-md disabled:opacity-50 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                >
+                    <ChevronRight className="w-4 h-4" />
+                </button>
+            </div>
+        </div>
       </div>
     </div>
   );
