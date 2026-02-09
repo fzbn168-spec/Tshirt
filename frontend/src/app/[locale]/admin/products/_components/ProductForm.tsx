@@ -525,80 +525,113 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
                 </button>
             </div>
             
-            <div className="space-y-3">
-                {skus.map((sku, idx) => (
-                    <div key={idx} className="flex gap-3 items-start p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-md">
-                        <div className="grid grid-cols-6 gap-3 flex-1">
-                            <div className="col-span-2 space-y-1">
-                                <label className="text-xs text-zinc-500">{t('skuCode')}</label>
-                                <input 
-                                    value={sku.skuCode}
-                                    onChange={e => handleSkuChange(idx, 'skuCode', e.target.value)}
-                                    placeholder="e.g. HB-RED-40"
-                                    className="w-full px-2 py-1.5 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded"
-                                />
-                            </div>
-                            <div className="col-span-2 space-y-1">
-                                <label className="text-xs text-zinc-500">Specs</label>
-                                <div className="px-2 py-1.5 text-sm text-zinc-600 dark:text-zinc-400">
-                                  {sku._displaySpecs || (sku.specs ? (() => {
-                                    try {
-                                      const parsed = JSON.parse(sku.specs);
-                                      return Object.values(parsed).join(' / ');
-                                    } catch {
-                                      return sku.specs; // Fallback to raw string
-                                    }
-                                  })() : 'Custom')}
-                                </div>
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-xs text-zinc-500">{t('price')}</label>
-                                <input 
-                                    type="number"
-                                    value={sku.price}
-                                    onChange={e => handleSkuChange(idx, 'price', e.target.value)}
-                                    className="w-full px-2 py-1.5 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded"
-                                />
-                            </div>
-                            <div className="space-y-1 col-span-2">
-                                <label className="text-xs text-zinc-500">Volume Pricing</label>
-                                <button
-                                    type="button"
-                                    onClick={() => openTierDialog(idx)}
-                                    className="w-full px-2 py-1.5 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded text-left flex items-center justify-between hover:border-blue-500 transition-colors group"
-                                >
-                                    <span className="truncate text-zinc-600 dark:text-zinc-400">
-                                    {sku.tierPrices && sku.tierPrices !== '[]' && sku.tierPrices !== ''
-                                        ? (() => {
-                                            try {
-                                                const len = JSON.parse(sku.tierPrices).length;
-                                                return len > 0 ? `${len} Tier${len > 1 ? 's' : ''} Set` : 'Configure';
-                                            } catch { return 'Configure'; }
-                                        })()
-                                        : 'Configure'}
-                                    </span>
-                                    <Layers className="w-4 h-4 text-zinc-400 group-hover:text-blue-500" />
-                                </button>
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-xs text-zinc-500">{t('stock')}</label>
-                                <input 
-                                    type="number"
-                                    value={sku.stock}
-                                    onChange={e => handleSkuChange(idx, 'stock', e.target.value)}
-                                    className="w-full px-2 py-1.5 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded"
-                                />
-                            </div>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => handleRemoveSku(idx)}
-                            className="mt-6 p-1.5 text-zinc-400 hover:text-red-600 transition-colors"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
+            <div className="border border-zinc-200 dark:border-zinc-800 rounded-md overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                    <thead className="bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800">
+                        <tr>
+                            {/* Dynamic Attribute Headers */}
+                            {selectedAttributes.map(attr => (
+                                <th key={attr.id} className="px-4 py-3 font-medium text-zinc-500 whitespace-nowrap">
+                                    {JSON.parse(attr.name).en}
+                                </th>
+                            ))}
+                            <th className="px-4 py-3 font-medium text-zinc-500 w-32">{t('price')}</th>
+                            <th className="px-4 py-3 font-medium text-zinc-500 w-32">Tier Price</th>
+                            <th className="px-4 py-3 font-medium text-zinc-500 w-24">{t('stock')}</th>
+                            <th className="px-4 py-3 font-medium text-zinc-500 w-24">MOQ</th>
+                            <th className="px-4 py-3 font-medium text-zinc-500 w-40">{t('skuCode')}</th>
+                            <th className="px-4 py-3 font-medium text-zinc-500 w-10"></th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                        {skus.map((sku, idx) => (
+                            <tr key={idx} className="group hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                                {/* Dynamic Attribute Values */}
+                                {selectedAttributes.map(attr => {
+                                    // Find the value for this attribute in the SKU
+                                    // We need to look through sku.attributeValueIds
+                                    // But we only have IDs. We need to find the value object from availableAttributes or selectedAttributes
+                                    const valId = sku.attributeValueIds?.find((id: string) => 
+                                        attr.values.some((v: any) => v.id === id)
+                                    );
+                                    const val = attr.values.find((v: any) => v.id === valId);
+                                    
+                                    return (
+                                        <td key={attr.id} className="px-4 py-2">
+                                            {val ? (
+                                                <span className="inline-flex items-center px-2 py-1 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs">
+                                                    {JSON.parse(val.value).en}
+                                                </span>
+                                            ) : (
+                                                <span className="text-zinc-400 italic text-xs">-</span>
+                                            )}
+                                        </td>
+                                    );
+                                })}
+                                
+                                <td className="px-4 py-2">
+                                    <input 
+                                        type="number"
+                                        value={sku.price}
+                                        onChange={e => handleSkuChange(idx, 'price', e.target.value)}
+                                        className="w-full px-2 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                    />
+                                </td>
+                                <td className="px-4 py-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => openTierDialog(idx)}
+                                        className="w-full px-2 py-1.5 text-xs bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded text-left flex items-center justify-between hover:border-blue-500 transition-colors group/btn"
+                                    >
+                                        <span className="truncate max-w-[80px]">
+                                        {sku.tierPrices && sku.tierPrices !== '[]' && sku.tierPrices !== ''
+                                            ? 'Set'
+                                            : 'Configure'}
+                                        </span>
+                                        <Layers className="w-3 h-3 text-zinc-400 group-hover/btn:text-blue-500" />
+                                    </button>
+                                </td>
+                                <td className="px-4 py-2">
+                                    <input 
+                                        type="number"
+                                        value={sku.stock}
+                                        onChange={e => handleSkuChange(idx, 'stock', e.target.value)}
+                                        className="w-full px-2 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                    />
+                                </td>
+                                <td className="px-4 py-2">
+                                    <input 
+                                        type="number"
+                                        value={sku.moq}
+                                        onChange={e => handleSkuChange(idx, 'moq', e.target.value)}
+                                        className="w-full px-2 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                    />
+                                </td>
+                                <td className="px-4 py-2">
+                                    <input 
+                                        value={sku.skuCode}
+                                        onChange={e => handleSkuChange(idx, 'skuCode', e.target.value)}
+                                        className="w-full px-2 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-xs font-mono"
+                                    />
+                                </td>
+                                <td className="px-4 py-2 text-right">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveSku(idx)}
+                                        className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+                {skus.length === 0 && (
+                    <div className="p-8 text-center text-zinc-500 bg-zinc-50/50 dark:bg-zinc-800/20">
+                        No variants generated yet. Select attributes above to generate.
                     </div>
-                ))}
+                )}
             </div>
           </div>
         </div>
