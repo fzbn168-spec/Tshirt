@@ -51,6 +51,7 @@ export const SheetTrigger = ({ asChild, children }: { asChild?: boolean, childre
   if (child) {
     return React.cloneElement(child, {
       onClick: (e: React.MouseEvent) => {
+        // @ts-ignore
         child.props.onClick?.(e);
         context.setOpen(true);
       }
