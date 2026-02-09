@@ -36,12 +36,6 @@ export class OrdersController {
     );
   }
 
-  @Get('admin')
-  @Roles('PLATFORM_ADMIN')
-  findAllAdmin() {
-    return this.ordersService.findAllForAdmin();
-  }
-
   @Get()
   @Roles('MEMBER', 'ADMIN')
   findAll(@Req() req: RequestWithUser) {
@@ -52,21 +46,16 @@ export class OrdersController {
   }
 
   @Get(':id')
-  @Roles('MEMBER', 'ADMIN', 'PLATFORM_ADMIN')
+  @Roles('MEMBER', 'ADMIN')
   findOne(@Req() req: RequestWithUser, @Param('id') id: string) {
-    // If platform admin, pass undefined for companyId to bypass scope check
-    const companyId =
-      req.user.role === 'PLATFORM_ADMIN' ? undefined : req.user.companyId;
-
-    if (req.user.role !== 'PLATFORM_ADMIN' && !companyId) {
+    if (!req.user.companyId) {
       throw new Error('User does not belong to a company');
     }
-
-    return this.ordersService.findOne(id, companyId || undefined);
+    return this.ordersService.findOne(id, req.user.companyId);
   }
 
   @Get(':id/pi')
-  @Roles('MEMBER', 'ADMIN', 'PLATFORM_ADMIN')
+  @Roles('MEMBER', 'ADMIN')
   @ApiOperation({ summary: 'Download Proforma Invoice PDF' })
   async downloadPi(
     @Param('id') id: string,
@@ -82,11 +71,5 @@ export class OrdersController {
     });
     
     res.end(buffer);
-  }
-
-  @Post(':id/status')
-  @Roles('PLATFORM_ADMIN')
-  updateStatus(@Param('id') id: string, @Body('status') status: string) {
-    return this.ordersService.updateStatus(id, status);
   }
 }
