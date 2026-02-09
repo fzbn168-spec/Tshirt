@@ -10,9 +10,33 @@ type Product = {
 
 async function getProducts(): Promise<Product[]> {
   try {
-    const res = await fetch(`${API_URL}/products`);
-    if (!res.ok) return [];
-    return res.json();
+    // Timeout to prevent hanging during build
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    const res = await fetch(`${API_URL}/products?limit=1000`, { 
+        signal: controller.signal,
+        next: { revalidate: 3600 } 
+    }).catch(err => null); // Catch network errors
+    
+    clearTimeout(timeoutId);
+
+    if (!res || !res.ok) return [];
+    
+    const data = await res.json().catch(() => null); // Catch JSON parse errors
+    if (!data) return [];
+
+    let items: any[] = [];
+    if (Array.isArray(data)) {
+        items = data;
+    } else if (typeof data === 'object' && Array.isArray(data.items)) {
+        items = data.items;
+    }
+    
+    return items.map((item: any) => ({
+        id: String(item.id),
+        updatedAt: item.updatedAt || new Date().toISOString()
+    }));
   } catch (error) {
     console.error('Failed to fetch products for sitemap', error);
     return [];
