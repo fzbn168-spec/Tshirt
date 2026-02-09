@@ -35,4 +35,9 @@ docker compose -f docker-compose.prod.yml up -d backend
 echo -e "\n${GREEN}=== 后端重置完成 ===${NC}"
 echo "正在等待服务初始化 (15秒)..."
 sleep 15
+
+echo -e "\n${GREEN}[6/6] 重载 Nginx 配置...${NC}"
+docker compose -f docker-compose.prod.yml exec nginx nginx -s reload || docker compose -f docker-compose.prod.yml restart nginx
+
+echo -e "\n${GREEN}=== 全部就绪 ===${NC}"
 docker compose -f docker-compose.prod.yml logs --tail 20 backend
