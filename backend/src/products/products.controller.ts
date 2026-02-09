@@ -61,19 +61,24 @@ export class ProductsController {
       }
     }
 
-    const pageNum = page ? Math.max(1, parseInt(page)) : 1;
-    const limitNum = limit ? Math.max(1, parseInt(limit)) : 50; // Default 50 items per page
+    const pageNum = page ? Math.max(1, parseInt(page) || 1) : 1;
+    const limitNum = limit ? Math.max(1, parseInt(limit) || 50) : 50;
     const skip = (pageNum - 1) * limitNum;
 
-    return this.productsService.findAll({ 
-      search, 
-      categoryId, 
-      minPrice: minPrice ? Number(minPrice) : undefined, 
-      maxPrice: maxPrice ? Number(maxPrice) : undefined,
-      attributes,
-      skip,
-      take: limitNum
-    });
+    try {
+      return await this.productsService.findAll({ 
+        search, 
+        categoryId, 
+        minPrice: minPrice ? Number(minPrice) : undefined, 
+        maxPrice: maxPrice ? Number(maxPrice) : undefined,
+        attributes,
+        skip,
+        take: limitNum
+      });
+    } catch (error) {
+      console.error('FindAll Products Error:', error);
+      throw error;
+    }
   }
 
   @Get(':id')

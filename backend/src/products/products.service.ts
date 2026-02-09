@@ -183,32 +183,30 @@ export class ProductsService {
       };
     }
 
-    const [total, items] = await Promise.all([
-      this.prisma.product.count({ where }),
-      this.prisma.product.findMany({
-        where,
-        include: {
-          skus: {
-            include: {
-              attributeValues: {
-                include: { attributeValue: true },
-              },
+    const total = await this.prisma.product.count({ where });
+    const items = await this.prisma.product.findMany({
+      where,
+      include: {
+        skus: {
+          include: {
+            attributeValues: {
+              include: { attributeValue: true },
             },
           },
-          attributes: {
-            include: {
-              attribute: {
-                include: { values: true }
-              }
-            },
-          },
-          category: true,
         },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take,
-      })
-    ]);
+        attributes: {
+          include: {
+            attribute: {
+              include: { values: true }
+            }
+          },
+        },
+        category: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take,
+    });
 
     return { total, items };
   }
