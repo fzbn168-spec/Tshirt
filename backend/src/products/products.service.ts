@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import PDFDocument from 'pdfkit';
 import { TranslationService } from '../translation/translation.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ProductsService {
@@ -80,48 +81,57 @@ export class ProductsService {
       } catch (e) {}
     }
 
-    return this.prisma.product.create({
-      data: {
-        ...productData,
-        attributes: attributeIds
-          ? {
-              create: attributeIds.map((id) => ({ attributeId: id })),
-            }
-          : undefined,
-        skus: {
-          create: skus.map((sku) => {
-            const { attributeValueIds, ...skuData } = sku;
-            return {
-              ...skuData,
-              attributeValues: attributeValueIds
-                ? {
-                    create: attributeValueIds.map((id) => ({
-                      attributeValueId: id,
-                    })),
-                  }
-                : undefined,
-            };
-          }),
+    try {
+      return await this.prisma.product.create({
+        data: {
+          ...productData,
+          attributes: attributeIds
+            ? {
+                create: attributeIds.map((id) => ({ attributeId: id })),
+              }
+            : undefined,
+          skus: {
+            create: skus.map((sku) => {
+              const { attributeValueIds, ...skuData } = sku;
+              return {
+                ...skuData,
+                attributeValues: attributeValueIds
+                  ? {
+                      create: attributeValueIds.map((id) => ({
+                        attributeValueId: id,
+                      })),
+                    }
+                  : undefined,
+              };
+            }),
+          },
         },
-      },
-      include: {
-        skus: {
-          include: {
-            attributeValues: {
-              include: { attributeValue: true },
+        include: {
+          skus: {
+            include: {
+              attributeValues: {
+                include: { attributeValue: true },
+              },
             },
           },
-        },
-        attributes: {
-          include: {
-            attribute: {
-              include: { values: true }
-            }
+          attributes: {
+            include: {
+              attribute: {
+                include: { values: true }
+              }
+            },
           },
+          category: true,
         },
-        category: true,
-      },
-    });
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ConflictException('SKU Code already exists');
+        }
+      }
+      throw error;
+    }
   }
 
   async findAll(params?: {
@@ -247,26 +257,35 @@ export class ProductsService {
 
     // Handle SKU updates if provided (Replace strategy)
     if (skus) {
-      await this.prisma.$transaction(async (tx) => {
-        await tx.sku.deleteMany({ where: { productId: id } });
-        
-        for (const sku of skus) {
-          const { attributeValueIds, ...skuData } = sku;
-          await tx.sku.create({
-            data: {
-              ...skuData,
-              productId: id,
-              attributeValues: attributeValueIds
-                ? {
-                    create: attributeValueIds.map((aid) => ({
-                      attributeValueId: aid,
-                    })),
-                  }
-                : undefined,
-            },
-          });
+      try {
+        await this.prisma.$transaction(async (tx) => {
+          await tx.sku.deleteMany({ where: { productId: id } });
+          
+          for (const sku of skus) {
+            const { attributeValueIds, ...skuData } = sku;
+            await tx.sku.create({
+              data: {
+                ...skuData,
+                productId: id,
+                attributeValues: attributeValueIds
+                  ? {
+                      create: attributeValueIds.map((aid) => ({
+                        attributeValueId: aid,
+                      })),
+                    }
+                  : undefined,
+              },
+            });
+          }
+        });
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          if (error.code === 'P2002') {
+            throw new ConflictException('SKU Code already exists');
+          }
         }
-      });
+        throw error;
+      }
     }
 
     return this.findOne(id);

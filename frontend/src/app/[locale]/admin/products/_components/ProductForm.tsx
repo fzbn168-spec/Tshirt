@@ -269,10 +269,10 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
         skus: skus.map(s => ({
           skuCode: s.skuCode,
           specs: s.specs || JSON.stringify({}),
-          price: parseFloat(s.price),
+          price: parseFloat(s.price) || 0,
           tierPrices: s.tierPrices, // Pass through
-          stock: parseInt(s.stock),
-          moq: parseInt(s.moq),
+          stock: parseInt(s.stock) || 0,
+          moq: parseInt(s.moq) || 1,
           attributeValueIds: s.attributeValueIds
         }))
       };
