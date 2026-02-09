@@ -159,7 +159,6 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
       setSelectedAttributes([...selectedAttributes, attr]);
       setSelectedValues(prev => ({ ...prev, [attrId]: [] }));
     }
-    e.target.value = ''; // Reset select
   };
 
   const removeAttribute = (attrId: string) => {
@@ -456,13 +455,16 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
             <div className="border-b border-zinc-200 dark:border-zinc-800 pb-6 mb-6">
               <div className="flex gap-4 mb-4">
                 <select 
-                  className="px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md"
+                  className="px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md disabled:opacity-50"
                   onChange={handleAttributeSelect}
-                  defaultValue=""
+                  value=""
+                  disabled={availableAttributes.length === 0}
                 >
-                  <option value="" disabled>Select Attribute to Add...</option>
+                  <option value="" disabled>
+                    {availableAttributes.length === 0 ? "Loading attributes..." : "Select Attribute to Add..."}
+                  </option>
                   {availableAttributes.map(attr => (
-                    <option key={attr.id} value={attr.id}>
+                    <option key={attr.id} value={attr.id} disabled={!!selectedAttributes.find(sa => sa.id === attr.id)}>
                       {JSON.parse(attr.name).en} ({attr.code})
                     </option>
                   ))}
