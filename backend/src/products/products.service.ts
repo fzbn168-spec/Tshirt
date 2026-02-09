@@ -228,7 +228,7 @@ export class ProductsService {
   }
 
   async update(id: string, updateProductDto: UpdateProductDto) {
-    const { skus, ...productData } = updateProductDto;
+    const { skus, attributeIds, ...productData } = updateProductDto;
 
     // Auto Translate Title & Description
     if (productData.title) {
@@ -247,13 +247,39 @@ export class ProductsService {
       } catch (e) {}
     }
 
-    // Update product fields if any
-    if (Object.keys(productData).length > 0) {
-      await this.prisma.product.update({
-        where: { id },
-        data: productData,
-      });
+    // Update product fields and attributes
+    try {
+      if (Object.keys(productData).length > 0 || attributeIds) {
+        await this.prisma.$transaction(async (tx) => {
+           // 1. Update basic fields
+           if (Object.keys(productData).length > 0) {
+              await tx.product.update({
+                where: { id },
+                data: productData,
+              });
+           }
+           
+           // 2. Update Attributes Relation if provided
+           if (attributeIds) {
+             // Delete old relations
+             await tx.productAttribute.deleteMany({ where: { productId: id } });
+             // Create new relations
+             if (attributeIds.length > 0) {
+               await tx.productAttribute.createMany({
+                 data: attributeIds.map(aid => ({
+                   productId: id,
+                   attributeId: aid
+                 }))
+               });
+             }
+           }
+        });
+      }
+    } catch (error) {
+       console.error("Update Product Error:", error);
+       throw error;
     }
+
 
     // Handle SKU updates if provided (Replace strategy)
     if (skus) {
