@@ -61,16 +61,21 @@ export class ProductsController {
       }
     }
 
-    const pageNum = page ? Math.max(1, parseInt(page) || 1) : 1;
-    const limitNum = limit ? Math.max(1, parseInt(limit) || 50) : 50;
+    // Safety check for pagination params
+    const pageInt = parseInt(page ?? '');
+    const limitInt = parseInt(limit ?? '');
+    const pageNum = isNaN(pageInt) || pageInt < 1 ? 1 : pageInt;
+    const limitNum = isNaN(limitInt) || limitInt < 1 ? 50 : limitInt;
     const skip = (pageNum - 1) * limitNum;
+
+    console.log(`[Products] findAll request: page=${pageNum}, limit=${limitNum}, skip=${skip}`);
 
     try {
       return await this.productsService.findAll({ 
         search, 
         categoryId, 
-        minPrice: minPrice ? Number(minPrice) : undefined, 
-        maxPrice: maxPrice ? Number(maxPrice) : undefined,
+        minPrice: minPrice && !isNaN(Number(minPrice)) ? Number(minPrice) : undefined, 
+        maxPrice: maxPrice && !isNaN(Number(maxPrice)) ? Number(maxPrice) : undefined,
         attributes,
         skip,
         take: limitNum
