@@ -43,7 +43,8 @@ export default function OrdersPage() {
 
     const fetchOrders = async () => {
       try {
-        const res = await fetch('http://localhost:3001/orders', {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const res = await fetch(`${API_URL}/orders`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -75,7 +76,8 @@ export default function OrdersPage() {
     if (!selectedOrder) return;
 
     try {
-        const res = await fetch('http://localhost:3001/payments', {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const res = await fetch(`${API_URL}/payments`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -95,7 +97,7 @@ export default function OrdersPage() {
             alert('Payment Submitted Successfully!');
             
             // Refetch to be sure
-            const fetchRes = await fetch('http://localhost:3001/orders', {
+            const fetchRes = await fetch(`${API_URL}/orders`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (fetchRes.ok) {

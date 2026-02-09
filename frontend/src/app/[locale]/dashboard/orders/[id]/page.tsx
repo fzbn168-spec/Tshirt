@@ -51,7 +51,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
     const fetchOrder = async () => {
       try {
-        const res = await fetch(`http://localhost:3001/orders/${id}`, {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const res = await fetch(`${API_URL}/orders/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -97,7 +98,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const handleDownloadPi = async () => {
     if (!order) return;
     try {
-      const res = await fetch(`http://localhost:3001/orders/${id}/pi`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/orders/${id}/pi`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

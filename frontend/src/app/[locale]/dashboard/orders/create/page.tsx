@@ -35,7 +35,8 @@ export default function CreateOrderPage() {
 
   const fetchInquiryDetails = async () => {
     try {
-      const res = await fetch(`http://localhost:3001/inquiries/${inquiryId}`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/inquiries/${inquiryId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to load inquiry details');
@@ -76,7 +77,8 @@ export default function CreateOrderPage() {
         items: items
       };
 
-      const res = await fetch('http://localhost:3001/orders', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

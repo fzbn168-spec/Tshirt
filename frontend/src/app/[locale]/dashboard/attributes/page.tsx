@@ -35,7 +35,8 @@ export default function AttributesPage() {
 
   const fetchAttributes = async () => {
     try {
-      const res = await fetch('http://localhost:3001/attributes', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/attributes`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -56,7 +57,8 @@ export default function AttributesPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure? This will delete all associated values.')) return;
     try {
-      const res = await fetch(`http://localhost:3001/attributes/${id}`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/attributes/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -77,9 +79,10 @@ export default function AttributesPage() {
     };
 
     try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       const url = editingAttribute
-        ? `http://localhost:3001/attributes/${editingAttribute.id}`
-        : 'http://localhost:3001/attributes';
+        ? `${API_URL}/attributes/${editingAttribute.id}`
+        : `${API_URL}/attributes`;
       
       const method = editingAttribute ? 'PATCH' : 'POST';
 
@@ -230,7 +233,8 @@ function AttributeCard({ attribute, onDelete, onEdit, refresh, token }: any) {
   const handleAddValue = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch(`http://localhost:3001/attributes/${attribute.id}/values`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/attributes/${attribute.id}/values`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -255,7 +259,8 @@ function AttributeCard({ attribute, onDelete, onEdit, refresh, token }: any) {
   const handleDeleteValue = async (valueId: string) => {
     if (!confirm('Delete this value?')) return;
     try {
-      const res = await fetch(`http://localhost:3001/attributes/values/${valueId}`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/attributes/values/${valueId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
