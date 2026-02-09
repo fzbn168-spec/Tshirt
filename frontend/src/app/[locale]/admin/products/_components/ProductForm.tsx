@@ -208,8 +208,10 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
         valueIds.push(v.id);
       });
 
-      // Simple SKU Code Gen
-      const skuCode = `${codes.join('-')}-${Math.floor(Math.random() * 1000)}`;
+      // Enhanced SKU Code Gen: {TitleInitials}-{AttrCodes}-{Random}
+      const titleInitials = (titleEn || 'PRD').split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 4).replace(/[^A-Z]/g, '') || 'PRD';
+      const randomSuffix = Math.floor(1000 + Math.random() * 9000); // 4 digit random
+      const skuCode = `${titleInitials}-${codes.join('-')}-${randomSuffix}`;
 
       return {
         skuCode,
@@ -276,7 +278,7 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
         title: JSON.stringify({ en: titleEn, zh: titleZh }),
         description: JSON.stringify({ en: descEn, zh: descZh }),
         images: JSON.stringify(images.split('\n').filter(url => url.trim() !== '')),
-        basePrice: parseFloat(basePrice),
+        basePrice: parseFloat(basePrice) || 0,
         specsTemplate: JSON.stringify({}), 
         isPublished,
         attributeIds: selectedAttributes.map(a => a.id),
@@ -315,7 +317,11 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
       router.push('/admin/products');
       router.refresh();
     } catch (err: any) {
-      alert(err.message);
+      if (err.message && (err.message.includes('Internal server error') || err.message.includes('500'))) {
+        alert("Server Error: Please check if SKU Codes are unique across all products, and Price/Stock values are valid numbers.");
+      } else {
+        alert(err.message);
+      }
     } finally {
       setIsSubmitting(false);
     }
