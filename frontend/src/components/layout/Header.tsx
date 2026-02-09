@@ -9,6 +9,8 @@ import { useTranslations } from 'next-intl';
 import LanguageSwitcher from './LanguageSwitcher';
 import { CurrencySwitcher } from './CurrencySwitcher';
 import { useNotifications } from '@/hooks/useNotifications';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
 
 export function Header() {
   const t = useTranslations('Common');
@@ -18,6 +20,7 @@ export function Header() {
   const { user, isAuthenticated } = useAuthStore();
   const [mounted, setMounted] = useState(false);
   const { unreadCount } = useNotifications();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Prevent hydration mismatch for persisted store
   useEffect(() => {
@@ -27,7 +30,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white dark:bg-zinc-950 dark:border-zinc-800">
       {/* Top Bar - B2B Info */}
-      <div className="bg-zinc-900 text-white text-xs py-2 px-4">
+      <div className="bg-zinc-900 text-white text-xs py-2 px-4 hidden md:block">
         <div className="container mx-auto flex justify-between items-center">
           <p>{tHome('heroTitle')}</p>
           <div className="flex items-center gap-4">
@@ -46,10 +49,50 @@ export function Header() {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <button className="lg:hidden p-2">
-            <Menu className="h-6 w-6" />
-          </button>
-          <Link href="/" className="text-2xl font-bold tracking-tight">
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="lg:hidden">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+              <div className="flex flex-col gap-6 mt-6">
+                <Link href="/" className="text-2xl font-bold tracking-tight mb-4" onClick={() => setIsMobileMenuOpen(false)}>
+                  SOLE<span className="text-blue-600">TRADE</span>
+                </Link>
+                <nav className="flex flex-col gap-4 text-lg font-medium">
+                  <Link href="/products?search=Men" onClick={() => setIsMobileMenuOpen(false)}>{tNav('men')}</Link>
+                  <Link href="/products?search=Women" onClick={() => setIsMobileMenuOpen(false)}>{tNav('women')}</Link>
+                  <Link href="/products?search=Kids" onClick={() => setIsMobileMenuOpen(false)}>{tNav('kids')}</Link>
+                  <Link href="/products?search=Apparel" onClick={() => setIsMobileMenuOpen(false)}>{tNav('apparel')}</Link>
+                  <Link href="/products?sort=newest" className="text-blue-600" onClick={() => setIsMobileMenuOpen(false)}>{tNav('newArrivals')}</Link>
+                </nav>
+                <div className="border-t pt-6 flex flex-col gap-4">
+                  {isAuthenticated() && mounted ? (
+                    <>
+                      <Link href="/dashboard" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
+                        <LayoutDashboard className="h-5 w-5" />
+                        {t('dashboard')}
+                      </Link>
+                      {(user?.role === 'ADMIN' || user?.role === 'PLATFORM_ADMIN') && (
+                        <Link href="/admin" className="flex items-center gap-2 text-red-500 font-medium" onClick={() => setIsMobileMenuOpen(false)}>
+                            <LayoutDashboard className="h-5 w-5" />
+                            {t('adminPortal')}
+                        </Link>
+                      )}
+                    </>
+                  ) : (
+                    <Link href="/login" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
+                      <User className="h-5 w-5" />
+                      {t('signIn')}
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+          
+          <Link href="/" className="text-xl md:text-2xl font-bold tracking-tight">
             SOLE<span className="text-blue-600">TRADE</span>
           </Link>
         </div>

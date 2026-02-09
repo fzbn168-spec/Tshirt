@@ -3,16 +3,35 @@ import { useTranslations } from 'next-intl';
 import { ProductFilters } from './_components/ProductFilters';
 import { ProductGrid } from './_components/ProductGrid';
 import { Suspense } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, SlidersHorizontal } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 export default function ProductsPage() {
   const t = useTranslations('Home'); // Reusing Home translations for now or create generic ones
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Mobile Filter Button */}
+      <div className="md:hidden mb-6">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" className="w-full flex items-center justify-center gap-2">
+              <SlidersHorizontal className="w-4 h-4" />
+              Show Filters
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[85vw] sm:w-[380px] overflow-y-auto p-6">
+            <div className="mt-6">
+              <ProductFilters />
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+
       <div className="flex flex-col md:flex-row gap-8">
-        {/* Sidebar Filters - Sticky on Desktop */}
-        <aside className="w-full md:w-64 flex-shrink-0">
+        {/* Sidebar Filters - Desktop */}
+        <aside className="hidden md:block w-64 flex-shrink-0">
           <div className="sticky top-24">
              <Suspense fallback={<div className="h-64 animate-pulse bg-zinc-100 rounded"></div>}>
                <ProductFilters />

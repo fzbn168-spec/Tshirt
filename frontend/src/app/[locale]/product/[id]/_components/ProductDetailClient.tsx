@@ -63,7 +63,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
         {/* Right Column: Info & Selector */}
         <div className="flex flex-col h-full">
-          <div className="sticky top-24">
+          <div className="lg:sticky lg:top-24">
             <ProductInfo 
               title={title}
               skuCode={product.skus[0]?.skuCode || ''}
