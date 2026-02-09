@@ -304,11 +304,10 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
               <div className="space-y-2">
                 <label className="text-sm font-medium">{t('titleEn')}</label>
                 <input 
-                  required
                   value={titleEn}
                   onChange={e => setTitleEn(e.target.value)}
                   className="w-full px-3 py-2 bg-transparent border border-zinc-200 dark:border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-900"
-                  placeholder="e.g. Hiking Boots"
+                  placeholder="e.g. Hiking Boots (Auto-translate)"
                 />
               </div>
               <div className="space-y-2">
@@ -317,7 +316,7 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
                   value={titleZh}
                   onChange={e => setTitleZh(e.target.value)}
                   className="w-full px-3 py-2 bg-transparent border border-zinc-200 dark:border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-900"
-                  placeholder="e.g. 登山靴"
+                  placeholder="例如 登山靴 (自动翻译)"
                 />
               </div>
             </div>
@@ -329,6 +328,7 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
                 value={descEn}
                 onChange={e => setDescEn(e.target.value)}
                 className="w-full px-3 py-2 bg-transparent border border-zinc-200 dark:border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                placeholder="Auto-translated if empty"
               />
             </div>
             
@@ -339,6 +339,7 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
                 value={descZh}
                 onChange={e => setDescZh(e.target.value)}
                 className="w-full px-3 py-2 bg-transparent border border-zinc-200 dark:border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                placeholder="如果留空将自动翻译"
               />
             </div>
 

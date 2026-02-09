@@ -163,19 +163,19 @@ export default function AttributesPage() {
                 <div>
                   <label className="mb-1 block text-sm font-medium">Name (EN)</label>
                   <input
-                    required
                     value={formData.nameEn}
                     onChange={(e) => setFormData({ ...formData, nameEn: e.target.value })}
                     className="w-full rounded-md border p-2 text-sm dark:bg-zinc-800"
+                    placeholder="Auto-translated if empty"
                   />
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-medium">Name (ZH)</label>
                   <input
-                    required
                     value={formData.nameZh}
                     onChange={(e) => setFormData({ ...formData, nameZh: e.target.value })}
                     className="w-full rounded-md border p-2 text-sm dark:bg-zinc-800"
+                    placeholder="如果留空将自动翻译"
                   />
                 </div>
               </div>
@@ -330,21 +330,19 @@ function AttributeCard({ attribute, onDelete, onEdit, refresh, token }: any) {
                 <div>
                   <label className="text-xs">Value (EN)</label>
                   <input
-                    required
                     value={newValue.en}
                     onChange={(e) => setNewValue({ ...newValue, en: e.target.value })}
                     className="w-full rounded border px-2 py-1 text-sm"
-                    placeholder="Red"
+                    placeholder="Auto-translate"
                   />
                 </div>
                 <div>
                   <label className="text-xs">Value (ZH)</label>
                   <input
-                    required
                     value={newValue.zh}
                     onChange={(e) => setNewValue({ ...newValue, zh: e.target.value })}
                     className="w-full rounded border px-2 py-1 text-sm"
-                    placeholder="红色"
+                    placeholder="自动翻译"
                   />
                 </div>
                 {attribute.type === 'color' && (

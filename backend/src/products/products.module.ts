@@ -4,8 +4,10 @@ import { ProductsService } from './products.service';
 import { CategoriesController } from './categories.controller';
 import { CategoriesService } from './categories.service';
 import { PrismaService } from '../prisma.service';
+import { TranslationModule } from '../translation/translation.module';
 
 @Module({
+  imports: [TranslationModule],
   controllers: [CategoriesController, ProductsController],
   providers: [ProductsService, CategoriesService, PrismaService],
 })

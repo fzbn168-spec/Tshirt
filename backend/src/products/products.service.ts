@@ -3,10 +3,14 @@ import { PrismaService } from '../prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import PDFDocument from 'pdfkit';
+import { TranslationService } from '../translation/translation.service';
 
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private translationService: TranslationService,
+  ) {}
 
   async generateCatalogPdf(): Promise<Buffer> {
     const products = await this.prisma.product.findMany({
@@ -58,6 +62,23 @@ export class ProductsService {
 
   async create(createProductDto: CreateProductDto) {
     const { skus, attributeIds, ...productData } = createProductDto;
+
+    // Auto Translate Title & Description
+    if (productData.title) {
+      try {
+        const titleObj = JSON.parse(productData.title);
+        const translated = await this.translationService.autoFill(titleObj);
+        productData.title = JSON.stringify(translated);
+      } catch (e) {}
+    }
+
+    if (productData.description) {
+      try {
+        const descObj = JSON.parse(productData.description);
+        const translated = await this.translationService.autoFill(descObj);
+        productData.description = JSON.stringify(translated);
+      } catch (e) {}
+    }
 
     return this.prisma.product.create({
       data: {
@@ -198,6 +219,23 @@ export class ProductsService {
 
   async update(id: string, updateProductDto: UpdateProductDto) {
     const { skus, ...productData } = updateProductDto;
+
+    // Auto Translate Title & Description
+    if (productData.title) {
+      try {
+        const titleObj = JSON.parse(productData.title);
+        const translated = await this.translationService.autoFill(titleObj);
+        productData.title = JSON.stringify(translated);
+      } catch (e) {}
+    }
+
+    if (productData.description) {
+      try {
+        const descObj = JSON.parse(productData.description);
+        const translated = await this.translationService.autoFill(descObj);
+        productData.description = JSON.stringify(translated);
+      } catch (e) {}
+    }
 
     // Update product fields if any
     if (Object.keys(productData).length > 0) {
