@@ -1,4 +1,8 @@
-import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -33,28 +37,37 @@ export class ProductsService {
 
       // Title
       doc.fontSize(24).text('Product Catalog', { align: 'center' });
-      doc.fontSize(10).text(`Generated on ${new Date().toLocaleDateString()}`, { align: 'center' });
+      doc.fontSize(10).text(`Generated on ${new Date().toLocaleDateString()}`, {
+        align: 'center',
+      });
       doc.moveDown(2);
 
       // List
       products.forEach((product, index) => {
-         // Avoid page break inside item if possible, or just let it flow
-         if (doc.y > 700) doc.addPage();
+        // Avoid page break inside item if possible, or just let it flow
+        if (doc.y > 700) doc.addPage();
 
-         const title = JSON.parse(product.title).en || 'Product';
-         doc.fontSize(14).font('Helvetica-Bold').text(title);
-         doc.fontSize(10).font('Helvetica').text(`Category: ${product.category?.name ? (JSON.parse(product.category.name).en || '-') : '-'}`);
-         doc.text(`Price: From $${Number(product.basePrice).toFixed(2)}`);
-         doc.text(`MOQ: ${product.skus[0]?.moq || 1}`);
-         doc.moveDown(0.5);
-         
-         const desc = JSON.parse(product.description).en || '';
-         doc.fontSize(9).text(desc.substring(0, 200) + (desc.length > 200 ? '...' : ''), {
-             width: 500,
-             align: 'justify'
-         });
-         
-         doc.moveDown(1.5);
+        const title = JSON.parse(product.title).en || 'Product';
+        doc.fontSize(14).font('Helvetica-Bold').text(title);
+        doc
+          .fontSize(10)
+          .font('Helvetica')
+          .text(
+            `Category: ${product.category?.name ? JSON.parse(product.category.name).en || '-' : '-'}`,
+          );
+        doc.text(`Price: From $${Number(product.basePrice).toFixed(2)}`);
+        doc.text(`MOQ: ${product.skus[0]?.moq || 1}`);
+        doc.moveDown(0.5);
+
+        const desc = JSON.parse(product.description).en || '';
+        doc
+          .fontSize(9)
+          .text(desc.substring(0, 200) + (desc.length > 200 ? '...' : ''), {
+            width: 500,
+            align: 'justify',
+          });
+
+        doc.moveDown(1.5);
       });
 
       doc.end();
@@ -117,8 +130,8 @@ export class ProductsService {
           attributes: {
             include: {
               attribute: {
-                include: { values: true }
-              }
+                include: { values: true },
+              },
             },
           },
           category: true,
@@ -143,8 +156,9 @@ export class ProductsService {
     skip?: number;
     take?: number;
   }) {
-    const { search, categoryId, minPrice, maxPrice, attributes, skip, take } = params || {};
-    
+    const { search, categoryId, minPrice, maxPrice, attributes, skip, take } =
+      params || {};
+
     const where: any = {};
 
     if (search) {
@@ -167,19 +181,21 @@ export class ProductsService {
 
     // Attribute Filtering
     if (attributes && Object.keys(attributes).length > 0) {
-      const attributeConditions = Object.entries(attributes).map(([attrId, valueIds]) => ({
-        attributeValues: {
-          some: {
-            attributeValueId: { in: valueIds }
-          }
-        }
-      }));
+      const attributeConditions = Object.entries(attributes).map(
+        ([attrId, valueIds]) => ({
+          attributeValues: {
+            some: {
+              attributeValueId: { in: valueIds },
+            },
+          },
+        }),
+      );
 
       // Ensure at least one SKU matches ALL attribute conditions
       where.skus = {
         some: {
-          AND: attributeConditions
-        }
+          AND: attributeConditions,
+        },
       };
     }
 
@@ -197,8 +213,8 @@ export class ProductsService {
         attributes: {
           include: {
             attribute: {
-              include: { values: true }
-            }
+              include: { values: true },
+            },
           },
         },
         category: true,
@@ -225,8 +241,8 @@ export class ProductsService {
         attributes: {
           include: {
             attribute: {
-              include: { values: true }
-            }
+              include: { values: true },
+            },
           },
         },
         category: true,
@@ -258,42 +274,41 @@ export class ProductsService {
     try {
       if (Object.keys(productData).length > 0 || attributeIds) {
         await this.prisma.$transaction(async (tx) => {
-           // 1. Update basic fields
-           if (Object.keys(productData).length > 0) {
-              await tx.product.update({
-                where: { id },
-                data: productData,
+          // 1. Update basic fields
+          if (Object.keys(productData).length > 0) {
+            await tx.product.update({
+              where: { id },
+              data: productData,
+            });
+          }
+
+          // 2. Update Attributes Relation if provided
+          if (attributeIds) {
+            // Delete old relations
+            await tx.productAttribute.deleteMany({ where: { productId: id } });
+            // Create new relations
+            if (attributeIds.length > 0) {
+              await tx.productAttribute.createMany({
+                data: attributeIds.map((aid) => ({
+                  productId: id,
+                  attributeId: aid,
+                })),
               });
-           }
-           
-           // 2. Update Attributes Relation if provided
-           if (attributeIds) {
-             // Delete old relations
-             await tx.productAttribute.deleteMany({ where: { productId: id } });
-             // Create new relations
-             if (attributeIds.length > 0) {
-               await tx.productAttribute.createMany({
-                 data: attributeIds.map(aid => ({
-                   productId: id,
-                   attributeId: aid
-                 }))
-               });
-             }
-           }
+            }
+          }
         });
       }
     } catch (error) {
-       console.error("Update Product Error:", error);
-       throw error;
+      console.error('Update Product Error:', error);
+      throw error;
     }
-
 
     // Handle SKU updates if provided (Replace strategy)
     if (skus) {
       try {
         await this.prisma.$transaction(async (tx) => {
           await tx.sku.deleteMany({ where: { productId: id } });
-          
+
           for (const sku of skus) {
             const { attributeValueIds, ...skuData } = sku;
             await tx.sku.create({

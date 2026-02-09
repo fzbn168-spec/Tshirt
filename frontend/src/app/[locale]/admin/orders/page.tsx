@@ -21,15 +21,25 @@ export default function AdminOrdersPage() {
   const t = useTranslations('Admin');
 
   useEffect(() => {
-    fetch('http://localhost:3001/orders', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.json())
-      .then(data => {
-         // Assuming PLATFORM_ADMIN sees all orders
-         setOrders(Array.isArray(data) ? data : data.data || []);
-      })
-      .catch(console.error);
+    const fetchOrders = async () => {
+      try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        // Use the new Admin-specific endpoint
+        const res = await fetch(`${API_URL}/platform/orders`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setOrders(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch orders', error);
+      }
+    };
+
+    fetchOrders();
   }, [token]);
 
   return (

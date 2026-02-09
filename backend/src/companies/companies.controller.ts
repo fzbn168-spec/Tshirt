@@ -23,7 +23,7 @@ export class CompaniesController {
   @Roles('ADMIN')
   updateProfile(@Req() req: RequestWithUser, @Body() data: any) {
     if (!req.user.companyId) {
-        throw new Error('User does not belong to a company');
+      throw new Error('User does not belong to a company');
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.companiesService.update(req.user.companyId, data);

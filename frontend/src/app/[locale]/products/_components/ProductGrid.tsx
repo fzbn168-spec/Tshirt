@@ -28,7 +28,7 @@ export function ProductGrid() {
   // Construct query string
   const queryString = searchParams.toString();
 
-  const { data: products, isLoading, error } = useQuery<Product[]>({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['products', queryString],
     queryFn: async () => {
       const res = await fetch(`${API_URL}/products?${queryString}`);
@@ -36,6 +36,8 @@ export function ProductGrid() {
       return res.json();
     }
   });
+
+  const products = data ? (Array.isArray(data) ? data : (data.items || [])) : [];
 
   // Client-side auth check
   const isAuthenticated = useAuthStore(state => state.isAuthenticated);

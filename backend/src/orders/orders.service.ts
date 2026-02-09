@@ -13,89 +13,100 @@ export class OrdersService {
   ) {}
 
   async generatePi(id: string, user: any): Promise<Buffer> {
-    const companyId = user.role === 'PLATFORM_ADMIN' ? undefined : user.companyId;
+    const companyId =
+      user.role === 'PLATFORM_ADMIN' ? undefined : user.companyId;
     const order = await this.findOne(id, companyId);
-    
+
     return new Promise((resolve, reject) => {
-       const doc = new PDFDocument({ margin: 50, size: 'A4' });
-       const buffers: Buffer[] = [];
-       
-       doc.on('data', buffers.push.bind(buffers));
-       doc.on('end', () => resolve(Buffer.concat(buffers)));
-       doc.on('error', reject);
-       
-       // Header
-       doc.fontSize(20).text('Proforma Invoice', { align: 'center' });
-       doc.moveDown();
-       
-       // Info Section
-       doc.fontSize(10);
-       doc.text(`Order No: ${order.orderNo}`, { align: 'right' });
-       doc.text(`Date: ${order.createdAt.toISOString().split('T')[0]}`, { align: 'right' });
-       doc.text(`Status: ${order.status}`, { align: 'right' });
-       doc.moveDown();
+      const doc = new PDFDocument({ margin: 50, size: 'A4' });
+      const buffers: Buffer[] = [];
 
-       // Buyer Info
-       doc.font('Helvetica-Bold').text('Buyer:', 50, doc.y);
-       doc.font('Helvetica').text(order.company.name, 100, doc.y - 12);
-       if (order.company.address) doc.text(order.company.address, 100);
-       if (order.company.contactEmail) doc.text(order.company.contactEmail, 100);
-       
-       doc.moveDown(2);
-       
-       // Table Header
-       const startY = doc.y;
-       const colX = { product: 50, sku: 200, qty: 350, price: 400, total: 480 };
-       
-       doc.font('Helvetica-Bold');
-       doc.text('Product', colX.product, startY);
-       doc.text('SKU / Specs', colX.sku, startY);
-       doc.text('Qty', colX.qty, startY);
-       doc.text('Unit Price', colX.price, startY);
-       doc.text('Total', colX.total, startY);
-       
-       doc.moveTo(50, startY + 15).lineTo(550, startY + 15).stroke();
-       
-       let y = startY + 25;
-       doc.font('Helvetica');
-       
-       order.items.forEach(item => {
-           // Handle page break
-           if (y > 700) {
-               doc.addPage();
-               y = 50;
-           }
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
+      doc.on('error', reject);
 
-           const productName = item.productName;
-           const specs = item.skuSpecs || '-';
-           
-           doc.text(productName.substring(0, 30), colX.product, y);
-           doc.text(specs.substring(0, 30), colX.sku, y);
-           doc.text(item.quantity.toString(), colX.qty, y);
-           doc.text(`$${Number(item.unitPrice).toFixed(2)}`, colX.price, y);
-           doc.text(`$${Number(item.totalPrice).toFixed(2)}`, colX.total, y);
-           
-           y += 20;
-       });
-       
-       doc.moveDown(2);
-       doc.moveTo(50, y).lineTo(550, y).stroke();
-       y += 10;
-       
-       // Totals
-       doc.font('Helvetica-Bold');
-       doc.text(`Total Amount: $${Number(order.totalAmount).toFixed(2)}`, 350, y, { align: 'right', width: 200 });
-       
-       // Payment Terms (Bank Info - Mock)
-       doc.moveDown(4);
-       doc.text('Payment Terms:', 50);
-       doc.font('Helvetica').fontSize(9);
-       doc.text('Bank: Bank of America');
-       doc.text('Account Name: SoleTrade Inc.');
-       doc.text('Account No: 1234567890');
-       doc.text('Swift Code: BOFAUS3N');
-       
-       doc.end();
+      // Header
+      doc.fontSize(20).text('Proforma Invoice', { align: 'center' });
+      doc.moveDown();
+
+      // Info Section
+      doc.fontSize(10);
+      doc.text(`Order No: ${order.orderNo}`, { align: 'right' });
+      doc.text(`Date: ${order.createdAt.toISOString().split('T')[0]}`, {
+        align: 'right',
+      });
+      doc.text(`Status: ${order.status}`, { align: 'right' });
+      doc.moveDown();
+
+      // Buyer Info
+      doc.font('Helvetica-Bold').text('Buyer:', 50, doc.y);
+      doc.font('Helvetica').text(order.company.name, 100, doc.y - 12);
+      if (order.company.address) doc.text(order.company.address, 100);
+      if (order.company.contactEmail) doc.text(order.company.contactEmail, 100);
+
+      doc.moveDown(2);
+
+      // Table Header
+      const startY = doc.y;
+      const colX = { product: 50, sku: 200, qty: 350, price: 400, total: 480 };
+
+      doc.font('Helvetica-Bold');
+      doc.text('Product', colX.product, startY);
+      doc.text('SKU / Specs', colX.sku, startY);
+      doc.text('Qty', colX.qty, startY);
+      doc.text('Unit Price', colX.price, startY);
+      doc.text('Total', colX.total, startY);
+
+      doc
+        .moveTo(50, startY + 15)
+        .lineTo(550, startY + 15)
+        .stroke();
+
+      let y = startY + 25;
+      doc.font('Helvetica');
+
+      order.items.forEach((item) => {
+        // Handle page break
+        if (y > 700) {
+          doc.addPage();
+          y = 50;
+        }
+
+        const productName = item.productName;
+        const specs = item.skuSpecs || '-';
+
+        doc.text(productName.substring(0, 30), colX.product, y);
+        doc.text(specs.substring(0, 30), colX.sku, y);
+        doc.text(item.quantity.toString(), colX.qty, y);
+        doc.text(`$${Number(item.unitPrice).toFixed(2)}`, colX.price, y);
+        doc.text(`$${Number(item.totalPrice).toFixed(2)}`, colX.total, y);
+
+        y += 20;
+      });
+
+      doc.moveDown(2);
+      doc.moveTo(50, y).lineTo(550, y).stroke();
+      y += 10;
+
+      // Totals
+      doc.font('Helvetica-Bold');
+      doc.text(
+        `Total Amount: $${Number(order.totalAmount).toFixed(2)}`,
+        350,
+        y,
+        { align: 'right', width: 200 },
+      );
+
+      // Payment Terms (Bank Info - Mock)
+      doc.moveDown(4);
+      doc.text('Payment Terms:', 50);
+      doc.font('Helvetica').fontSize(9);
+      doc.text('Bank: Bank of America');
+      doc.text('Account Name: SoleTrade Inc.');
+      doc.text('Account No: 1234567890');
+      doc.text('Swift Code: BOFAUS3N');
+
+      doc.end();
     });
   }
 
@@ -177,7 +188,7 @@ export class OrdersService {
       `New Order Received: ${order.orderNo}`,
       EmailTemplates.adminNewOrder(order.orderNo, Number(order.totalAmount)),
       order.id,
-      'ORDER'
+      'ORDER',
     );
 
     // Notify User
@@ -188,9 +199,13 @@ export class OrdersService {
         user.email,
         'ORDER',
         `Order Confirmation: ${order.orderNo}`,
-        EmailTemplates.orderConfirmation(user.fullName || 'Customer', order.orderNo, Number(order.totalAmount)),
+        EmailTemplates.orderConfirmation(
+          user.fullName || 'Customer',
+          order.orderNo,
+          Number(order.totalAmount),
+        ),
         order.id,
-        'ORDER'
+        'ORDER',
       );
     }
 
@@ -243,9 +258,14 @@ export class OrdersService {
         order.user.email,
         'ORDER',
         `Order Status Update: ${order.orderNo}`,
-        EmailTemplates.orderStatusUpdate(order.user.fullName || 'Customer', order.orderNo, status, order.id),
+        EmailTemplates.orderStatusUpdate(
+          order.user.fullName || 'Customer',
+          order.orderNo,
+          status,
+          order.id,
+        ),
         order.id,
-        'ORDER'
+        'ORDER',
       );
     }
 

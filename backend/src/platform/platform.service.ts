@@ -29,14 +29,16 @@ export class PlatformService {
   }
 
   async assignSalesRep(companyId: string, salesRepId: string) {
-    const company = await this.prisma.company.findUnique({ where: { id: companyId } });
+    const company = await this.prisma.company.findUnique({
+      where: { id: companyId },
+    });
     if (!company) {
       throw new NotFoundException('Company not found');
     }
 
     // Check if sales rep exists (optional but good practice)
     // const rep = await this.prisma.user.findUnique({ where: { id: salesRepId } });
-    
+
     return this.prisma.company.update({
       where: { id: companyId },
       data: { salesRepId },

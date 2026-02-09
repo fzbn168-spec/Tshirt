@@ -58,9 +58,9 @@ export class UsersService {
 
   async findOne(id: string, companyId?: string) {
     const user = await this.prisma.user.findFirst({
-      where: { 
-        id, 
-        ...(companyId ? { companyId } : {})
+      where: {
+        id,
+        ...(companyId ? { companyId } : {}),
       },
       select: {
         id: true,
@@ -107,6 +107,4 @@ export class UsersService {
       where: { id },
     });
   }
-
-  
 }

@@ -25,13 +25,13 @@ export class ProductsController {
   @Get('catalog/pdf')
   async downloadCatalog(@Res() res: Response) {
     const buffer = await this.productsService.generateCatalogPdf();
-    
+
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': 'attachment; filename=product-catalog.pdf',
       'Content-Length': buffer.length,
     });
-    
+
     res.end(buffer);
   }
 
@@ -71,14 +71,16 @@ export class ProductsController {
     const skip = (pageNum - 1) * limitNum;
 
     try {
-      return await this.productsService.findAll({ 
-        search, 
-        categoryId, 
-        minPrice: minPrice && !isNaN(Number(minPrice)) ? Number(minPrice) : undefined, 
-        maxPrice: maxPrice && !isNaN(Number(maxPrice)) ? Number(maxPrice) : undefined,
+      return await this.productsService.findAll({
+        search,
+        categoryId,
+        minPrice:
+          minPrice && !isNaN(Number(minPrice)) ? Number(minPrice) : undefined,
+        maxPrice:
+          maxPrice && !isNaN(Number(maxPrice)) ? Number(maxPrice) : undefined,
         attributes,
         skip,
-        take: limitNum
+        take: limitNum,
       });
     } catch (error) {
       console.error('FindAll Products Error:', error);

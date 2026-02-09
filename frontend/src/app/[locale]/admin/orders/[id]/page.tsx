@@ -44,7 +44,9 @@ export default function AdminOrderDetailPage() {
     const t = useTranslations('Admin');
 
     const fetchOrder = useCallback(() => {
-        fetch(`http://localhost:3001/orders/${id}`, {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        // Use Admin endpoint
+        fetch(`${API_URL}/platform/orders/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
         })
         .then(res => res.json())
@@ -59,7 +61,8 @@ export default function AdminOrderDetailPage() {
     const handleApprovePayment = async (paymentId: string) => {
         if (!confirm('Approve this payment?')) return;
         try {
-            const res = await fetch(`http://localhost:3001/payments/${paymentId}/status`, {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            const res = await fetch(`${API_URL}/payments/${paymentId}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -81,7 +84,8 @@ export default function AdminOrderDetailPage() {
     const handleShip = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch('http://localhost:3001/shippings', {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            const res = await fetch(`${API_URL}/shippings`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

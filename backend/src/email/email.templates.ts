@@ -36,7 +36,12 @@ export const EmailTemplates = {
     </div>
   `,
 
-  orderStatusUpdate: (name: string, orderNo: string, status: string, orderId: string) => `
+  orderStatusUpdate: (
+    name: string,
+    orderNo: string,
+    status: string,
+    orderId: string,
+  ) => `
     <div style="font-family: Arial, sans-serif; color: #333;">
       <h2>Order Status Update</h2>
       <p>Dear ${name},</p>
@@ -47,7 +52,7 @@ export const EmailTemplates = {
       <p>The SoleTrade Team</p>
     </div>
   `,
-  
+
   adminNewOrder: (orderNo: string, amount: number) => `
     <div style="font-family: Arial, sans-serif; color: #333;">
       <h2>New Order Received</h2>
@@ -69,7 +74,12 @@ export const EmailTemplates = {
     </div>
   `,
 
-  shippingUpdate: (name: string, orderNo: string, carrier: string, trackingNo: string) => `
+  shippingUpdate: (
+    name: string,
+    orderNo: string,
+    carrier: string,
+    trackingNo: string,
+  ) => `
     <div style="font-family: Arial, sans-serif; color: #333;">
       <h2>Order Shipped</h2>
       <p>Dear ${name},</p>
@@ -87,5 +97,5 @@ export const EmailTemplates = {
       <p>Inquiry <strong>${inquiryNo}</strong> has been submitted by ${contactName}.</p>
       <p>Please review and provide a quote via the Admin Dashboard.</p>
     </div>
-  `
+  `,
 };

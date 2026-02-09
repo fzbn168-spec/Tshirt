@@ -32,7 +32,7 @@ async function bootstrap() {
     process.exit(1);
   }
 }
-bootstrap().catch(err => {
+bootstrap().catch((err) => {
   console.error('Fatal Error during bootstrap:', err);
   process.exit(1);
 });

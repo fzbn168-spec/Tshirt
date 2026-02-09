@@ -63,13 +63,13 @@ export class OrdersController {
     @Res() res: Response,
   ) {
     const buffer = await this.ordersService.generatePi(id, req.user);
-    
+
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename=PI-${id}.pdf`,
       'Content-Length': buffer.length,
     });
-    
+
     res.end(buffer);
   }
 }

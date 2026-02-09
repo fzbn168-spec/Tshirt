@@ -17,7 +17,7 @@ export class StripeController {
     return this.stripeService.createPaymentIntent(
       createPaymentIntentDto.amount,
       createPaymentIntentDto.currency,
-      { orderId: createPaymentIntentDto.orderId || '' }
+      { orderId: createPaymentIntentDto.orderId || '' },
     );
   }
 }

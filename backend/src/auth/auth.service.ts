@@ -81,7 +81,7 @@ export class AuthService {
       email,
       'SYSTEM',
       'Welcome to SoleTrade',
-      EmailTemplates.welcome(fullName || 'User')
+      EmailTemplates.welcome(fullName || 'User'),
     );
 
     return result;
