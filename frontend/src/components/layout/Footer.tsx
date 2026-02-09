@@ -29,11 +29,11 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-6">{t('sourcing')}</h3>
             <ul className="space-y-4 text-sm text-zinc-500">
-              <li><Link href="#" className="hover:text-blue-600">{t('men')}</Link></li>
-              <li><Link href="#" className="hover:text-blue-600">{t('women')}</Link></li>
-              <li><Link href="#" className="hover:text-blue-600">{t('kids')}</Link></li>
-              <li><Link href="#" className="hover:text-blue-600">{t('sports')}</Link></li>
-              <li><Link href="#" className="hover:text-blue-600">{t('rfq')}</Link></li>
+              <li><Link href="/products" className="hover:text-blue-600">{t('men')}</Link></li>
+              <li><Link href="/products" className="hover:text-blue-600">{t('women')}</Link></li>
+              <li><Link href="/products" className="hover:text-blue-600">{t('kids')}</Link></li>
+              <li><Link href="/products" className="hover:text-blue-600">{t('sports')}</Link></li>
+              <li><Link href="/products" className="hover:text-blue-600">{t('rfq')}</Link></li>
               <li>
                 <a 
                     href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/products/catalog/pdf`}

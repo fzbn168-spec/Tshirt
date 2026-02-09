@@ -33,7 +33,7 @@ export default function Home() {
                 {t('startSourcing')}
               </Link>
               <Link 
-                href="/catalog" 
+                href="/products" 
                 className="inline-flex items-center justify-center h-12 px-8 font-medium text-white border border-white/30 rounded-md hover:bg-white/10 transition-colors"
               >
                 {t('viewCatalog')}
@@ -83,7 +83,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-end mb-8">
             <h2 className="text-3xl font-bold">{t('shopCategory')}</h2>
-            <Link href="/categories" className="text-blue-600 hover:underline flex items-center gap-1">
+            <Link href="/products" className="text-blue-600 hover:underline flex items-center gap-1">
               {t('viewAll')} <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
