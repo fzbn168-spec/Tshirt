@@ -30,70 +30,73 @@ async function main() {
 
   // Check if we need to seed initial product data
   const existingCategory = await prisma.category.findUnique({ where: { slug: 'men-shoes' } });
+
+  // 0. Seeding Attributes
+  const existingColor = await prisma.attribute.findFirst({ where: { code: 'color' } });
+  if (!existingColor) {
+    console.log('Seeding Attributes...');
+    
+    // Color
+    await prisma.attribute.create({
+      data: {
+        name: JSON.stringify({ en: "Color", zh: "颜色" }),
+        code: "color",
+        type: "color",
+        values: {
+          create: [
+            { value: JSON.stringify({ en: "Red", zh: "红色" }), meta: "#FF0000" },
+            { value: JSON.stringify({ en: "Blue", zh: "蓝色" }), meta: "#0000FF" },
+            { value: JSON.stringify({ en: "Black", zh: "黑色" }), meta: "#000000" },
+            { value: JSON.stringify({ en: "White", zh: "白色" }), meta: "#FFFFFF" }
+          ]
+        }
+      }
+    });
+
+    // Size
+    await prisma.attribute.create({
+      data: {
+        name: JSON.stringify({ en: "Size", zh: "尺码" }),
+        code: "size",
+        type: "text",
+        values: {
+          create: [
+            { value: JSON.stringify({ en: "S", zh: "S" }) },
+            { value: JSON.stringify({ en: "M", zh: "M" }) },
+            { value: JSON.stringify({ en: "L", zh: "L" }) },
+            { value: JSON.stringify({ en: "XL", zh: "XL" }) },
+            { value: JSON.stringify({ en: "40", zh: "40" }) },
+            { value: JSON.stringify({ en: "41", zh: "41" }) },
+            { value: JSON.stringify({ en: "42", zh: "42" }) },
+            { value: JSON.stringify({ en: "43", zh: "43" }) }
+          ]
+        }
+      }
+    });
+
+    // Material
+    await prisma.attribute.create({
+      data: {
+        name: JSON.stringify({ en: "Material", zh: "材质" }),
+        code: "material",
+        type: "text",
+        values: {
+          create: [
+            { value: JSON.stringify({ en: "Cotton", zh: "棉" }) },
+            { value: JSON.stringify({ en: "Polyester", zh: "聚酯纤维" }) },
+            { value: JSON.stringify({ en: "Leather", zh: "真皮" }) }
+          ]
+        }
+      }
+    });
+    console.log('Created Attributes: Color, Size, Material');
+  } else {
+    console.log('Attributes already exist, skipping.');
+  }
   
   if (!existingCategory) {
     console.log('Seeding initial product data...');
 
-    // 0. Seeding Attributes
-    const existingColor = await prisma.attribute.findFirst({ where: { code: 'color' } });
-    if (!existingColor) {
-      console.log('Seeding Attributes...');
-      
-      // Color
-      await prisma.attribute.create({
-        data: {
-          name: JSON.stringify({ en: "Color", zh: "颜色" }),
-          code: "color",
-          type: "color",
-          values: {
-            create: [
-              { value: JSON.stringify({ en: "Red", zh: "红色" }), meta: "#FF0000" },
-              { value: JSON.stringify({ en: "Blue", zh: "蓝色" }), meta: "#0000FF" },
-              { value: JSON.stringify({ en: "Black", zh: "黑色" }), meta: "#000000" },
-              { value: JSON.stringify({ en: "White", zh: "白色" }), meta: "#FFFFFF" }
-            ]
-          }
-        }
-      });
-
-      // Size
-      await prisma.attribute.create({
-        data: {
-          name: JSON.stringify({ en: "Size", zh: "尺码" }),
-          code: "size",
-          type: "text",
-          values: {
-            create: [
-              { value: JSON.stringify({ en: "S", zh: "S" }) },
-              { value: JSON.stringify({ en: "M", zh: "M" }) },
-              { value: JSON.stringify({ en: "L", zh: "L" }) },
-              { value: JSON.stringify({ en: "XL", zh: "XL" }) },
-              { value: JSON.stringify({ en: "40", zh: "40" }) },
-              { value: JSON.stringify({ en: "41", zh: "41" }) },
-              { value: JSON.stringify({ en: "42", zh: "42" }) },
-              { value: JSON.stringify({ en: "43", zh: "43" }) }
-            ]
-          }
-        }
-      });
-
-      // Material
-      await prisma.attribute.create({
-        data: {
-          name: JSON.stringify({ en: "Material", zh: "材质" }),
-          code: "material",
-          type: "text",
-          values: {
-            create: [
-              { value: JSON.stringify({ en: "Cotton", zh: "棉" }) },
-              { value: JSON.stringify({ en: "Polyester", zh: "聚酯纤维" }) },
-              { value: JSON.stringify({ en: "Leather", zh: "真皮" }) }
-            ]
-          }
-        }
-      });
-      console.log('Created Attributes: Color, Size, Material');
-    }
 
     // 1. Create Categories
     const menShoes = await prisma.category.create({
