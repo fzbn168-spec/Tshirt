@@ -62,13 +62,13 @@ export class ProductsController {
     }
 
     // Safety check for pagination params
-    const pageInt = parseInt(page ?? '');
-    const limitInt = parseInt(limit ?? '');
+    const pageStr = page || '';
+    const limitStr = limit || '';
+    const pageInt = parseInt(pageStr);
+    const limitInt = parseInt(limitStr);
     const pageNum = isNaN(pageInt) || pageInt < 1 ? 1 : pageInt;
     const limitNum = isNaN(limitInt) || limitInt < 1 ? 50 : limitInt;
     const skip = (pageNum - 1) * limitNum;
-
-    console.log(`[Products] findAll request: page=${pageNum}, limit=${limitNum}, skip=${skip}`);
 
     try {
       return await this.productsService.findAll({ 
