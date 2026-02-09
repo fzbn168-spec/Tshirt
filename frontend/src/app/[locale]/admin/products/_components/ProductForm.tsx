@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Plus, Trash2, Save, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Layers } from 'lucide-react';
 import { Link } from '@/navigation';
 import { useTranslations } from 'next-intl';
+import { TierPriceDialog } from './TierPriceDialog';
 
 interface ProductFormProps {
   initialData?: any;
@@ -36,6 +37,9 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
   const [skus, setSkus] = useState<any[]>([
     { skuCode: '', color: '', size: '', price: '', stock: 0, moq: 1 }
   ]);
+  
+  const [tierDialogOpen, setTierDialogOpen] = useState(false);
+  const [currentSkuIndex, setCurrentSkuIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -210,6 +214,17 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
     const newSkus = [...skus];
     newSkus[index][field] = value;
     setSkus(newSkus);
+  };
+
+  const openTierDialog = (index: number) => {
+    setCurrentSkuIndex(index);
+    setTierDialogOpen(true);
+  };
+
+  const handleTierSave = (value: string) => {
+    if (currentSkuIndex !== null) {
+      handleSkuChange(currentSkuIndex, 'tierPrices', value);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -474,13 +489,24 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
                                 />
                             </div>
                             <div className="space-y-1 col-span-2">
-                                <label className="text-xs text-zinc-500">Tier Prices (JSON)</label>
-                                <input 
-                                    value={sku.tierPrices || ''}
-                                    onChange={e => handleSkuChange(idx, 'tierPrices', e.target.value)}
-                                    placeholder='[{"minQty":10,"price":90}]'
-                                    className="w-full px-2 py-1.5 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded font-mono"
-                                />
+                                <label className="text-xs text-zinc-500">Volume Pricing</label>
+                                <button
+                                    type="button"
+                                    onClick={() => openTierDialog(idx)}
+                                    className="w-full px-2 py-1.5 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded text-left flex items-center justify-between hover:border-blue-500 transition-colors group"
+                                >
+                                    <span className="truncate text-zinc-600 dark:text-zinc-400">
+                                    {sku.tierPrices && sku.tierPrices !== '[]' && sku.tierPrices !== ''
+                                        ? (() => {
+                                            try {
+                                                const len = JSON.parse(sku.tierPrices).length;
+                                                return len > 0 ? `${len} Tier${len > 1 ? 's' : ''} Set` : 'Configure';
+                                            } catch { return 'Configure'; }
+                                        })()
+                                        : 'Configure'}
+                                    </span>
+                                    <Layers className="w-4 h-4 text-zinc-400 group-hover:text-blue-500" />
+                                </button>
                             </div>
                             <div className="space-y-1">
                                 <label className="text-xs text-zinc-500">{t('stock')}</label>
@@ -536,6 +562,12 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
           </div>
         </div>
       </div>
+      <TierPriceDialog 
+        isOpen={tierDialogOpen}
+        onClose={() => setTierDialogOpen(false)}
+        initialValue={currentSkuIndex !== null ? skus[currentSkuIndex]?.tierPrices || '' : ''}
+        onSave={handleTierSave}
+      />
     </form>
   );
 }
