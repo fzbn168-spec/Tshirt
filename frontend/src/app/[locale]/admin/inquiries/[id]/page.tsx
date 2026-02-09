@@ -72,7 +72,7 @@ export default function AdminInquiryDetailPage() {
           productName: item.productName,
           skuSpecs: item.skuSpecs,
           quantity: item.quantity,
-          price: item.targetPrice,
+          price: Number(item.targetPrice || 0),
           quotedPrice: quotes[item.id] ? Number(quotes[item.id]) : Number(item.quotedPrice || 0)
       }));
 
