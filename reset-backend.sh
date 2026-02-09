@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # 颜色定义
 GREEN='\033[0;32m'

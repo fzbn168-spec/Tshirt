@@ -23,6 +23,16 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   // Listen on port 3001 to avoid conflict with Next.js (3000)
-  await app.listen(3001);
+  try {
+    await app.listen(3001);
+    console.log(`Application is running on: ${await app.getUrl()}`);
+    console.log('Backend successfully started on port 3001');
+  } catch (error) {
+    console.error('Error starting server:', error);
+    process.exit(1);
+  }
 }
-bootstrap();
+bootstrap().catch(err => {
+  console.error('Fatal Error during bootstrap:', err);
+  process.exit(1);
+});
