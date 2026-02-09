@@ -31,6 +31,7 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
   
   // Attribute Management
   const [availableAttributes, setAvailableAttributes] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]); // Categories State
   const [selectedAttributes, setSelectedAttributes] = useState<any[]>([]); // Array of attribute objects
   const [selectedValues, setSelectedValues] = useState<{[key: string]: string[]}>({}); // attributeId -> valueIds[]
 
@@ -67,6 +68,14 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
     .then(res => res.json())
     .then(data => setAvailableAttributes(data))
     .catch(err => console.error("Failed to fetch attributes", err));
+
+    // Fetch categories
+    fetch(`${API_URL}/products/categories`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    .then(res => res.json())
+    .then(data => setCategories(data))
+    .catch(err => console.error("Failed to fetch categories", err));
 
     if (initialData) {
         try {
@@ -417,13 +426,19 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
                 </div>
                 <div className="space-y-2">
                     <label className="text-sm font-medium">{t('categoryId')}</label>
-                    <input 
-                    required
-                    value={categoryId}
-                    onChange={e => setCategoryId(e.target.value)}
-                    className="w-full px-3 py-2 bg-transparent border border-zinc-200 dark:border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-900"
-                    placeholder="UUID"
-                    />
+                    <select 
+                        required
+                        value={categoryId}
+                        onChange={e => setCategoryId(e.target.value)}
+                        className="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                    >
+                        <option value="" disabled>Select Category</option>
+                        {categories.map(cat => (
+                            <option key={cat.id} value={cat.id}>
+                                {safeParseLocalized(cat.name).en} ({cat.slug})
+                            </option>
+                        ))}
+                    </select>
                     <p className="text-xs text-zinc-500">{t('categoryIdHelp')}</p>
                 </div>
             </div>
