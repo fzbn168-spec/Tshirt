@@ -254,6 +254,20 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Client-side Validation
+    const skuCodes = skus.map(s => (s.skuCode || '').trim());
+    if (skuCodes.some(c => !c)) {
+      alert("Please ensure all SKUs have a valid SKU Code.");
+      return;
+    }
+    
+    const uniqueCodes = new Set(skuCodes);
+    if (uniqueCodes.size !== skuCodes.length) {
+      alert("Duplicate SKU Codes detected in the list. Each SKU must be unique.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
