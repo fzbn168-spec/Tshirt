@@ -41,6 +41,23 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
   const [tierDialogOpen, setTierDialogOpen] = useState(false);
   const [currentSkuIndex, setCurrentSkuIndex] = useState<number | null>(null);
 
+  // Helper to safely parse localized strings
+  const safeParseLocalized = (str: string) => {
+    if (!str) return { en: '', zh: '' };
+    try {
+      const parsed = JSON.parse(str);
+      // If valid object
+      if (typeof parsed === 'object' && parsed !== null) {
+        return { en: parsed.en || '', zh: parsed.zh || '' };
+      }
+      // If it's a primitive string after parse
+      return { en: String(parsed), zh: '' };
+    } catch (e) {
+      // Not valid JSON, treat as plain string (legacy data)
+      return { en: str, zh: '' };
+    }
+  };
+
   useEffect(() => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
     // Fetch attributes
@@ -53,17 +70,25 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
 
     if (initialData) {
         try {
-          const title = JSON.parse(initialData.title || '{}');
-          const desc = JSON.parse(initialData.description || '{}');
-          const imgs = JSON.parse(initialData.images || '[]');
+          const title = safeParseLocalized(initialData.title);
+          const desc = safeParseLocalized(initialData.description);
           
-          setTitleEn(title.en || '');
-          setTitleZh(title.zh || '');
-          setDescEn(desc.en || '');
-          setDescZh(desc.zh || '');
+          let imgs: string[] = [];
+          try {
+            const parsedImgs = JSON.parse(initialData.images || '[]');
+            imgs = Array.isArray(parsedImgs) ? parsedImgs : [];
+          } catch {
+            // Fallback for legacy plain string
+            if (initialData.images) imgs = [initialData.images];
+          }
+          
+          setTitleEn(title.en);
+          setTitleZh(title.zh);
+          setDescEn(desc.en);
+          setDescZh(desc.zh);
           setBasePrice(initialData.basePrice || '');
           setCategoryId(initialData.categoryId || '');
-          setImages(Array.isArray(imgs) ? imgs.join('\n') : '');
+          setImages(imgs.join('\n'));
           setIsPublished(initialData.isPublished || false);
 
           // Restore Attributes
@@ -476,7 +501,14 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
                             <div className="col-span-2 space-y-1">
                                 <label className="text-xs text-zinc-500">Specs</label>
                                 <div className="px-2 py-1.5 text-sm text-zinc-600 dark:text-zinc-400">
-                                  {sku._displaySpecs || (sku.specs ? Object.values(JSON.parse(sku.specs)).join(' / ') : 'Custom')}
+                                  {sku._displaySpecs || (sku.specs ? (() => {
+                                    try {
+                                      const parsed = JSON.parse(sku.specs);
+                                      return Object.values(parsed).join(' / ');
+                                    } catch {
+                                      return sku.specs; // Fallback to raw string
+                                    }
+                                  })() : 'Custom')}
                                 </div>
                             </div>
                             <div className="space-y-1">
