@@ -77,7 +77,7 @@ export function TierPriceDialog({ isOpen, onClose, initialValue, onSave }: TierP
       <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-lg shadow-xl p-6 animate-in fade-in zoom-in duration-200">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold">Manage Volume Pricing</h3>
-          <button onClick={onClose} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded">
+          <button type="button" onClick={onClose} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -106,6 +106,7 @@ export function TierPriceDialog({ isOpen, onClose, initialValue, onSave }: TierP
               />
             </div>
             <button 
+              type="button"
               onClick={handleAdd}
               className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 flex items-center gap-1 h-[34px]"
             >
@@ -137,6 +138,7 @@ export function TierPriceDialog({ isOpen, onClose, initialValue, onSave }: TierP
                       <td className="px-4 py-2">${tier.price.toFixed(2)}</td>
                       <td className="px-4 py-2 text-right">
                         <button 
+                          type="button"
                           onClick={() => handleDelete(idx)}
                           className="text-zinc-400 hover:text-red-500"
                         >
@@ -153,12 +155,14 @@ export function TierPriceDialog({ isOpen, onClose, initialValue, onSave }: TierP
 
         <div className="flex justify-end gap-2 mt-6">
           <button 
+            type="button"
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900"
           >
             Cancel
           </button>
           <button 
+            type="button"
             onClick={handleSave}
             className="px-4 py-2 bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900 rounded-md text-sm font-medium hover:opacity-90"
           >
