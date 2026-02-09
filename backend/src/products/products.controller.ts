@@ -43,7 +43,7 @@ export class ProductsController {
   }
 
   @Get()
-  findAll(
+  async findAll(
     @Query('search') search?: string,
     @Query('categoryId') categoryId?: string,
     @Query('minPrice') minPrice?: string,
