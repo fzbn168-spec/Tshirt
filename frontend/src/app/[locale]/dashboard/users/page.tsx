@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Plus, Trash2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { PasswordInput } from '@/components/ui/password-input';
 
 interface User {
   id: string;
@@ -210,8 +211,7 @@ export default function UsersPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Password</label>
-                <input 
-                  type="password" 
+                <PasswordInput 
                   required
                   minLength={6}
                   className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-md bg-transparent"

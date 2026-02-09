@@ -5,6 +5,7 @@ import { Link, useRouter } from '@/navigation';
 import { ArrowRight, Mail, Lock, Building, User } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTranslations } from 'next-intl';
+import { PasswordInput } from '@/components/ui/password-input';
 
 export default function RegisterPage() {
   const t = useTranslations('Auth');
@@ -112,11 +113,10 @@ export default function RegisterPage() {
           <div>
             <label className="block text-sm font-medium mb-1">{t('password')}</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
-              <input 
+              <Lock className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400 z-10" />
+              <PasswordInput 
                 name="password"
-                type="password" 
-                className="w-full h-10 rounded-md border border-zinc-200 bg-zinc-50 pl-9 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-800 dark:bg-zinc-900"
+                className="w-full h-10 rounded-md border border-zinc-200 bg-zinc-50 pl-9 pr-10 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-800 dark:bg-zinc-900"
                 required 
                 minLength={6}
                 placeholder="At least 6 characters"
