@@ -92,6 +92,7 @@ model Product {
   
   // 媒体
   images        String   // JSON string: ["url1", "url2"]
+  images360     String?  // JSON string: ["frame1.jpg", "frame2.jpg", ...] - 360 view frames
 
   // 基础信息
   basePrice     Decimal
@@ -219,6 +220,7 @@ model Inquiry {
   contactName   String
   contactEmail  String
   notes         String?
+  attachments   String?       // JSON string: ["url1", "url2"] - OEM Logos, Design files
   
   status        String        @default("PENDING") // PENDING, QUOTED, ORDERED, CLOSED
   

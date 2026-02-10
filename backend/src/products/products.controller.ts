@@ -9,7 +9,11 @@ import {
   UseGuards,
   Query,
   Res,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -17,21 +21,45 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { ApiConsumes, ApiBody } from '@nestjs/swagger';
 
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
+  @Post('import')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PLATFORM_ADMIN', 'ADMIN')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  async importProducts(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+    return this.productsService.importFromExcel(file.buffer);
+  }
+
   @Get('catalog/pdf')
   async downloadCatalog(@Res() res: Response) {
     const buffer = await this.productsService.generateCatalogPdf();
-
+    
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': 'attachment; filename=product-catalog.pdf',
       'Content-Length': buffer.length,
     });
-
+    
     res.end(buffer);
   }
 
@@ -71,16 +99,14 @@ export class ProductsController {
     const skip = (pageNum - 1) * limitNum;
 
     try {
-      return await this.productsService.findAll({
-        search,
-        categoryId,
-        minPrice:
-          minPrice && !isNaN(Number(minPrice)) ? Number(minPrice) : undefined,
-        maxPrice:
-          maxPrice && !isNaN(Number(maxPrice)) ? Number(maxPrice) : undefined,
+      return await this.productsService.findAll({ 
+        search, 
+        categoryId, 
+        minPrice: minPrice && !isNaN(Number(minPrice)) ? Number(minPrice) : undefined, 
+        maxPrice: maxPrice && !isNaN(Number(maxPrice)) ? Number(maxPrice) : undefined,
         attributes,
         skip,
-        take: limitNum,
+        take: limitNum
       });
     } catch (error) {
       console.error('FindAll Products Error:', error);

@@ -110,6 +110,188 @@ export class OrdersService {
     });
   }
 
+  async generateCi(id: string, user: any): Promise<Buffer> {
+    const companyId =
+      user.role === 'PLATFORM_ADMIN' ? undefined : user.companyId;
+    const order = await this.findOne(id, companyId);
+
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ margin: 50, size: 'A4' });
+      const buffers: Buffer[] = [];
+
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
+      doc.on('error', reject);
+
+      // Header
+      doc.fontSize(20).text('Commercial Invoice', { align: 'center' });
+      doc.moveDown();
+
+      // Info Section
+      doc.fontSize(10);
+      doc.text(`Invoice No: CI-${order.orderNo}`, { align: 'right' });
+      doc.text(`Date: ${new Date().toISOString().split('T')[0]}`, {
+        align: 'right',
+      });
+      doc.text(`Order No: ${order.orderNo}`, { align: 'right' });
+      doc.moveDown();
+
+      // Seller Info (Platform)
+      doc.font('Helvetica-Bold').text('Seller:', 50, doc.y);
+      doc.font('Helvetica').text('SoleTrade Inc.', 100, doc.y - 12);
+      doc.text('123 Innovation Dr, Tech City', 100);
+      doc.text('support@soletrade.com', 100);
+      doc.moveDown();
+
+      // Buyer Info
+      doc.font('Helvetica-Bold').text('Buyer:', 50, doc.y);
+      doc.font('Helvetica').text(order.company.name, 100, doc.y - 12);
+      if (order.company.address) doc.text(order.company.address, 100);
+      if (order.company.contactEmail) doc.text(order.company.contactEmail, 100);
+
+      doc.moveDown(2);
+
+      // Table Header
+      const startY = doc.y;
+      const colX = { product: 50, sku: 200, qty: 350, price: 400, total: 480 };
+
+      doc.font('Helvetica-Bold');
+      doc.text('Product', colX.product, startY);
+      doc.text('SKU / Specs', colX.sku, startY);
+      doc.text('Qty', colX.qty, startY);
+      doc.text('Unit Price', colX.price, startY);
+      doc.text('Total', colX.total, startY);
+
+      doc
+        .moveTo(50, startY + 15)
+        .lineTo(550, startY + 15)
+        .stroke();
+
+      let y = startY + 25;
+      doc.font('Helvetica');
+
+      order.items.forEach((item) => {
+        if (y > 700) {
+          doc.addPage();
+          y = 50;
+        }
+
+        const productName = item.productName;
+        const specs = item.skuSpecs || '-';
+
+        doc.text(productName.substring(0, 30), colX.product, y);
+        doc.text(specs.substring(0, 30), colX.sku, y);
+        doc.text(item.quantity.toString(), colX.qty, y);
+        doc.text(`$${Number(item.unitPrice).toFixed(2)}`, colX.price, y);
+        doc.text(`$${Number(item.totalPrice).toFixed(2)}`, colX.total, y);
+
+        y += 20;
+      });
+
+      doc.moveDown(2);
+      doc.moveTo(50, y).lineTo(550, y).stroke();
+      y += 10;
+
+      // Totals
+      doc.font('Helvetica-Bold');
+      doc.text(
+        `Total Amount: $${Number(order.totalAmount).toFixed(2)}`,
+        350,
+        y,
+        { align: 'right', width: 200 },
+      );
+
+      doc.end();
+    });
+  }
+
+  async generatePl(id: string, user: any): Promise<Buffer> {
+    const companyId =
+      user.role === 'PLATFORM_ADMIN' ? undefined : user.companyId;
+    const order = await this.findOne(id, companyId);
+
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ margin: 50, size: 'A4' });
+      const buffers: Buffer[] = [];
+
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
+      doc.on('error', reject);
+
+      // Header
+      doc.fontSize(20).text('Packing List', { align: 'center' });
+      doc.moveDown();
+
+      // Info Section
+      doc.fontSize(10);
+      doc.text(`PL No: PL-${order.orderNo}`, { align: 'right' });
+      doc.text(`Date: ${new Date().toISOString().split('T')[0]}`, {
+        align: 'right',
+      });
+      doc.text(`Order No: ${order.orderNo}`, { align: 'right' });
+      doc.moveDown();
+
+      // Buyer Info
+      doc.font('Helvetica-Bold').text('Consignee:', 50, doc.y);
+      doc.font('Helvetica').text(order.company.name, 100, doc.y - 12);
+      if (order.company.address) doc.text(order.company.address, 100);
+      
+      doc.moveDown(2);
+
+      // Table Header
+      const startY = doc.y;
+      const colX = { product: 50, sku: 200, qty: 350, cartons: 420, weight: 480 };
+
+      doc.font('Helvetica-Bold');
+      doc.text('Product', colX.product, startY);
+      doc.text('SKU / Specs', colX.sku, startY);
+      doc.text('Qty', colX.qty, startY);
+      doc.text('Cartons', colX.cartons, startY);
+      doc.text('G.W (kg)', colX.weight, startY);
+
+      doc
+        .moveTo(50, startY + 15)
+        .lineTo(550, startY + 15)
+        .stroke();
+
+      let y = startY + 25;
+      doc.font('Helvetica');
+
+      let totalQty = 0;
+      // Mock weight/carton logic since DB doesn't have it yet
+      order.items.forEach((item) => {
+        if (y > 700) {
+          doc.addPage();
+          y = 50;
+        }
+
+        const productName = item.productName;
+        const specs = item.skuSpecs || '-';
+        // Mock calculation: 20 items per carton, 0.5kg per item
+        const cartons = Math.ceil(item.quantity / 20); 
+        const weight = (item.quantity * 0.5).toFixed(1);
+
+        doc.text(productName.substring(0, 30), colX.product, y);
+        doc.text(specs.substring(0, 30), colX.sku, y);
+        doc.text(item.quantity.toString(), colX.qty, y);
+        doc.text(cartons.toString(), colX.cartons, y);
+        doc.text(weight, colX.weight, y);
+
+        totalQty += item.quantity;
+        y += 20;
+      });
+
+      doc.moveDown(2);
+      doc.moveTo(50, y).lineTo(550, y).stroke();
+      y += 10;
+
+      doc.font('Helvetica-Bold');
+      doc.text(`Total Quantity: ${totalQty}`, 50, y);
+
+      doc.end();
+    });
+  }
+
   async create(
     userId: string,
     companyId: string,

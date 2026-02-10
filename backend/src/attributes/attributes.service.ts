@@ -20,14 +20,9 @@ export class AttributesService {
         createAttributeDto.name = JSON.stringify(translated);
       } catch (e) {
         // If it's a plain string, treat as EN and translate to ZH
-        if (
-          typeof createAttributeDto.name === 'string' &&
-          !createAttributeDto.name.startsWith('{')
-        ) {
-          const translated = await this.translationService.autoFill({
-            en: createAttributeDto.name,
-          });
-          createAttributeDto.name = JSON.stringify(translated);
+        if (typeof createAttributeDto.name === 'string' && !createAttributeDto.name.startsWith('{')) {
+           const translated = await this.translationService.autoFill({ en: createAttributeDto.name });
+           createAttributeDto.name = JSON.stringify(translated);
         }
       }
     }
@@ -84,7 +79,7 @@ export class AttributesService {
   async addValue(attributeId: string, createValueDto: CreateAttributeValueDto) {
     // Verify attribute exists
     await this.findOne(attributeId);
-
+    
     // Auto translate value
     if (createValueDto.value) {
       try {
@@ -92,15 +87,10 @@ export class AttributesService {
         const translated = await this.translationService.autoFill(valObj);
         createValueDto.value = JSON.stringify(translated);
       } catch (e) {
-        if (
-          typeof createValueDto.value === 'string' &&
-          !createValueDto.value.startsWith('{')
-        ) {
-          const translated = await this.translationService.autoFill({
-            en: createValueDto.value,
-          });
-          createValueDto.value = JSON.stringify(translated);
-        }
+         if (typeof createValueDto.value === 'string' && !createValueDto.value.startsWith('{')) {
+           const translated = await this.translationService.autoFill({ en: createValueDto.value });
+           createValueDto.value = JSON.stringify(translated);
+         }
       }
     }
 

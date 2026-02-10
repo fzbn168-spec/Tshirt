@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Patch,
-  Param,
-  Body,
-  UseGuards,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Patch, Param, Body, UseGuards, Query } from '@nestjs/common';
 import { PlatformService } from './platform.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -34,10 +26,7 @@ export class PlatformController {
   }
 
   @Patch('companies/:id/sales-rep')
-  assignSalesRep(
-    @Param('id') id: string,
-    @Body('salesRepId') salesRepId: string,
-  ) {
+  assignSalesRep(@Param('id') id: string, @Body('salesRepId') salesRepId: string) {
     return this.platformService.assignSalesRep(id, salesRepId);
   }
 

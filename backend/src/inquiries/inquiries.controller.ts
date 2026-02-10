@@ -22,13 +22,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import type { RequestWithUser } from '../auth/request-with-user.interface';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiConsumes,
-  ApiBody,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 
 @ApiTags('Inquiries')
 @ApiBearerAuth()
@@ -43,12 +37,8 @@ export class InquiriesController {
     @Req() req: RequestWithUser,
   ) {
     // Public access allowed, but attach user info if available
-    const companyId =
-      req.user?.role === 'PLATFORM_ADMIN' ? undefined : req.user?.companyId;
-    return this.inquiriesService.create(
-      createInquiryDto,
-      companyId || undefined,
-    );
+    const companyId = req.user?.role === 'PLATFORM_ADMIN' ? undefined : req.user?.companyId;
+    return this.inquiriesService.create(createInquiryDto, companyId || undefined);
   }
 
   @Post('import')
@@ -73,7 +63,7 @@ export class InquiriesController {
     @Req() req: RequestWithUser,
   ) {
     if (!file) {
-      throw new BadRequestException('File is required');
+        throw new BadRequestException('File is required');
     }
     return this.inquiriesService.importFromExcel(file.buffer, req.user);
   }
@@ -88,13 +78,13 @@ export class InquiriesController {
     @Res() res: Response,
   ) {
     const buffer = await this.inquiriesService.generatePdf(id, req.user);
-
+    
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename=Inquiry-${id}.pdf`,
       'Content-Length': buffer.length,
     });
-
+    
     res.end(buffer);
   }
 
@@ -114,8 +104,7 @@ export class InquiriesController {
   @Roles('MEMBER', 'ADMIN', 'PLATFORM_ADMIN')
   @ApiOperation({ summary: 'Get inquiry by ID' })
   findOne(@Param('id') id: string, @Req() req: RequestWithUser) {
-    const companyId =
-      req.user.role === 'PLATFORM_ADMIN' ? undefined : req.user.companyId;
+    const companyId = req.user.role === 'PLATFORM_ADMIN' ? undefined : req.user.companyId;
     return this.inquiriesService.findOne(id, companyId || undefined);
   }
 
@@ -129,7 +118,7 @@ export class InquiriesController {
     @Req() req: RequestWithUser,
   ) {
     if (!req.user.companyId) {
-      throw new BadRequestException('User must belong to a company');
+       throw new BadRequestException('User must belong to a company');
     }
     return this.inquiriesService.update(
       id,
@@ -143,7 +132,7 @@ export class InquiriesController {
   @Roles('MEMBER', 'ADMIN')
   remove(@Param('id') id: string, @Req() req: RequestWithUser) {
     if (!req.user.companyId) {
-      throw new BadRequestException('User must belong to a company');
+       throw new BadRequestException('User must belong to a company');
     }
     return this.inquiriesService.remove(id, req.user.companyId);
   }

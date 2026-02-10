@@ -12,17 +12,11 @@ export class StripeService {
         apiVersion: '2025-01-27.acacia' as any, // Cast to any to avoid version mismatch with installed package
       });
     } else {
-      console.warn(
-        'StripeService: STRIPE_SECRET_KEY not found. Stripe features will be disabled.',
-      );
+      console.warn('StripeService: STRIPE_SECRET_KEY not found. Stripe features will be disabled.');
     }
   }
 
-  async createPaymentIntent(
-    amount: number,
-    currency: string,
-    metadata?: Record<string, string>,
-  ) {
+  async createPaymentIntent(amount: number, currency: string, metadata?: Record<string, string>) {
     if (!this.stripe) {
       // Return a mock response for development without keys
       // Only allow mock in development environment for security
@@ -34,12 +28,10 @@ export class StripeService {
           status: 'requires_payment_method', // simulate real status
           amount,
           currency,
-          mock: true,
+          mock: true
         };
       } else {
-        throw new InternalServerErrorException(
-          'Stripe configuration missing in production',
-        );
+        throw new InternalServerErrorException('Stripe configuration missing in production');
       }
     }
 
