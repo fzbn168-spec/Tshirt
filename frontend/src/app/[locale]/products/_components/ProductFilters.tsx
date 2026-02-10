@@ -48,13 +48,27 @@ export function ProductFilters() {
     // Fetch Categories
     fetch(`${API_URL}/products/categories`)
       .then(res => res.json())
-      .then(data => setCategories(data))
+      .then(data => {
+        if (Array.isArray(data)) {
+          setCategories(data);
+        } else {
+          console.error('Categories data is not an array:', data);
+          setCategories([]);
+        }
+      })
       .catch(err => console.error('Failed to fetch categories', err));
 
     // Fetch Attributes (Optional for future advanced filtering)
     fetch(`${API_URL}/attributes`)
       .then(res => res.json())
-      .then(data => setAttributes(data))
+      .then(data => {
+        if (Array.isArray(data)) {
+          setAttributes(data);
+        } else {
+          console.error('Attributes data is not an array:', data);
+          setAttributes([]);
+        }
+      })
       .catch(err => console.error('Failed to fetch attributes', err));
   }, []);
 
@@ -123,7 +137,8 @@ export function ProductFilters() {
     }
   }, [debouncedSearch, categoryId, debouncedMinPrice, debouncedMaxPrice, selectedAttributes, router, searchParams]);
 
-  const parseJson = (str: string) => {
+  const parseJson = (str: any) => {
+    if (typeof str !== 'string') return '';
     try {
       const obj = JSON.parse(str);
       return obj.en || obj.zh || str;

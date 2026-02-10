@@ -44,7 +44,8 @@ export function ProductGrid() {
   const isAuth = isAuthenticated();
   const { format } = useCurrencyStore();
 
-  const parseJson = (str: string) => {
+  const parseJson = (str: any) => {
+    if (typeof str !== 'string') return '';
     try {
       const obj = JSON.parse(str);
       return obj.en || obj.zh || str;
@@ -53,7 +54,8 @@ export function ProductGrid() {
     }
   };
 
-  const getFirstImage = (jsonStr: string) => {
+  const getFirstImage = (jsonStr: any) => {
+    if (typeof jsonStr !== 'string') return null;
     try {
       const arr = JSON.parse(jsonStr);
       return Array.isArray(arr) && arr.length > 0 ? arr[0] : null;
@@ -95,7 +97,7 @@ export function ProductGrid() {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
-      {products.map(product => {
+      {products.map((product: Product) => {
         const imageUrl = getFirstImage(product.images);
         const title = parseJson(product.title);
         
