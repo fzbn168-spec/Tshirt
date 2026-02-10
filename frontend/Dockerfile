@@ -42,4 +42,5 @@ USER nextjs
 EXPOSE 3000
 
 # Start application
+ENV HOSTNAME="0.0.0.0"
 CMD ["node", "server.js"]
