@@ -4,18 +4,9 @@
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
   "transform": {
-    "^.+\\.(t|j)s$": [
-        "ts-jest",
-        {
-            "tsconfig": {
-                "esModuleInterop": true
-            }
-        }
-    ]
+    "^.+\\.(t|j)s$": "ts-jest"
   },
   "moduleNameMapper": {
-    "^src/(.*)$": "<rootDir>/../src/$1",
-    "^../src/(.*)$": "<rootDir>/../src/$1",
-    "^../src/app.module$": "<rootDir>/../src/app.module"
+    "^../src/(.*)$": "<rootDir>/../src/$1"
   }
 }
