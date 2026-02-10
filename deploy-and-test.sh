@@ -56,8 +56,8 @@ fi
 
 # Check Frontend Health (Internal)
 echo -e "\nChecking Frontend Health..."
-# Use wget --spider to check if page exists
-if docker compose -f docker-compose.prod.yml exec -T frontend wget --spider -q http://localhost:3000; then
+# Use wget --spider to check if page exists (Use 127.0.0.1 to avoid IPv6 issues)
+if docker compose -f docker-compose.prod.yml exec -T frontend wget --spider -q http://127.0.0.1:3000; then
     echo -e "${GREEN}Frontend is Reachable!${NC}"
 else
     echo -e "${RED}Frontend Health Check Failed!${NC}"
