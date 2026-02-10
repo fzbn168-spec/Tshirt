@@ -10,7 +10,7 @@ echo -e "${YELLOW}=== SoleTrade Deployment & Health Check Script ===${NC}"
 
 # 1. Update Code
 echo -e "\n${YELLOW}[1/4] Pulling latest code...${NC}"
-cd /opt/soletrade
+# Ensure we are in the project root
 git pull
 if [ $? -ne 0 ]; then
     echo -e "${RED}Git pull failed!${NC}"
@@ -28,9 +28,9 @@ docker compose -f docker-compose.prod.yml up -d --build
 # 3. Database Migration
 echo -e "\n${YELLOW}[3/4] Applying Database Migrations...${NC}"
 # Wait a bit for backend to be ready
-echo "Waiting for backend to initialize..."
+echo "Waiting 10s for backend to initialize..."
 sleep 10
-docker compose -f docker-compose.prod.yml exec backend npx prisma migrate deploy
+docker compose -f docker-compose.prod.yml exec -T backend npx prisma migrate deploy
 if [ $? -ne 0 ]; then
     echo -e "${RED}Database migration failed!${NC}"
     exit 1
@@ -43,30 +43,32 @@ echo -e "\n${YELLOW}[4/4] Performing System Health Checks...${NC}"
 echo "Checking Docker Containers:"
 docker compose -f docker-compose.prod.yml ps
 
-# Check Backend Health Endpoint
+# Check Backend Health Endpoint (Internal)
 echo -e "\nChecking Backend API Health..."
-BACKEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api/health)
-if [ "$BACKEND_STATUS" == "200" ] || [ "$BACKEND_STATUS" == "404" ]; then 
-    # 404 might be returned if /health endpoint doesn't exist but server responds. 
-    # Better to check a known endpoint or root. Assuming root returns 200 or 404 (NestJS default)
-    echo -e "${GREEN}Backend is reachable (Status: $BACKEND_STATUS)${NC}"
+# Use docker exec to check inside the container since ports are not exposed to host
+if docker compose -f docker-compose.prod.yml exec -T backend wget -qO- http://localhost:3001/api/health | grep "ok"; then
+    echo -e "${GREEN}Backend is Healthy!${NC}"
 else
-    echo -e "${RED}Backend check failed (Status: $BACKEND_STATUS)${NC}"
+    echo -e "${RED}Backend Health Check Failed!${NC}"
+    echo "Logs:"
+    docker compose -f docker-compose.prod.yml logs --tail=20 backend
 fi
 
-# Check Frontend
+# Check Frontend Health (Internal)
 echo -e "\nChecking Frontend Health..."
-FRONTEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000)
-if [ "$FRONTEND_STATUS" == "200" ]; then
-    echo -e "${GREEN}Frontend is reachable (Status: 200)${NC}"
+# Use wget --spider to check if page exists
+if docker compose -f docker-compose.prod.yml exec -T frontend wget --spider -q http://localhost:3000; then
+    echo -e "${GREEN}Frontend is Reachable!${NC}"
 else
-    echo -e "${RED}Frontend check failed (Status: $FRONTEND_STATUS)${NC}"
+    echo -e "${RED}Frontend Health Check Failed!${NC}"
+    echo "Logs:"
+    docker compose -f docker-compose.prod.yml logs --tail=20 frontend
 fi
 
-# Feature Verification Checks (Mock)
+# Feature Verification Checks (Manual)
 echo -e "\n${YELLOW}=== P1 Feature Verification Hints ===${NC}"
 echo "1. 360 View: Check Product Detail Page JSON response includes 'images360'."
 echo "2. Attachments: Check Inquiry creation endpoint accepts 'attachments'."
 echo "3. Verification: Check Company Profile endpoint includes 'documents'."
 
-echo -e "\n${GREEN}Deployment Completed!${NC}"
+echo -e "\n${GREEN}Deployment Script Completed!${NC}"
