@@ -8,7 +8,26 @@ echo "   SoleTrade Production Configuration Wizard   "
 echo "==============================================="
 echo ""
 
-# 1. Ask for Stripe Keys
+# 0. Load existing .env if present
+if [ -f .env ]; then
+  export $(grep -v '^#' .env | xargs)
+fi
+
+# 1. Ask for Domain & Email (for SSL)
+if [ -z "$DOMAIN_NAME" ]; then
+  read -p "Enter your domain name (e.g., example.com): " DOMAIN_NAME
+fi
+if [ -z "$EMAIL" ]; then
+  read -p "Enter your email for SSL certificates: " EMAIL
+fi
+
+# Save to root .env
+echo "DOMAIN_NAME=$DOMAIN_NAME" > .env
+echo "EMAIL=$EMAIL" >> .env
+echo "COMPOSE_PROJECT_NAME=soletrade" >> .env
+
+# 2. Ask for Stripe Keys
+echo ""
 echo "Please enter your Stripe LIVE keys (from Dashboard > Developers > API keys):"
 read -p "Stripe Secret Key (sk_live_...): " STRIPE_SECRET_KEY
 read -p "Stripe Publishable Key (pk_live_...): " STRIPE_PUBLISHABLE_KEY

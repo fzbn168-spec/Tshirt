@@ -31,18 +31,26 @@ cd soletrade
 ```
 
 ## 5. 配置生产环境
-运行配置向导，输入您的 Stripe 密钥：
+运行配置向导，输入您的域名和 Stripe 密钥：
 ```bash
+chmod +x scripts/*.sh
 ./scripts/setup-production-env.sh
 ```
 
-## 6. 启动服务
+## 6. 初始化 SSL 证书 (首次部署必须)
+此脚本会自动申请 Let's Encrypt 免费 HTTPS 证书：
+```bash
+./scripts/init-letsencrypt.sh
+```
+> **注意**: 请确保您的域名已经解析到服务器 IP，否则证书申请会失败。
+
+## 7. 启动服务
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 等待几分钟，直到容器全部启动。
 
-## 7. 配置自动备份
+## 8. 验证
 ```bash
 ./scripts/install-cron-job.sh
 ```

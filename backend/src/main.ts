@@ -26,9 +26,8 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  // Listen on port 3001 to avoid conflict with Next.js (3000)
-  try {
-    await app.listen(3001);
+  // Listen on all network interfaces for Docker compatibility
+    await app.listen(3001, '0.0.0.0');
     console.log(`Application is running on: ${await app.getUrl()}`);
     console.log('Backend successfully started on port 3001');
   } catch (error) {
