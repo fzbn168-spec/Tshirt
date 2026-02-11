@@ -21,10 +21,32 @@ if [ -z "$EMAIL" ]; then
   read -p "Enter your email for SSL certificates: " EMAIL
 fi
 
+# 1.1 Generate JWT Secret
+if [ -z "$JWT_SECRET" ]; then
+  if command -v openssl &> /dev/null; then
+    JWT_SECRET=$(openssl rand -hex 32)
+  else
+    JWT_SECRET="secret_$(date +%s)"
+  fi
+fi
+
+# 1.2 Ask for SMTP
+echo ""
+echo "Configure SMTP (Optional, press Enter to skip)"
+[ -z "$SMTP_HOST" ] && read -p "SMTP Host: " SMTP_HOST
+[ -z "$SMTP_PORT" ] && read -p "SMTP Port: " SMTP_PORT
+[ -z "$SMTP_USER" ] && read -p "SMTP User: " SMTP_USER
+[ -z "$SMTP_PASS" ] && read -p "SMTP Password: " SMTP_PASS
+
 # Save to root .env
 echo "DOMAIN_NAME=$DOMAIN_NAME" > .env
 echo "EMAIL=$EMAIL" >> .env
 echo "COMPOSE_PROJECT_NAME=soletrade" >> .env
+echo "JWT_SECRET=$JWT_SECRET" >> .env
+echo "SMTP_HOST=$SMTP_HOST" >> .env
+echo "SMTP_PORT=$SMTP_PORT" >> .env
+echo "SMTP_USER=$SMTP_USER" >> .env
+echo "SMTP_PASS=$SMTP_PASS" >> .env
 
 # 2. Ask for Stripe Keys
 echo ""
