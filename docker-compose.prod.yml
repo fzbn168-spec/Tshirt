@@ -5,6 +5,8 @@ services:
     environment:
       - DATABASE_URL=file:/app/data/prod.db
       - JWT_SECRET=${JWT_SECRET}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
       - FRONTEND_URL=https://${DOMAIN_NAME}
       - BACKEND_URL=https://${DOMAIN_NAME}
       - SMTP_HOST=${SMTP_HOST}
@@ -29,6 +31,7 @@ services:
       context: ./frontend
       args:
         NEXT_PUBLIC_API_URL: https://${DOMAIN_NAME}/api
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
     environment:
       - NEXT_PUBLIC_API_URL=https://${DOMAIN_NAME}/api
     depends_on:
