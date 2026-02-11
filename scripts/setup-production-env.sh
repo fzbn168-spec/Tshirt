@@ -14,12 +14,11 @@ if [ -f .env ]; then
 fi
 
 # 1. Ask for Domain & Email (for SSL)
-if [ -z "$DOMAIN_NAME" ]; then
-  read -p "Enter your domain name (e.g., example.com): " DOMAIN_NAME
-fi
-if [ -z "$EMAIL" ]; then
-  read -p "Enter your email for SSL certificates: " EMAIL
-fi
+read -p "Enter your domain name [${DOMAIN_NAME}]: " input
+DOMAIN_NAME="${input:-$DOMAIN_NAME}"
+
+read -p "Enter your email for SSL certificates [${EMAIL}]: " input
+EMAIL="${input:-$EMAIL}"
 
 # 1.1 Generate JWT Secret
 if [ -z "$JWT_SECRET" ]; then
@@ -32,11 +31,18 @@ fi
 
 # 1.2 Ask for SMTP
 echo ""
-echo "Configure SMTP (Optional, press Enter to skip)"
-[ -z "$SMTP_HOST" ] && read -p "SMTP Host: " SMTP_HOST
-[ -z "$SMTP_PORT" ] && read -p "SMTP Port: " SMTP_PORT
-[ -z "$SMTP_USER" ] && read -p "SMTP User: " SMTP_USER
-[ -z "$SMTP_PASS" ] && read -p "SMTP Password: " SMTP_PASS
+echo "Configure SMTP (Optional, press Enter to keep current value or skip)"
+read -p "SMTP Host [${SMTP_HOST}]: " input
+SMTP_HOST="${input:-$SMTP_HOST}"
+
+read -p "SMTP Port [${SMTP_PORT}]: " input
+SMTP_PORT="${input:-$SMTP_PORT}"
+
+read -p "SMTP User [${SMTP_USER}]: " input
+SMTP_USER="${input:-$SMTP_USER}"
+
+read -p "SMTP Password [${SMTP_PASS}]: " input
+SMTP_PASS="${input:-$SMTP_PASS}"
 
 # Save to root .env
 echo "DOMAIN_NAME=$DOMAIN_NAME" > .env
@@ -51,9 +57,20 @@ echo "SMTP_PASS=$SMTP_PASS" >> .env
 # 2. Ask for Stripe Keys
 echo ""
 echo "Please enter your Stripe LIVE keys (from Dashboard > Developers > API keys):"
-read -p "Stripe Secret Key (sk_live_...): " STRIPE_SECRET_KEY
-read -p "Stripe Publishable Key (pk_live_...): " STRIPE_PUBLISHABLE_KEY
-read -p "Stripe Webhook Secret (whsec_...): " STRIPE_WEBHOOK_SECRET
+
+# Mask secrets for display
+MASKED_SECRET="${STRIPE_SECRET_KEY:0:7}..."
+MASKED_PUB="${STRIPE_PUBLISHABLE_KEY:0:7}..."
+MASKED_WEBHOOK="${STRIPE_WEBHOOK_SECRET:0:7}..."
+
+read -p "Stripe Secret Key [${MASKED_SECRET}]: " input
+if [ ! -z "$input" ]; then STRIPE_SECRET_KEY="$input"; fi
+
+read -p "Stripe Publishable Key [${MASKED_PUB}]: " input
+if [ ! -z "$input" ]; then STRIPE_PUBLISHABLE_KEY="$input"; fi
+
+read -p "Stripe Webhook Secret [${MASKED_WEBHOOK}]: " input
+if [ ! -z "$input" ]; then STRIPE_WEBHOOK_SECRET="$input"; fi
 
 if [ -z "$STRIPE_SECRET_KEY" ] || [ -z "$STRIPE_PUBLISHABLE_KEY" ]; then
   echo "Error: Keys cannot be empty."
