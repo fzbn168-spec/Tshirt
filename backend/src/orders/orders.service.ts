@@ -431,7 +431,7 @@ export class OrdersService {
 
       // 1. Validate & Calculate Items (Backend Pricing & Stock Check)
       let calculatedTotalAmount = 0;
-      const orderItemsData = [];
+      const orderItemsData: Prisma.OrderItemUncheckedCreateWithoutOrderInput[] = [];
 
       for (const item of items) {
         // Fetch SKU to get real price and stock (Locking strategy relies on Prisma default isolation)
