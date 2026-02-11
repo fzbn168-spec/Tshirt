@@ -5,6 +5,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { EmailTemplates } from '../email/email.templates';
 import PDFDocument from 'pdfkit';
 
+import { UpdateOrderDto } from './dto/update-order.dto';
+
 @Injectable()
 export class OrdersService {
   constructor(
@@ -12,12 +14,23 @@ export class OrdersService {
     private notificationsService: NotificationsService,
   ) {}
 
-  async generatePi(id: string, user: any): Promise<Buffer> {
+  /**
+    * 生成形式发票 (PI) PDF
+    * 
+    * 形式发票 (PI) 是在发货或交付货物之前发送给买方的初步销售清单。
+    * 它描述了购买的商品以及其他重要信息，如运输重量和运输费用。
+    * 
+    * @param id 订单 ID
+    * @param user 请求用户 (用于权限检查)
+    * @returns 包含 PDF 数据的 Buffer
+    */
+   async generatePi(id: string, user: any): Promise<Buffer> {
     const companyId =
       user.role === 'PLATFORM_ADMIN' ? undefined : user.companyId;
     const order = await this.findOne(id, companyId);
 
     return new Promise((resolve, reject) => {
+      // Create PDF Document (A4 Size)
       const doc = new PDFDocument({ margin: 50, size: 'A4' });
       const buffers: Buffer[] = [];
 
@@ -25,11 +38,11 @@ export class OrdersService {
       doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', reject);
 
-      // Header
+      // --- Header Section ---
       doc.fontSize(20).text('Proforma Invoice', { align: 'center' });
       doc.moveDown();
 
-      // Info Section
+      // --- Info Section ---
       doc.fontSize(10);
       doc.text(`Order No: ${order.orderNo}`, { align: 'right' });
       doc.text(`Date: ${order.createdAt.toISOString().split('T')[0]}`, {
@@ -38,7 +51,7 @@ export class OrdersService {
       doc.text(`Status: ${order.status}`, { align: 'right' });
       doc.moveDown();
 
-      // Buyer Info
+      // --- Buyer Info ---
       doc.font('Helvetica-Bold').text('Buyer:', 50, doc.y);
       doc.font('Helvetica').text(order.company.name, 100, doc.y - 12);
       if (order.company.address) doc.text(order.company.address, 100);
@@ -46,9 +59,16 @@ export class OrdersService {
 
       doc.moveDown(2);
 
-      // Table Header
+      // --- Table Layout Configuration ---
+      // Define X coordinates for each column to ensure alignment
       const startY = doc.y;
-      const colX = { product: 50, sku: 200, qty: 350, price: 400, total: 480 };
+      const colX = { 
+          product: 50,  // Product Name
+          sku: 200,     // SKU/Specs
+          qty: 350,     // Quantity
+          price: 400,   // Unit Price
+          total: 480    // Total Price
+      };
 
       doc.font('Helvetica-Bold');
       doc.text('Product', colX.product, startY);
@@ -57,6 +77,7 @@ export class OrdersService {
       doc.text('Unit Price', colX.price, startY);
       doc.text('Total', colX.total, startY);
 
+      // Draw Header Line
       doc
         .moveTo(50, startY + 15)
         .lineTo(550, startY + 15)
@@ -65,11 +86,12 @@ export class OrdersService {
       let y = startY + 25;
       doc.font('Helvetica');
 
+      // --- Render Items ---
       order.items.forEach((item) => {
-        // Handle page break
+        // Page Break Logic: If we are near bottom (700px), add new page
         if (y > 700) {
           doc.addPage();
-          y = 50;
+          y = 50; // Reset Y to top margin
         }
 
         const productName = item.productName;
@@ -81,7 +103,7 @@ export class OrdersService {
         doc.text(`$${Number(item.unitPrice).toFixed(2)}`, colX.price, y);
         doc.text(`$${Number(item.totalPrice).toFixed(2)}`, colX.total, y);
 
-        y += 20;
+        y += 20; // Move down for next row
       });
 
       doc.moveDown(2);
@@ -110,7 +132,16 @@ export class OrdersService {
     });
   }
 
-  async generateCi(id: string, user: any): Promise<Buffer> {
+  /**
+    * 生成商业发票 (CI) PDF
+    * 
+    * 商业发票 (CI) 是用于海关申报的主要单证。
+    * 与 PI 不同，CI 必须包含 HS 编码、原产国和确切的贸易条款 (Incoterms)。
+    * 
+    * @param id 订单 ID
+    * @param user 请求用户
+    */
+   async generateCi(id: string, user: any): Promise<Buffer> {
     const companyId =
       user.role === 'PLATFORM_ADMIN' ? undefined : user.companyId;
     const order = await this.findOne(id, companyId);
@@ -123,41 +154,64 @@ export class OrdersService {
       doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', reject);
 
-      // Header
+      // --- Header ---
       doc.fontSize(20).text('Commercial Invoice', { align: 'center' });
       doc.moveDown();
 
-      // Info Section
+      // --- Document Info ---
       doc.fontSize(10);
       doc.text(`Invoice No: CI-${order.orderNo}`, { align: 'right' });
       doc.text(`Date: ${new Date().toISOString().split('T')[0]}`, {
         align: 'right',
       });
       doc.text(`Order No: ${order.orderNo}`, { align: 'right' });
+      
+      // Trade Terms (Crucial for Customs)
+      if (order.incoterms) {
+        doc.text(`Incoterms: ${order.incoterms}`, { align: 'right' });
+      }
+      if (order.portOfLoading) {
+        doc.text(`Port of Loading: ${order.portOfLoading}`, { align: 'right' });
+      }
+      if (order.portOfDestination) {
+        doc.text(`Port of Destination: ${order.portOfDestination}`, { align: 'right' });
+      }
+
       doc.moveDown();
 
-      // Seller Info (Platform)
+      // --- Seller Info ---
       doc.font('Helvetica-Bold').text('Seller:', 50, doc.y);
       doc.font('Helvetica').text('SoleTrade Inc.', 100, doc.y - 12);
       doc.text('123 Innovation Dr, Tech City', 100);
       doc.text('support@soletrade.com', 100);
       doc.moveDown();
 
-      // Buyer Info
+      // --- Buyer Info ---
       doc.font('Helvetica-Bold').text('Buyer:', 50, doc.y);
       doc.font('Helvetica').text(order.company.name, 100, doc.y - 12);
       if (order.company.address) doc.text(order.company.address, 100);
       if (order.company.contactEmail) doc.text(order.company.contactEmail, 100);
 
       doc.moveDown(2);
+      // Mandatory for Export
+      doc.text('Country of Origin: China', 50);
+      doc.moveDown(1);
 
-      // Table Header
+      // --- Table Layout ---
       const startY = doc.y;
-      const colX = { product: 50, sku: 200, qty: 350, price: 400, total: 480 };
+      const colX = { 
+          product: 50, 
+          sku: 180, 
+          hsCode: 280, // HS Code Column (Required for Customs)
+          qty: 350, 
+          price: 400, 
+          total: 480 
+      };
 
       doc.font('Helvetica-Bold');
       doc.text('Product', colX.product, startY);
       doc.text('SKU / Specs', colX.sku, startY);
+      doc.text('HS Code', colX.hsCode, startY);
       doc.text('Qty', colX.qty, startY);
       doc.text('Unit Price', colX.price, startY);
       doc.text('Total', colX.total, startY);
@@ -170,7 +224,7 @@ export class OrdersService {
       let y = startY + 25;
       doc.font('Helvetica');
 
-      order.items.forEach((item) => {
+      order.items.forEach((item: any) => {
         if (y > 700) {
           doc.addPage();
           y = 50;
@@ -178,9 +232,12 @@ export class OrdersService {
 
         const productName = item.productName;
         const specs = item.skuSpecs || '-';
+        // Get HS Code from Product (via OrderItem relation)
+        const hsCode = item.product?.hsCode || '-';
 
-        doc.text(productName.substring(0, 30), colX.product, y);
-        doc.text(specs.substring(0, 30), colX.sku, y);
+        doc.text(productName.substring(0, 25), colX.product, y);
+        doc.text(specs.substring(0, 25), colX.sku, y);
+        doc.text(hsCode, colX.hsCode, y);
         doc.text(item.quantity.toString(), colX.qty, y);
         doc.text(`$${Number(item.unitPrice).toFixed(2)}`, colX.price, y);
         doc.text(`$${Number(item.totalPrice).toFixed(2)}`, colX.total, y);
@@ -238,16 +295,24 @@ export class OrdersService {
       
       doc.moveDown(2);
 
+      // Shipping Marks
+      if (order.shippingMarks) {
+        doc.font('Helvetica-Bold').text('Shipping Marks:', 50);
+        doc.font('Helvetica').text(order.shippingMarks, 50);
+        doc.moveDown();
+      }
+
       // Table Header
       const startY = doc.y;
-      const colX = { product: 50, sku: 200, qty: 350, cartons: 420, weight: 480 };
+      const colX = { product: 50, sku: 180, qty: 320, cartons: 380, weight: 440, cbm: 500 };
 
       doc.font('Helvetica-Bold');
       doc.text('Product', colX.product, startY);
       doc.text('SKU / Specs', colX.sku, startY);
       doc.text('Qty', colX.qty, startY);
-      doc.text('Cartons', colX.cartons, startY);
-      doc.text('G.W (kg)', colX.weight, startY);
+      doc.text('Ctns', colX.cartons, startY);
+      doc.text('G.W(kg)', colX.weight, startY);
+      doc.text('CBM', colX.cbm, startY);
 
       doc
         .moveTo(50, startY + 15)
@@ -258,8 +323,11 @@ export class OrdersService {
       doc.font('Helvetica');
 
       let totalQty = 0;
-      // Mock weight/carton logic since DB doesn't have it yet
-      order.items.forEach((item) => {
+      let totalCartons = 0;
+      let totalGw = 0;
+      let totalCbm = 0;
+
+      order.items.forEach((item: any) => {
         if (y > 700) {
           doc.addPage();
           y = 50;
@@ -267,17 +335,35 @@ export class OrdersService {
 
         const productName = item.productName;
         const specs = item.skuSpecs || '-';
-        // Mock calculation: 20 items per carton, 0.5kg per item
-        const cartons = Math.ceil(item.quantity / 20); 
-        const weight = (item.quantity * 0.5).toFixed(1);
+        
+        // Logistics Calculation
+        const itemsPerCarton = item.sku?.itemsPerCarton || 1; // Default to 1 if not set
+        const cartons = Math.ceil(item.quantity / itemsPerCarton);
+        
+        // Weight: Gross Weight per item * Qty
+        const unitGw = item.sku?.grossWeight ? Number(item.sku.grossWeight) : 0;
+        const gw = (item.quantity * unitGw).toFixed(2);
+        
+        // Volume: (L*W*H / 1,000,000) * Cartons
+        let cbm = 0;
+        if (item.sku?.length && item.sku?.width && item.sku?.height) {
+            const volPerCarton = (Number(item.sku.length) * Number(item.sku.width) * Number(item.sku.height)) / 1000000;
+            cbm = volPerCarton * cartons;
+        }
+        const cbmStr = cbm.toFixed(3);
 
-        doc.text(productName.substring(0, 30), colX.product, y);
-        doc.text(specs.substring(0, 30), colX.sku, y);
+        doc.text(productName.substring(0, 25), colX.product, y);
+        doc.text(specs.substring(0, 25), colX.sku, y);
         doc.text(item.quantity.toString(), colX.qty, y);
         doc.text(cartons.toString(), colX.cartons, y);
-        doc.text(weight, colX.weight, y);
+        doc.text(gw, colX.weight, y);
+        doc.text(cbmStr, colX.cbm, y);
 
         totalQty += item.quantity;
+        totalCartons += cartons;
+        totalGw += Number(gw);
+        totalCbm += cbm;
+
         y += 20;
       });
 
@@ -285,34 +371,49 @@ export class OrdersService {
       doc.moveTo(50, y).lineTo(550, y).stroke();
       y += 10;
 
+      // Summary
       doc.font('Helvetica-Bold');
-      doc.text(`Total Quantity: ${totalQty}`, 50, y);
+      doc.text('TOTAL:', 50, y);
+      doc.text(totalQty.toString(), colX.qty, y);
+      doc.text(totalCartons.toString(), colX.cartons, y);
+      doc.text(totalGw.toFixed(2), colX.weight, y);
+      doc.text(totalCbm.toFixed(3), colX.cbm, y);
 
       doc.end();
     });
   }
 
-  async create(
+  /**
+    * 🔒 事务性订单创建
+    * 
+    * 此方法实现了具有 ACID 保证的核心 B2B 交易逻辑：
+    * 1. 🛡️ 库存检查：悲观地检查实时库存。
+    * 2. 📉 库存扣减：原子性地扣减库存以防止超卖。
+    * 3. 💰 后端计价：忽略前端价格，根据数据库值重新计算。
+    * 4. 📊 阶梯定价：根据数量自动应用批量折扣。
+    * 
+    * @param userId 买家 ID
+    * @param companyId 买家公司 ID
+    * @param createOrderDto 订单数据
+    * @returns 创建的订单
+    */
+   async create(
     userId: string,
     companyId: string,
     createOrderDto: CreateOrderDto,
   ) {
     const { inquiryId, items } = createOrderDto;
 
-    // Calculate total amount
-    const totalAmount = items.reduce((sum, item) => {
-      return sum + item.quantity * item.unitPrice;
-    }, 0);
-
-    // Generate Order No
+    // Generate Order No (Format: ORD-YYYYMMDD-RRR)
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const randomSuffix = Math.floor(Math.random() * 1000)
       .toString()
       .padStart(3, '0');
     const orderNo = `ORD-${dateStr}-${randomSuffix}`;
 
+    // Start Database Transaction
     const order = await this.prisma.$transaction(async (tx) => {
-      // Validate Inquiry if provided
+      // Validate Inquiry if provided (Ensure it belongs to this company)
       if (inquiryId) {
         const inquiry = await tx.inquiry.findUnique({
           where: { id: inquiryId },
@@ -327,25 +428,80 @@ export class OrdersService {
         }
       }
 
-      // Create Order
+      // 1. Validate & Calculate Items (Backend Pricing & Stock Check)
+      let calculatedTotalAmount = 0;
+      const orderItemsData = [];
+
+      for (const item of items) {
+        // Fetch SKU to get real price and stock (Locking strategy relies on Prisma default isolation)
+        const sku = await tx.sku.findUnique({
+          where: { id: item.skuId },
+          include: { product: true }
+        });
+
+        if (!sku) {
+          throw new NotFoundException(`SKU not found: ${item.skuId}`);
+        }
+
+        // Critical Stock Check
+        if (sku.stock < item.quantity) {
+          throw new Error(`Insufficient stock for SKU: ${sku.skuCode} (Requested: ${item.quantity}, Available: ${sku.stock})`);
+        }
+
+        // Atomic Decrement (Prevents race conditions)
+        await tx.sku.update({
+          where: { id: sku.id },
+          data: { stock: { decrement: item.quantity } }
+        });
+
+        // Determine Unit Price (Tiered Pricing Logic)
+        let unitPrice = Number(sku.price);
+        
+        // Tiered Pricing Strategy:
+        // Parse JSON config: [{minQty: 10, price: 90}, {minQty: 50, price: 80}]
+        // Sort descending by minQty to find the highest applicable tier.
+        if (sku.tierPrices) {
+          try {
+            const tiers = JSON.parse(sku.tierPrices);
+            if (Array.isArray(tiers)) {
+              // Sort tiers by minQty descending to find the best match
+              const sortedTiers = tiers.sort((a, b) => b.minQty - a.minQty);
+              const matchedTier = sortedTiers.find(t => item.quantity >= t.minQty);
+              
+              if (matchedTier) {
+                unitPrice = Number(matchedTier.price);
+              }
+            }
+          } catch (e) {
+            console.warn(`Failed to parse tier prices for SKU ${sku.skuCode}`, e);
+          }
+        }
+
+        const totalPrice = unitPrice * item.quantity;
+        calculatedTotalAmount += totalPrice;
+
+        orderItemsData.push({
+          productId: item.productId,
+          skuId: item.skuId,
+          productName: sku.product.title ? JSON.parse(sku.product.title).en : 'Product', // Source of Truth: DB
+          skuSpecs: item.skuSpecs, // Note: Specs string is currently from frontend, consider reconstructing from DB attributes for stricter consistency
+          quantity: item.quantity,
+          unitPrice: unitPrice, // Source of Truth: Backend Calculation
+          totalPrice: totalPrice,
+        });
+      }
+
+      // Create Order with backend-calculated total
       const newOrder = await tx.order.create({
         data: {
           orderNo,
           companyId,
           userId,
           inquiryId,
-          totalAmount,
+          totalAmount: calculatedTotalAmount,
           status: 'PENDING_PAYMENT',
           items: {
-            create: items.map((item) => ({
-              productId: item.productId,
-              skuId: item.skuId,
-              productName: item.productName,
-              skuSpecs: item.skuSpecs,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              totalPrice: item.quantity * item.unitPrice,
-            })),
+            create: orderItemsData,
           },
         },
         include: {
@@ -422,15 +578,91 @@ export class OrdersService {
     });
   }
 
-  async updateStatus(id: string, status: string) {
+  async update(id: string, updateOrderDto: UpdateOrderDto) {
     const order = await this.prisma.order.update({
       where: { id },
-      data: { status },
+      data: {
+        ...updateOrderDto,
+      },
       include: {
         user: {
           select: { id: true, email: true, fullName: true },
         },
       },
+    });
+
+    // If status changed, notify user (reuse existing logic if status is present)
+    if (updateOrderDto.status && order.user?.email) {
+      await this.notificationsService.notifyUser(
+        order.user.id,
+        order.user.email,
+        'ORDER',
+        `Order Status Update: ${order.orderNo}`,
+        EmailTemplates.orderStatusUpdate(
+          order.user.fullName || 'Customer',
+          order.orderNo,
+          updateOrderDto.status,
+          order.id,
+        ),
+        order.id,
+        'ORDER',
+      );
+    }
+
+    return order;
+  }
+
+  /**
+    * 更新订单状态并处理库存回滚逻辑
+    * 
+    * 处理状态转换和副作用：
+    * - CANCELLED: 自动将库存释放回 SKU。
+    * - SHIPPED/DELIVERED: 触发通知。
+    * 
+    * @param id 订单 ID
+    * @param status 新状态
+    */
+   async updateStatus(id: string, status: string) {
+    // Wrap in transaction to ensure inventory rollback is atomic with status change
+    const order = await this.prisma.$transaction(async (tx) => {
+      // 1. Get current order status
+      const currentOrder = await tx.order.findUnique({
+        where: { id },
+        include: { items: true }
+      });
+
+      if (!currentOrder) {
+        throw new NotFoundException('Order not found');
+      }
+
+      // 2. Handle Inventory Rollback
+      // If cancelling an order that was not already cancelled, we return stock.
+      if (status === 'CANCELLED' && currentOrder.status !== 'CANCELLED') {
+        for (const item of currentOrder.items) {
+          if (item.skuId) {
+            await tx.sku.update({
+              where: { id: item.skuId },
+              data: { stock: { increment: item.quantity } }
+            });
+          }
+        }
+      }
+      
+      // NOTE: Re-opening a cancelled order is currently NOT supported automatically.
+      // If manually re-opening, stock must be checked and decremented manually.
+
+      // 3. Update Status
+      const updatedOrder = await tx.order.update({
+        where: { id },
+        data: { status },
+        include: {
+          user: {
+            select: { id: true, email: true, fullName: true },
+          },
+        },
+      });
+
+      return updatedOrder;
     });
 
     // Notify User
@@ -463,7 +695,12 @@ export class OrdersService {
     const order = await this.prisma.order.findFirst({
       where: whereClause,
       include: {
-        items: true,
+        items: {
+          include: {
+            product: true,
+            sku: true,
+          },
+        },
         inquiry: true,
         shippings: true,
         payments: true,

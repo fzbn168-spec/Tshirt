@@ -26,6 +26,8 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
   const [descZh, setDescZh] = useState('');
   const [basePrice, setBasePrice] = useState('');
   const [categoryId, setCategoryId] = useState(''); 
+  const [hsCode, setHsCode] = useState(''); // New HS Code
+  const [material, setMaterial] = useState(''); // New Material
   const [images, setImages] = useState(''); 
   const [isPublished, setIsPublished] = useState(false);
   
@@ -37,7 +39,20 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
   const [selectedValues, setSelectedValues] = useState<{[key: string]: string[]}>({}); // attributeId -> valueIds[]
 
   const [skus, setSkus] = useState<any[]>([
-    { skuCode: '', color: '', size: '', price: '', stock: 0, moq: 1 }
+    { 
+      skuCode: '', 
+      color: '', 
+      size: '', 
+      price: '', 
+      stock: 0, 
+      moq: 1,
+      netWeight: '',
+      grossWeight: '',
+      itemsPerCarton: 1,
+      length: '',
+      width: '',
+      height: ''
+    }
   ]);
   
   const [tierDialogOpen, setTierDialogOpen] = useState(false);
@@ -105,6 +120,8 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
           setDescZh(desc.zh);
           setBasePrice(initialData.basePrice || '');
           setCategoryId(initialData.categoryId || '');
+          setHsCode(initialData.hsCode || '');
+          setMaterial(initialData.material || '');
           setImages(imgs.join('\n'));
           setIsPublished(initialData.isPublished || false);
 
@@ -142,6 +159,12 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
                 tierPrices: s.tierPrices || '', // Restore tierPrices
                 stock: s.stock,
                 moq: s.moq,
+                netWeight: s.netWeight || '',
+                grossWeight: s.grossWeight || '',
+                itemsPerCarton: s.itemsPerCarton || 1,
+                length: s.length || '',
+                width: s.width || '',
+                height: s.height || '',
                 attributeValueIds: s.attributeValues.map((sav: any) => sav.attributeValueId)
               };
             }));
@@ -237,6 +260,12 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
         tierPrices: '', // Default empty
         stock: 0,
         moq: 1,
+        netWeight: '',
+        grossWeight: '',
+        itemsPerCarton: 1,
+        length: '',
+        width: '',
+        height: '',
         // Helper for display
         _displaySpecs: values.map((v: any) => JSON.parse(v.value).en).join(' / ')
       };
@@ -246,7 +275,20 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
   };
 
   const handleAddSku = () => {
-    setSkus([...skus, { skuCode: '', specs: '', price: basePrice, tierPrices: '', stock: 0, moq: 1 }]);
+    setSkus([...skus, { 
+      skuCode: '', 
+      specs: '', 
+      price: basePrice, 
+      tierPrices: '', 
+      stock: 0, 
+      moq: 1,
+      netWeight: '',
+      grossWeight: '',
+      itemsPerCarton: 1,
+      length: '',
+      width: '',
+      height: ''
+    }]);
   };
 
   const handleRemoveSku = (index: number) => {
@@ -296,6 +338,8 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
         images: JSON.stringify(images.split('\n').filter(url => url.trim() !== '')),
         basePrice: parseFloat(basePrice) || 0,
         specsTemplate: JSON.stringify({}), 
+        hsCode,
+        material,
         isPublished,
         attributeIds: selectedAttributes.map(a => a.id),
         skus: skus.map(s => ({
@@ -305,6 +349,12 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
           tierPrices: s.tierPrices, // Pass through
           stock: parseInt(s.stock) || 0,
           moq: parseInt(s.moq) || 1,
+          netWeight: parseFloat(s.netWeight) || 0,
+          grossWeight: parseFloat(s.grossWeight) || 0,
+          itemsPerCarton: parseInt(s.itemsPerCarton) || 1,
+          length: parseFloat(s.length) || 0,
+          width: parseFloat(s.width) || 0,
+          height: parseFloat(s.height) || 0,
           attributeValueIds: s.attributeValueIds
         }))
       };
@@ -449,6 +499,27 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
                     <p className="text-xs text-zinc-500">{t('categoryIdHelp')}</p>
                 </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">HS Code</label>
+                    <input 
+                        value={hsCode}
+                        onChange={e => setHsCode(e.target.value)}
+                        className="w-full px-3 py-2 bg-transparent border border-zinc-200 dark:border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                        placeholder="e.g. 640399"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">Material</label>
+                    <input 
+                        value={material}
+                        onChange={e => setMaterial(e.target.value)}
+                        className="w-full px-3 py-2 bg-transparent border border-zinc-200 dark:border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                        placeholder="e.g. 100% Leather"
+                    />
+                </div>
+            </div>
           </div>
 
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-6 space-y-4">
@@ -546,6 +617,7 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
                             <th className="px-4 py-3 font-medium text-zinc-500 w-32">Tier Price</th>
                             <th className="px-4 py-3 font-medium text-zinc-500 w-24">{t('stock')}</th>
                             <th className="px-4 py-3 font-medium text-zinc-500 w-24">MOQ</th>
+                            <th className="px-4 py-3 font-medium text-zinc-500 w-24">Logistics</th>
                             <th className="px-4 py-3 font-medium text-zinc-500 w-40">{t('skuCode')}</th>
                             <th className="px-4 py-3 font-medium text-zinc-500 w-10"></th>
                         </tr>
@@ -613,6 +685,51 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
                                         onChange={e => handleSkuChange(idx, 'moq', e.target.value)}
                                         className="w-full px-2 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                                     />
+                                </td>
+                                <td className="px-4 py-2">
+                                  <div className="flex flex-col gap-1">
+                                    <div className="flex gap-1">
+                                        <input 
+                                            type="number"
+                                            placeholder="N.W (kg)"
+                                            title="Net Weight (kg)"
+                                            value={sku.netWeight}
+                                            onChange={e => handleSkuChange(idx, 'netWeight', e.target.value)}
+                                            className="w-16 px-2 py-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded text-xs"
+                                        />
+                                        <input 
+                                            type="number"
+                                            placeholder="G.W (kg)"
+                                            title="Gross Weight (kg)"
+                                            value={sku.grossWeight}
+                                            onChange={e => handleSkuChange(idx, 'grossWeight', e.target.value)}
+                                            className="w-16 px-2 py-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded text-xs"
+                                        />
+                                    </div>
+                                    <div className="flex gap-1">
+                                        <input 
+                                            type="number"
+                                            placeholder="Items/Ctn"
+                                            title="Items Per Carton"
+                                            value={sku.itemsPerCarton}
+                                            onChange={e => handleSkuChange(idx, 'itemsPerCarton', e.target.value)}
+                                            className="w-16 px-2 py-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded text-xs"
+                                        />
+                                        <input 
+                                            type="text"
+                                            placeholder="L*W*H"
+                                            title="Dimensions (cm)"
+                                            value={`${sku.length || ''}*${sku.width || ''}*${sku.height || ''}`}
+                                            onChange={e => {
+                                                const [l, w, h] = e.target.value.split('*');
+                                                handleSkuChange(idx, 'length', l);
+                                                handleSkuChange(idx, 'width', w);
+                                                handleSkuChange(idx, 'height', h);
+                                            }}
+                                            className="w-16 px-2 py-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded text-xs"
+                                        />
+                                    </div>
+                                  </div>
                                 </td>
                                 <td className="px-4 py-2">
                                     <input 

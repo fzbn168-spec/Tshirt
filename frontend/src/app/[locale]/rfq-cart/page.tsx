@@ -1,16 +1,18 @@
 'use client';
 
 import { useCartStore } from '@/store/useCartStore';
-import { Minus, Plus, Trash2, Send, ArrowRight } from 'lucide-react';
+import { Minus, Plus, Trash2, Send, ArrowRight, Upload, X } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 export default function RFQCartPage() {
   const { items, updateQuantity, removeItem, clearCart, totalPrice, totalItems } = useCartStore();
   const [mounted, setMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -18,48 +20,83 @@ export default function RFQCartPage() {
 
   if (!mounted) return null;
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+        setAttachments(prev => [...prev, ...Array.from(e.target.files!)]);
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     const formData = new FormData(e.target as HTMLFormElement);
-    const data = {
-      contactName: formData.get('companyName') as string, // Using Company Name as Contact Name for now
-      contactEmail: formData.get('email') as string,
-      notes: formData.get('notes') as string,
-      items: items.map(item => ({
-        productId: item.productId,
-        productName: item.productName,
-        skuId: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.skuId) ? item.skuId : undefined,
-        skuSpecs: item.specs || `Color: ${item.color || 'N/A'}, Size: ${item.size || 'N/A'}`,
-        quantity: Number(item.quantity),
-        price: Number(item.price)
-      }))
-    };
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    let uploadedUrls: string[] = [];
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${API_URL}/inquiries`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
+        // 1. Upload Attachments if any
+        if (attachments.length > 0) {
+            const uploadFormData = new FormData();
+            attachments.forEach(file => uploadFormData.append('file', file));
+            // Assuming we have a batch upload or single upload loop. 
+            // For simplicity, let's assume we upload one by one or the backend supports multiple.
+            // But our current UploadsController typically handles single file 'file'.
+            // Let's loop for now to be safe.
+            
+            for (const file of attachments) {
+                const fData = new FormData();
+                fData.append('file', file);
+                const upRes = await fetch(`${API_URL}/uploads`, {
+                    method: 'POST',
+                    body: fData
+                });
+                if (upRes.ok) {
+                    const upData = await upRes.json();
+                    uploadedUrls.push(upData.url); // Adjust based on actual response { url: ... }
+                }
+            }
+        }
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Submission failed:', response.status, errorText);
-        throw new Error(`Failed to submit inquiry: ${response.status} ${errorText}`);
-      }
+        const data = {
+            contactName: formData.get('companyName') as string,
+            contactEmail: formData.get('email') as string,
+            notes: formData.get('notes') as string,
+            attachments: JSON.stringify(uploadedUrls),
+            items: items.map(item => ({
+                productId: item.productId,
+                productName: item.productName,
+                skuId: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.skuId) ? item.skuId : undefined,
+                skuSpecs: item.specs || `Color: ${item.color || 'N/A'}, Size: ${item.size || 'N/A'}`,
+                quantity: Number(item.quantity),
+                price: Number(item.price)
+            }))
+        };
 
-      setSubmitted(true);
-      clearCart();
+        const response = await fetch(`${API_URL}/inquiries`, {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to submit inquiry: ${response.status} ${errorText}`);
+        }
+
+        setSubmitted(true);
+        clearCart();
     } catch (error) {
-      console.error(error);
-      alert('Failed to submit inquiry. Please try again.');
+        console.error(error);
+        alert('Failed to submit inquiry. Please try again.');
     } finally {
-      setIsSubmitting(false);
+        setIsSubmitting(false);
     }
   };
 
@@ -220,6 +257,43 @@ export default function RFQCartPage() {
                           className="w-full rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-800 dark:bg-zinc-900"
                           placeholder="Specific requirements, shipping destination, etc."
                         />
+                      </div>
+
+                      {/* File Upload Section */}
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Attachments (Logo, Design)</label>
+                        <input 
+                            type="file" 
+                            multiple
+                            ref={fileInputRef}
+                            className="hidden"
+                            onChange={handleFileChange}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="w-full h-10 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-md flex items-center justify-center gap-2 text-zinc-500 hover:text-zinc-700 hover:border-zinc-400 dark:hover:text-zinc-300 transition-colors"
+                        >
+                            <Upload className="w-4 h-4" />
+                            <span className="text-sm">Upload Files</span>
+                        </button>
+                        
+                        {attachments.length > 0 && (
+                            <div className="mt-2 space-y-2">
+                                {attachments.map((file, idx) => (
+                                    <div key={idx} className="flex items-center justify-between text-sm bg-zinc-50 dark:bg-zinc-800 p-2 rounded">
+                                        <span className="truncate max-w-[200px]">{file.name}</span>
+                                        <button 
+                                            type="button"
+                                            onClick={() => removeAttachment(idx)}
+                                            className="text-zinc-400 hover:text-red-500"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                       </div>
 
               <button 

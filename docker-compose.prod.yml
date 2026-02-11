@@ -15,6 +15,11 @@ services:
       - ./backend/data:/app/data
       - ./backend/uploads:/app/uploads
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - soletrade-network
 
@@ -29,6 +34,11 @@ services:
     depends_on:
       - backend
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - soletrade-network
 

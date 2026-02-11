@@ -58,7 +58,10 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
         {/* Left Column: Gallery */}
         <div className="space-y-6">
-          <ProductGallery images={images} />
+          <ProductGallery 
+            images={images} 
+            images360={product.images360 ? JSON.parse(product.images360) : []}
+          />
         </div>
 
         {/* Right Column: Info & Selector */}

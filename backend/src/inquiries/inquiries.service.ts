@@ -15,10 +15,21 @@ export class InquiriesService {
     private notificationsService: NotificationsService,
   ) {}
 
+  /**
+   * 创建新的询价单 (RFQ)
+   * 
+   * 逻辑说明:
+   * 1. 生成唯一的询价单号 (RFQ-YYYY-NNN)。
+   * 2. 创建询价主表和明细表记录。
+   * 3. 触发系统通知：告知平台管理员收到新询盘。
+   * 
+   * @param createInquiryDto 询价单数据
+   * @param companyId 关联公司ID (可选)
+   */
   async create(createInquiryDto: CreateInquiryDto, companyId?: string) {
     const { items, ...inquiryData } = createInquiryDto;
 
-    // Generate simple inquiry number
+    // 生成简易询价单号 (实际业务可能需要更复杂的生成规则)
     const count = await this.prisma.inquiry.count();
     const inquiryNo = `RFQ-${new Date().getFullYear()}-${String(count + 1).padStart(3, '0')}`;
 
@@ -44,7 +55,7 @@ export class InquiriesService {
       },
     });
 
-    // Notify Admin
+    // 通知管理员
     await this.notificationsService.notifyAdmin(
       'INQUIRY',
       `New Inquiry Received: ${inquiry.inquiryNo}`,
@@ -96,19 +107,34 @@ export class InquiriesService {
     return inquiry;
   }
 
+  /**
+   * 更新询价单 (支持批量修改明细)
+   * 
+   * 逻辑说明:
+   * 1. 验证权限 (仅限所属公司或管理员)。
+   * 2. 事务性更新: 
+   *    - 如果提供了 items，则采用"全量替换"策略 (删除旧明细 -> 插入新明细)。
+   *    - 更新主表字段 (如状态、报价)。
+   * 3. 状态流转通知:
+   *    - 如果状态变为 QUOTED (已报价)，自动通知买家查看。
+   * 
+   * @param id 询价单ID
+   * @param updateInquiryDto 更新数据
+   * @param companyId 请求者所属公司 (用于权限验证)
+   */
   async update(
     id: string,
     updateInquiryDto: UpdateInquiryDto,
     companyId?: string,
   ) {
-    // Verify existence and permission first
+    // 验证存在性和权限
     const existing = await this.findOne(id, companyId);
 
     const { items, ...data } = updateInquiryDto;
 
     const updatedInquiry = await this.prisma.$transaction(async (prisma) => {
       if (items) {
-        // Replace items if provided
+        // 如果提供了明细，先删除旧明细，再创建新明细 (全量替换模式)
         await prisma.inquiryItem.deleteMany({ where: { inquiryId: id } });
         await prisma.inquiryItem.createMany({
           data: items.map((item) => ({
@@ -131,17 +157,14 @@ export class InquiriesService {
       });
     });
 
-    // Notify User if quoted
+    // 状态流转通知: 如果已报价 (QUOTED)
     if (data.status === 'QUOTED' && existing.status !== 'QUOTED') {
-      // Find a user associated with this company (or just use contactEmail if no user)
-      // Since Inquiry has companyId, we can try to notify company users.
-      // But for simplicity, we rely on contactEmail which is always present in Inquiry.
-      // However, notification requires userId if we want it to show up in dashboard.
-      // If anonymous, just email. If registered, we should try to find the user.
+      // 尝试查找该公司下的用户进行通知
+      // 如果是匿名询价，则仅发送邮件
       
       let userId: string | null = null;
       if (updatedInquiry.companyId) {
-         // Try to find the first admin/member of the company
+         // 查找公司下的第一个用户 (通常是管理员)
          const user = await this.prisma.user.findFirst({
              where: { companyId: updatedInquiry.companyId }
          });
@@ -159,7 +182,7 @@ export class InquiriesService {
             'INQUIRY'
           );
       } else {
-          // Just email if no user found (e.g. anonymous or data inconsistency)
+          // 如果找不到用户 (匿名询价)，仅发送邮件
           await this.notificationsService.notifyEmailOnly(
             updatedInquiry.contactEmail,
             `Inquiry Quoted: ${updatedInquiry.inquiryNo}`,

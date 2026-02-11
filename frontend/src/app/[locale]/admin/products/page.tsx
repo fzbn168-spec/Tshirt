@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Plus, Pencil, Trash2, Package, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, ChevronLeft, ChevronRight, Upload, FileUp, Loader2 } from 'lucide-react';
 import { Link } from '@/navigation';
 import { useTranslations } from 'next-intl';
 
@@ -34,6 +34,8 @@ export default function ProductsPage() {
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
   const [isLoading, setIsLoading] = useState(true);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { token } = useAuthStore();
   const t = useTranslations('Admin');
 
@@ -89,6 +91,49 @@ export default function ProductsPage() {
     }
   };
 
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+        alert('Please upload an Excel file (.xlsx or .xls)');
+        return;
+    }
+
+    try {
+        setIsImporting(true);
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await fetch(`${API_URL}/products/import`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.message || 'Import failed');
+        }
+
+        const result = await res.json();
+        alert(`Import completed!\nSuccess: ${result.success}\nFailed: ${result.failed}\nErrors: ${result.errors.join('\n')}`);
+        fetchProducts();
+    } catch (err: any) {
+        alert(err.message);
+    } finally {
+        setIsImporting(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const parseJson = (jsonStr: string) => {
     try {
       return JSON.parse(jsonStr);
@@ -115,13 +160,30 @@ export default function ProductsPage() {
           <h2 className="text-2xl font-bold tracking-tight">{t('productTitle')}</h2>
           <p className="text-zinc-500">{t('productSubtitle')}</p>
         </div>
-        <Link 
-          href="/admin/products/new"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900 rounded-md hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors text-sm font-medium"
-        >
-          <Plus className="w-4 h-4" />
-          {t('actions.addProduct')}
-        </Link>
+        <div className="flex gap-2">
+            <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileChange} 
+                accept=".xlsx,.xls" 
+                className="hidden" 
+            />
+            <button
+                onClick={handleImportClick}
+                disabled={isImporting}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-sm font-medium"
+            >
+                {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileUp className="w-4 h-4" />}
+                Import Excel
+            </button>
+            <Link 
+            href="/admin/products/new"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900 rounded-md hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors text-sm font-medium"
+            >
+            <Plus className="w-4 h-4" />
+            {t('actions.addProduct')}
+            </Link>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden">

@@ -19,10 +19,22 @@ export class AuthService {
     private notificationsService: NotificationsService,
   ) {}
 
+  /**
+   * 用户注册 (B2B 公司入驻)
+   * 
+   * 逻辑说明:
+   * 1. 检查邮箱是否已存在。
+   * 2. 加密密码 (bcrypt)。
+   * 3. 事务性创建: 同时创建 `Company` 和 `User` 记录。
+   *    - 默认将注册用户设为该公司管理员 (ADMIN)。
+   * 4. 发送欢迎通知。
+   * 
+   * @param registerDto 注册信息 (含公司名)
+   */
   async register(registerDto: RegisterDto) {
     const { email, password, fullName, companyName } = registerDto;
 
-    // Check if user exists
+    // 检查用户是否已存在
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
     });
@@ -31,33 +43,29 @@ export class AuthService {
       throw new ConflictException('User with this email already exists');
     }
 
-    // Hash password
+    // 密码加密 (安全散列)
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create Company and User transactionally
-    // Note: For simplicity, we create a new company for every registration here.
-    // In a real B2B app, you might want to join an existing company or verify company details.
-    // Here we assume self-service registration creates a new company account.
-
-    // We need to ensure company contact email is unique too if we use it for company lookup,
-    // but here we just create a company.
-
-    // Using transaction to ensure both created or neither
+    // 事务性创建公司和用户
+    // 注意: 在 B2B 场景中，通常是一个用户注册时创建一个公司账号。
+    // 如果是邀请加入已存在的公司，应走邀请流程 (Invite Flow)，而不是此注册流程。
     const result = await this.prisma.$transaction(async (tx) => {
+      // 1. 创建公司实体
       const company = await tx.company.create({
         data: {
           name: companyName,
-          contactEmail: email, // Use user email as company contact email for now
+          contactEmail: email, // 默认使用注册邮箱作为公司联系邮箱
         },
       });
 
+      // 2. 创建初始管理员用户
       const user = await tx.user.create({
         data: {
           email,
           passwordHash: hashedPassword,
           fullName,
           companyId: company.id,
-          role: 'ADMIN', // First user is Admin
+          role: 'ADMIN', // 首个用户默认为公司管理员
         },
       });
 
@@ -75,7 +83,7 @@ export class AuthService {
       };
     });
 
-    // Send Welcome Notification
+    // 发送系统欢迎通知
     await this.notificationsService.notifyUser(
       result.user.id,
       email,
@@ -87,6 +95,16 @@ export class AuthService {
     return result;
   }
 
+  /**
+   * 用户登录 (JWT 签发)
+   * 
+   * 逻辑说明:
+   * 1. 根据邮箱查找用户。
+   * 2. 验证密码哈希。
+   * 3. 签发 JWT 令牌 (包含 userId, role, companyId)。
+   * 
+   * @param loginDto 登录凭证
+   */
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
 
@@ -105,6 +123,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    // 构建 JWT 载荷 (Payload)
+    // 这些信息会被编码到 Token 中，前端解码后可直接使用
     const payload = {
       sub: user.id,
       email: user.email,

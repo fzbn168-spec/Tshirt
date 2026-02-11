@@ -262,7 +262,21 @@ export class ProductsService {
 
     // Attribute Filtering
     if (attributes && Object.keys(attributes).length > 0) {
-      const attributeConditions = Object.entries(attributes).map(([attrId, valueIds]) => ({
+      /**
+        * 复杂筛选逻辑：
+        * 
+        * 我们需要找到那些“至少有一个 SKU 匹配所有选定属性值”的商品。
+        * 
+        * 示例：
+        * 用户选择了 颜色: [红, 蓝] 且 尺码: [40, 41]
+        * 
+        * 1. `attributeConditions` 为每种属性类型创建一个条件数组。
+        *    例如 [{ attributeValues: { some: { id: IN [红, 蓝] } } }, { attributeValues: { some: { id: IN [40, 41] } } }]
+        * 
+        * 2. `where.skus` 使用 `some` -> `AND` 逻辑：
+        *    "找到一个商品，它有一些 SKU 满足 (Sku.Color 是 红 或 蓝) 且 (Sku.Size 是 40 或 41)"
+        */
+       const attributeConditions = Object.entries(attributes).map(([attrId, valueIds]) => ({
         attributeValues: {
           some: {
             attributeValueId: { in: valueIds }
@@ -363,8 +377,13 @@ export class ProductsService {
            
            // 2. Update Attributes Relation if provided
            if (attributeIds) {
-             // Delete old relations
+             // ⚠️ DESTRUCTIVE OPERATION ⚠️
+             // We delete all existing ProductAttribute relations and recreate them.
+             // This is simpler than diffing (finding which to add/remove), 
+             // but it means we lose `createdAt` history for these relations.
+             // Ensure this side effect is acceptable.
              await tx.productAttribute.deleteMany({ where: { productId: id } });
+             
              // Create new relations
              if (attributeIds.length > 0) {
                await tx.productAttribute.createMany({
@@ -386,7 +405,22 @@ export class ProductsService {
     // Handle SKU updates if provided (Replace strategy)
     if (skus) {
       try {
-        await this.prisma.$transaction(async (tx) => {
+        /**
+          * ⚠️ 高风险操作：SKU 替换 ⚠️
+          * 
+          * 我们将删除该商品的所有现有 SKU 并重新创建它们。
+          * 
+          * 风险：
+          * 1. 外键约束：如果现有订单引用了这些 SKU ID，这将失败
+          *    除非设置了级联删除（这对订单来说很危险）。
+          * 2. 历史丢失：如果 ID 发生变化，历史订单数据可能会丢失与 SKU 的链接。
+          * 
+          * TODO: 实现“差异对比 (Diffing)”策略：
+          * - 按 ID 更新现有 SKU
+          * - 创建新 SKU
+          * - 仅删除已移除的 SKU（检查使用情况后）
+          */
+         await this.prisma.$transaction(async (tx) => {
           await tx.sku.deleteMany({ where: { productId: id } });
           
           for (const sku of skus) {

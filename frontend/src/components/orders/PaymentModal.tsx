@@ -61,9 +61,15 @@ export function PaymentModal({ isOpen, onClose, onSubmit, amount, currency }: Pa
               className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-zinc-800 dark:border-zinc-700"
             >
               <option value="WIRE">Offline Transfer (Bank Wire)</option>
-              {/* <option value="STRIPE">Credit Card (Stripe)</option> */}
+              <option value="STRIPE">Credit Card (Stripe)</option>
             </select>
           </div>
+
+          {method === 'STRIPE' && (
+             <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 text-sm rounded-md">
+                Stripe integration is currently in development mode. Please contact admin for test credentials.
+             </div>
+          )}
 
           {method === 'WIRE' && (
             <div className="space-y-2">
