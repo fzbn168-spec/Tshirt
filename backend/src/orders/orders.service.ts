@@ -486,8 +486,8 @@ export class OrdersService {
           productName: sku.product.title ? JSON.parse(sku.product.title).en : 'Product', // Source of Truth: DB
           skuSpecs: item.skuSpecs, // Note: Specs string is currently from frontend, consider reconstructing from DB attributes for stricter consistency
           quantity: item.quantity,
-          unitPrice: unitPrice, // Source of Truth: Backend Calculation
-          totalPrice: totalPrice,
+          unitPrice: new Prisma.Decimal(unitPrice), // Source of Truth: Backend Calculation
+          totalPrice: new Prisma.Decimal(totalPrice),
         });
       }
 
