@@ -57,7 +57,7 @@ services:
       - SERVER_NAMES=${DOMAIN_NAME}
       - PRIMARY_DOMAIN=${DOMAIN_NAME}
     volumes:
-      - ./nginx/conf.d/app.conf:/etc/nginx/conf.d/app.conf
+      - ./nginx/conf.d:/etc/nginx/conf.d
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     depends_on:
