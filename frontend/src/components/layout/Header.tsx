@@ -36,7 +36,7 @@ export function Header() {
           <div className="flex items-center gap-4">
             <span className="cursor-pointer hover:text-zinc-300">{t('moqPolicy')}</span>
             <span className="cursor-pointer hover:text-zinc-300">{t('shippingInfo')}</span>
-            {(user?.role === 'ADMIN' || user?.role === 'PLATFORM_ADMIN') && (
+            {(user?.role === 'PLATFORM_ADMIN') && (
                <Link href="/admin" className="font-bold text-red-400 hover:text-red-300">
                    {t('adminPortal')}
                </Link>
