@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Plus, Trash2, Save, ArrowLeft, Layers } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Layers, Wand2 } from 'lucide-react';
 import { Link } from '@/navigation';
 import { useTranslations } from 'next-intl';
 import { TierPriceDialog } from './TierPriceDialog';
+import { SkuMatrix } from './SkuMatrix';
 
 interface ProductFormProps {
   initialData?: any;
@@ -37,6 +38,7 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
   const [categories, setCategories] = useState<any[]>([]); // Categories State
   const [selectedAttributes, setSelectedAttributes] = useState<any[]>([]); // Array of attribute objects
   const [selectedValues, setSelectedValues] = useState<{[key: string]: string[]}>({}); // attributeId -> valueIds[]
+  const [showMatrix, setShowMatrix] = useState(false);
 
   const [skus, setSkus] = useState<any[]>([
     { 
@@ -203,7 +205,25 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
     setSelectedValues({ ...selectedValues, [attrId]: updated });
   };
 
+  const handleSkusGenerated = (newSkus: any[]) => {
+    // Merge generated SKUs with existing data logic
+    const processedSkus = newSkus.map(s => {
+        // Generate a smart SKU code: {TitleInitials}-{Suffix}-{Random}
+        const titleInitials = (titleEn || 'PRD').split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 4).replace(/[^A-Z]/g, '') || 'PRD';
+        const randomSuffix = Math.floor(1000 + Math.random() * 9000); 
+        const skuCode = `${titleInitials}-${s._codeSuffix}-${randomSuffix}`;
+        
+        return {
+            ...s,
+            skuCode
+        };
+    });
+    setSkus(processedSkus);
+    setShowMatrix(false); // Hide generator after use
+  };
+
   const generateSkus = () => {
+    // Legacy simple generator (kept for compatibility or simple use cases)
     // Cartesian product of selected values
     const attrs = selectedAttributes.filter(attr => (selectedValues[attr.id] || []).length > 0);
     
@@ -528,8 +548,8 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
             {/* Attribute Selection Area */}
             <div className="border-b border-zinc-200 dark:border-zinc-800 pb-6 mb-6">
               <div className="flex gap-4 mb-4">
-                <select 
-                  className="px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md disabled:opacity-50"
+                <select
+                  className="h-10 flex-1 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900"
                   onChange={handleAttributeSelect}
                   value=""
                   disabled={availableAttributes.length === 0}
@@ -545,14 +565,28 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
                     </option>
                   ))}
                 </select>
+                
                 <button
                   type="button"
-                  onClick={generateSkus}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+                  onClick={() => setShowMatrix(!showMatrix)}
+                  className="px-4 py-2 bg-zinc-100 text-zinc-700 border border-zinc-200 rounded-md hover:bg-zinc-200 text-sm font-medium flex items-center gap-2 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200"
                 >
-                  Generate SKUs
+                  <Wand2 className="w-4 h-4" />
+                  {showMatrix ? "Hide Matrix Tool" : "Matrix Generator"}
                 </button>
               </div>
+
+              {showMatrix && (
+                <div className="mb-6">
+                    <SkuMatrix 
+                        attributes={availableAttributes}
+                        selectedAttributes={selectedAttributes}
+                        selectedValues={selectedValues}
+                        onSkusGenerated={handleSkusGenerated}
+                        basePrice={parseFloat(basePrice) || 0}
+                    />
+                </div>
+              )}
 
               <div className="space-y-4">
                 {selectedAttributes.map(attr => (
