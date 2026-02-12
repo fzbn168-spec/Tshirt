@@ -253,40 +253,53 @@ export function SkuSelector({
       )}
 
       {/* Quantity & Action */}
-      <div className="flex gap-4">
-          <div className="w-32 flex items-center border border-zinc-200 dark:border-zinc-700 rounded-md">
-              <button 
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-10 h-10 flex items-center justify-center hover:bg-zinc-50 dark:hover:bg-zinc-800"
-              >
-                  -
-              </button>
-              <div className="flex-1 text-center font-medium">{quantity}</div>
-              <button 
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="w-10 h-10 flex items-center justify-center hover:bg-zinc-50 dark:hover:bg-zinc-800"
-              >
-                  +
-              </button>
+      <div className="flex flex-col gap-3">
+          <div className="flex gap-4">
+            <div className="w-32 flex items-center border border-zinc-200 dark:border-zinc-700 rounded-md">
+                <button 
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="w-10 h-10 flex items-center justify-center hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                >
+                    -
+                </button>
+                <div className="flex-1 text-center font-medium">{quantity}</div>
+                <button 
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="w-10 h-10 flex items-center justify-center hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                >
+                    +
+                </button>
+            </div>
+            
+            <button 
+              onClick={() => handleAddToRFQ(false)}
+              disabled={(!matchingSku || matchingSku.stock === 0) && isAuth}
+              className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isAuth ? (
+                <>
+                  <ShoppingBag className="w-5 h-5" />
+                  {matchingSku ? (matchingSku.stock > 0 ? t('addToRfq') : t('outOfStock')) : t('selectOptions')}
+                </>
+              ) : (
+                <>
+                  <Lock className="w-5 h-5" />
+                  {t('loginToAdd')}
+                </>
+              )}
+            </button>
           </div>
-          
-          <button 
-            onClick={handleAddToRFQ}
-            disabled={(!matchingSku || matchingSku.stock === 0) && isAuth}
-            className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {isAuth ? (
-              <>
-                <ShoppingBag className="w-5 h-5" />
-                {matchingSku ? (matchingSku.stock > 0 ? t('addToRfq') : t('outOfStock')) : t('selectOptions')}
-              </>
-            ) : (
-              <>
-                <Lock className="w-5 h-5" />
-                {t('loginToAdd')}
-              </>
-            )}
-          </button>
+
+          {/* Sample Request Button (Secondary Action) */}
+          {isAuth && matchingSku && matchingSku.stock > 0 && (
+            <button 
+              onClick={() => handleAddToRFQ(true)}
+              className="w-full border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 px-6 py-2.5 rounded-md font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center justify-center gap-2 transition-colors"
+            >
+              <Box className="w-4 h-4" />
+              {t('requestSample')}
+            </button>
+          )}
       </div>
     </div>
   );
