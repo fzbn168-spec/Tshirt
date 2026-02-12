@@ -126,6 +126,7 @@ async function main() {
         images: JSON.stringify(['https://example.com/boots-main.jpg', 'https://example.com/boots-detail.jpg']), // SQLite stores JSON array as string
         basePrice: 45.00,
         specsTemplate: JSON.stringify({ colors: ["Red", "Army Green", "Black"], sizes: ["40", "41", "42", "43", "44", "45"] }),
+        hsCode: "64039111", // Added valid HS Code
         isPublished: true,
       },
     });
