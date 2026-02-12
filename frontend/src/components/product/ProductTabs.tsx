@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
-import { Ruler, Truck, FileText, Star } from 'lucide-react';
+import { Ruler, Truck, FileText, Star, ShieldCheck } from 'lucide-react';
 
 interface ProductTabsProps {
   description: string;
