@@ -3,6 +3,7 @@
 import { ArrowRight, CheckCircle, Package, Truck } from 'lucide-react';
 import { Link } from '@/navigation';
 import { useTranslations } from 'next-intl';
+import { TrustSection } from '@/components/home/TrustSection';
 
 export default function Home() {
   const t = useTranslations('Home');
@@ -77,6 +78,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Trust Section */}
+      <TrustSection />
 
       {/* Categories */}
       <section className="py-16 border-t border-zinc-100 dark:border-zinc-800">

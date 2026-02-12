@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { ShoppingBag, Check, Lock } from 'lucide-react';
+import { ShoppingBag, Check, Lock, Box } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useCartStore } from '@/store/useCartStore';
@@ -31,6 +31,7 @@ export function SkuSelector({
   const addItem = useCartStore(state => state.addItem);
   const [selectedValues, setSelectedValues] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
+  const [customNote, setCustomNote] = useState('');
 
   // Helper to parse JSON strings
   const parseJson = (str: string) => {
@@ -101,7 +102,7 @@ export function SkuSelector({
     return price;
   }, [matchingSku, tierPrices, quantity, basePrice]);
 
-  const handleAddToRFQ = () => {
+  const handleAddToRFQ = (isSample = false) => {
     if (!isAuth) {
       router.push('/login');
       return;
@@ -110,26 +111,37 @@ export function SkuSelector({
     if (!matchingSku) return;
 
     // Create a description of selected attributes
-    const specsDescription = attributes.map(attr => {
+    let specsDescription = attributes.map(attr => {
         const valId = selectedValues[attr.attribute.id];
         const val = attr.attribute.values.find((v: any) => v.id === valId);
         return `${parseJson(attr.attribute.name)}: ${val ? parseJson(val.value) : ''}`;
     }).join(', ');
 
+    // Mark as sample if applicable
+    if (isSample) {
+        specsDescription = `[SAMPLE REQUEST] ${specsDescription}`;
+    }
+
+    // Append customization note if present
+    if (customNote.trim()) {
+      specsDescription += ` | ${t('customization.label')}: ${customNote.trim()}`;
+    }
+
     addItem({
-      id: `${productId}-${matchingSku.id}`,
+      id: `${productId}-${matchingSku.id}-${Date.now()}`, // Unique ID for customized items
       productId,
       productName,
       skuId: matchingSku.id,
       skuCode: matchingSku.skuCode,
       specs: specsDescription,
-      quantity,
-      price: currentPrice,
+      quantity: isSample ? 1 : quantity, // Samples usually qty 1
+      price: currentPrice, // Samples might be free or paid, logic can be adjusted
       image: productImage
     });
 
     // Reset or show feedback
-    alert(t('addedToCart'));
+    alert(isSample ? t('sampleAdded') : t('addedToCart'));
+    setCustomNote(''); // Reset note
   };
 
   // If no attributes, show simple quantity selector for base product (if applicable)
@@ -224,6 +236,21 @@ export function SkuSelector({
               </div>
           )}
       </div>
+
+      {/* Customization Input */}
+      {isAuth && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+            {t('customization.title')}
+          </label>
+          <textarea
+            value={customNote}
+            onChange={(e) => setCustomNote(e.target.value)}
+            placeholder={t('customization.placeholder')}
+            className="w-full min-h-[80px] px-3 py-2 rounded-md border border-zinc-200 dark:border-zinc-700 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      )}
 
       {/* Quantity & Action */}
       <div className="flex gap-4">

@@ -30,7 +30,23 @@
     "shopCategory": "Shop by Category",
     "viewAll": "View All",
     "trending": "Trending This Week",
-    "moqLabel": "MOQ"
+    "moqLabel": "MOQ",
+    "trust": {
+      "title": "Why Global Brands Trust Us",
+      "subtitle": "Decades of expertise in footwear manufacturing and export.",
+      "stats": {
+        "experience": "Years Experience",
+        "countries": "Countries Served",
+        "partners": "Enterprise Partners",
+        "shipped": "Pairs Shipped"
+      },
+      "certifications": {
+        "title": "Certifications & Compliance",
+        "sgs": "SGS Audited",
+        "iso": "ISO 9001:2015",
+        "bsci": "BSCI Compliant"
+      }
+    }
   },
   "Profile": {
     "title": "Company Profile",
@@ -293,7 +309,14 @@
     "addToRfq": "Add to RFQ",
     "addedToCart": "Added to RFQ Cart",
     "loginToAdd": "Login to Add to RFQ",
-    "selectOption": "Select option"
+    "selectOption": "Select option",
+    "customization": {
+      "title": "Customization & Notes",
+      "placeholder": "Enter customization details (e.g. Logo, Team Name, Number printing...)",
+      "label": "Special Instructions"
+    },
+    "requestSample": "Request Sample",
+    "sampleAdded": "Sample Request added to cart"
   },
   "Settings": {
     "title": "Settings",

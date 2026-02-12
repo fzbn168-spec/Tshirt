@@ -16,7 +16,7 @@ if [ -f .env ]; then
 fi
 
 domains=($DOMAIN_NAME)
-rsa_key_size=4096
+rsa_key_size=4096  #SSL 证书-自动申请 Let's Encrypt 免费证书并配置 Nginx：
 data_path="./certbot"
 email="$EMAIL" # Adding a valid address is strongly recommended
 staging=0 # Set to 1 if you're testing your setup to avoid hitting request limits

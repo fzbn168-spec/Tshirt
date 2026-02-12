@@ -30,7 +30,23 @@
     "shopCategory": "按分类采购",
     "viewAll": "查看全部",
     "trending": "本周趋势",
-    "moqLabel": "起订量"
+    "moqLabel": "起订量",
+    "trust": {
+      "title": "为什么全球品牌信任我们",
+      "subtitle": "数十年的鞋类制造与出口经验。",
+      "stats": {
+        "experience": "年行业经验",
+        "countries": "服务国家",
+        "partners": "企业合作伙伴",
+        "shipped": "累计出货量"
+      },
+      "certifications": {
+        "title": "认证与合规",
+        "sgs": "SGS 实地验厂",
+        "iso": "ISO 9001:2015",
+        "bsci": "BSCI 社会责任认证"
+      }
+    }
   },
   "Profile": {
     "title": "公司资料",
@@ -293,7 +309,14 @@
     "addToRfq": "加入询价单",
     "addedToCart": "已加入询价单",
     "loginToAdd": "登录后加入询价单",
-    "selectOption": "选择选项"
+    "selectOption": "选择选项",
+    "customization": {
+      "title": "定制与备注",
+      "placeholder": "请输入定制要求 (例如: 印Logo, 队名, 印号...)",
+      "label": "特殊说明"
+    },
+    "requestSample": "申请拿样",
+    "sampleAdded": "样品申请已加入询价单"
   },
   "Settings": {
     "title": "设置",
