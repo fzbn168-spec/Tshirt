@@ -32,6 +32,7 @@ services:
       args:
         NEXT_PUBLIC_API_URL: https://${DOMAIN_NAME}/api
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+        NEXT_PUBLIC_WHATSAPP_NUMBER: ${NEXT_PUBLIC_WHATSAPP_NUMBER}
     environment:
       - NEXT_PUBLIC_API_URL=https://${DOMAIN_NAME}/api
     depends_on:
