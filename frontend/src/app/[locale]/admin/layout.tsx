@@ -18,12 +18,15 @@ export default function AdminLayout({
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/login');
-    } else if (user?.role !== 'ADMIN' && user?.role !== 'PLATFORM_ADMIN') {
+    } else if (user?.role !== 'PLATFORM_ADMIN') {
+      // Security Fix: Strictly redirect non-platform-admins to buyer dashboard
+      // Previously allowed 'ADMIN' (Company Admin), which caused the security breach
       router.push('/dashboard');
     }
   }, [isAuthenticated, user, router]);
 
-  if (!isAuthenticated || (user?.role !== 'ADMIN' && user?.role !== 'PLATFORM_ADMIN')) {
+  // Security Fix: Double check in render to prevent flash of content
+  if (!isAuthenticated || user?.role !== 'PLATFORM_ADMIN') {
     return null;
   }
 
