@@ -74,7 +74,12 @@ export function Header() {
                         <LayoutDashboard className="h-5 w-5" />
                         {t('dashboard')}
                       </Link>
-
+                      {(user?.role === 'PLATFORM_ADMIN') && (
+                        <Link href="/admin" className="flex items-center gap-2 text-red-500 font-medium" onClick={() => setIsMobileMenuOpen(false)}>
+                            <LayoutDashboard className="h-5 w-5" />
+                            {t('adminPortal')}
+                        </Link>
+                      )}
                     </>
                   ) : (
                     <Link href="/login" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>

@@ -46,6 +46,25 @@ services:
     networks:
       - soletrade-network
 
+  admin-panel:
+    container_name: soletrade-admin
+    build: 
+      context: ./admin-panel
+      args:
+        NEXT_PUBLIC_API_URL: https://${DOMAIN_NAME}/api
+    environment:
+      - NEXT_PUBLIC_API_URL=https://${DOMAIN_NAME}/api
+    depends_on:
+      - backend
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - soletrade-network
+
   nginx:
     container_name: soletrade-nginx
     image: nginx:1.25-alpine
@@ -62,6 +81,7 @@ services:
       - ./certbot/www:/var/www/certbot
     depends_on:
       - frontend
+      - admin-panel
       - backend
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
     networks:
