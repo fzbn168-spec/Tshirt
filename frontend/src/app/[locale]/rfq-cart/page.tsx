@@ -1,13 +1,17 @@
 'use client';
 
 import { useCartStore } from '@/store/useCartStore';
-import { Minus, Plus, Trash2, Send, ArrowRight, Upload, X } from 'lucide-react';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useToastStore } from '@/store/useToastStore';
+import { Minus, Plus, Trash2, Send, ArrowRight, Upload, X, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState, useRef } from 'react';
 
 export default function RFQCartPage() {
   const { items, updateQuantity, removeItem, clearCart, totalPrice, totalItems } = useCartStore();
+  const { user } = useAuthStore();
+  const { addToast } = useToastStore();
   const [mounted, setMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -41,13 +45,7 @@ export default function RFQCartPage() {
     try {
         // 1. Upload Attachments if any
         if (attachments.length > 0) {
-            const uploadFormData = new FormData();
-            attachments.forEach(file => uploadFormData.append('file', file));
-            // Assuming we have a batch upload or single upload loop. 
-            // For simplicity, let's assume we upload one by one or the backend supports multiple.
-            // But our current UploadsController typically handles single file 'file'.
-            // Let's loop for now to be safe.
-            
+            // Loop upload for simplicity as per original logic
             for (const file of attachments) {
                 const fData = new FormData();
                 fData.append('file', file);
@@ -57,7 +55,7 @@ export default function RFQCartPage() {
                 });
                 if (upRes.ok) {
                     const upData = await upRes.json();
-                    uploadedUrls.push(upData.url); // Adjust based on actual response { url: ... }
+                    uploadedUrls.push(upData.url);
                 }
             }
         }
@@ -92,9 +90,10 @@ export default function RFQCartPage() {
 
         setSubmitted(true);
         clearCart();
+        addToast('Inquiry submitted successfully!', 'success');
     } catch (error) {
         console.error(error);
-        alert('Failed to submit inquiry. Please try again.');
+        addToast('Failed to submit inquiry. Please try again.', 'error');
     } finally {
         setIsSubmitting(false);
     }
@@ -235,6 +234,7 @@ export default function RFQCartPage() {
                           name="companyName"
                           type="text"
                           required
+                          defaultValue={user?.company?.name || ''}
                           className="w-full h-10 rounded-md border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-800 dark:bg-zinc-900"
                         />
                       </div>
@@ -245,6 +245,7 @@ export default function RFQCartPage() {
                           name="email"
                           type="email"
                           required
+                          defaultValue={user?.email || ''}
                           className="w-full h-10 rounded-md border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-800 dark:bg-zinc-900"
                         />
                       </div>
@@ -299,14 +300,29 @@ export default function RFQCartPage() {
               <button 
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-blue-600 text-white h-12 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full h-12 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? 'Sending...' : (
                   <>
-                    Submit Inquiry <ArrowRight className="w-4 h-4" />
+                    <Send className="w-4 h-4" />
+                    Send Inquiry
                   </>
                 )}
               </button>
+
+              {/* WhatsApp Quick Action */}
+              <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 text-center">
+                <p className="text-xs text-zinc-500 mb-3">Need a faster response?</p>
+                <a 
+                  href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '8613800000000'}?text=${encodeURIComponent(`Hi, I'm interested in ${items.length} items (Value: $${totalPrice().toFixed(2)}) from SoleTrade.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full h-10 border border-green-500 text-green-600 rounded-md font-medium hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors flex items-center justify-center gap-2"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Chat on WhatsApp
+                </a>
+              </div>
             </form>
           </div>
         </div>

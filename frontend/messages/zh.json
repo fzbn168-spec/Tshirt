@@ -293,10 +293,59 @@
     }
   },
   "Product": {
+    "sampleAdded": "拿样申请已加入购物车！",
+    "addedToCart": "商品已加入询价单。",
+    "selectOption": "请选择",
+    "customization": {
+      "label": "定制备注",
+      "title": "定制需求",
+      "placeholder": "请输入印号、印名或其他需求..."
+    },
     "inStock": "现货",
+    "outOfStock": "缺货",
+    "available": "件可用",
+    "volumePricing": "阶梯价格",
+    "price": "价格",
+    "stock": "库存",
+    "addToRfq": "加入询价单",
+    "selectOptions": "请选择规格",
+    "loginToAdd": "登录后添加",
+    "loginToView": "登录查看价格",
+    "requestSample": "申请拿样",
+    "chatWhatsApp": "WhatsApp 在线咨询",
     "sku": "SKU",
     "verified": "认证供应商",
     "location": "中国广州",
+    "tabs": {
+      "details": "商品详情",
+      "sizeGuide": "尺码指南",
+      "shipping": "物流与支付",
+      "reviews": "客户评价"
+    },
+    "service": {
+      "shipping": "全球发货",
+      "sample": "支持拿样",
+      "payment": "安全支付",
+      "customization": "定制服务"
+    },
+    "sizeGuide": {
+      "title": "通用尺码表",
+      "note": "注：此为通用参考。如需精确尺寸，请申请拿样。",
+      "size": "尺码",
+      "chest": "胸围",
+      "length": "衣长",
+      "shoulder": "肩宽"
+    },
+    "shippingInfo": {
+      "processing": "发货时间",
+      "processingTime": "3-7 个工作日",
+      "methods": "运输方式",
+      "methodsDesc": "DHL/FedEx (3-7 天), 空运 (7-12 天), 海运 (30-45 天)",
+      "payment": "付款方式",
+      "paymentDesc": "T/T (银行转账), 信用卡 (Stripe), PayPal (仅限样品)"
+    },
+    "relatedProducts": "相关产品推荐"
+  },
     "pairs": "双",
     "loginToView": "登录查看价格",
     "wholesaleOnly": "批发价格仅对会员可见",

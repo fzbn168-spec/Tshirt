@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { ShoppingBag, Check, Lock, Box } from 'lucide-react';
+import { ShoppingBag, Check, Lock, Box, MessageCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useCartStore } from '@/store/useCartStore';
+import { useToastStore } from '@/store/useToastStore';
 import { useTranslations } from 'next-intl';
 
 interface SkuSelectorProps {
@@ -29,6 +30,7 @@ export function SkuSelector({
   const router = useRouter();
   const t = useTranslations('Product');
   const addItem = useCartStore(state => state.addItem);
+  const { addToast } = useToastStore();
   const [selectedValues, setSelectedValues] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
   const [customNote, setCustomNote] = useState('');
@@ -140,7 +142,7 @@ export function SkuSelector({
     });
 
     // Reset or show feedback
-    alert(isSample ? t('sampleAdded') : t('addedToCart'));
+    addToast(isSample ? t('sampleAdded') : t('addedToCart'), 'success');
     setCustomNote(''); // Reset note
   };
 
@@ -292,13 +294,25 @@ export function SkuSelector({
 
           {/* Sample Request Button (Secondary Action) */}
           {isAuth && matchingSku && matchingSku.stock > 0 && (
-            <button 
-              onClick={() => handleAddToRFQ(true)}
-              className="w-full border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 px-6 py-2.5 rounded-md font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center justify-center gap-2 transition-colors"
-            >
-              <Box className="w-4 h-4" />
-              {t('requestSample')}
-            </button>
+            <div className="flex gap-4">
+              <button 
+                onClick={() => handleAddToRFQ(true)}
+                className="flex-1 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 px-6 py-2.5 rounded-md font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center justify-center gap-2 transition-colors"
+              >
+                <Box className="w-4 h-4" />
+                {t('requestSample')}
+              </button>
+              
+              <a 
+                href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '8613800000000'}?text=${encodeURIComponent(`Hi, I'm interested in ${productName} (SKU: ${matchingSku.skuCode})`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 border border-green-500 text-green-600 px-6 py-2.5 rounded-md font-medium hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center justify-center gap-2 transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" />
+                {t('chatWhatsApp')}
+              </a>
+            </div>
           )}
       </div>
     </div>

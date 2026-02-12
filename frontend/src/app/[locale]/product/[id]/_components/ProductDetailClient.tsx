@@ -7,6 +7,9 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { ProductGallery } from '@/components/product/ProductGallery';
 import { ProductInfo } from '@/components/product/ProductInfo';
 import { SkuSelector } from '@/components/product/SkuSelector';
+import { ServiceBlock } from '@/components/product/ServiceBlock';
+import { ProductTabs } from '@/components/product/ProductTabs';
+import { RelatedProducts } from '@/components/product/RelatedProducts';
 
 interface ProductDetailClientProps {
   product: any;
@@ -86,8 +89,18 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
               skus={product.skus}
               isAuth={isAuth}
             />
+            
+            <ServiceBlock />
           </div>
         </div>
+      </div>
+
+      <div className="mt-16">
+        <ProductTabs description={description} />
+      </div>
+
+      <div className="mt-16">
+        <RelatedProducts />
       </div>
     </div>
   );

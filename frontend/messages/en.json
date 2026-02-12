@@ -293,10 +293,59 @@
     }
   },
   "Product": {
+    "sampleAdded": "Sample Request added to cart!",
+    "addedToCart": "Item added to inquiry cart.",
+    "selectOption": "Select Option",
+    "customization": {
+      "label": "Customization Notes",
+      "title": "Customization Requirements",
+      "placeholder": "Enter number, name, or other requirements..."
+    },
     "inStock": "In Stock",
+    "outOfStock": "Out of Stock",
+    "available": "Available",
+    "volumePricing": "Volume Pricing",
+    "price": "Price",
+    "stock": "Stock",
+    "addToRfq": "Add to RFQ Cart",
+    "selectOptions": "Select Options",
+    "loginToAdd": "Login to Add",
+    "loginToView": "Login to View Price",
+    "requestSample": "Request Sample",
+    "chatWhatsApp": "Chat on WhatsApp",
     "sku": "SKU",
     "verified": "Verified Supplier",
     "location": "Guangzhou, China",
+    "tabs": {
+      "details": "Product Details",
+      "sizeGuide": "Size Guide",
+      "shipping": "Shipping & Payment",
+      "reviews": "Reviews"
+    },
+    "service": {
+      "shipping": "Global Shipping",
+      "sample": "Sample Available",
+      "payment": "Secure Payment",
+      "customization": "Customization Service"
+    },
+    "sizeGuide": {
+      "title": "General Size Chart",
+      "note": "Note: This is a general guide. For specific fit, please request a sample.",
+      "size": "Size",
+      "chest": "Chest",
+      "length": "Length",
+      "shoulder": "Shoulder"
+    },
+    "shippingInfo": {
+      "processing": "Processing Time",
+      "processingTime": "3-7 Business Days",
+      "methods": "Shipping Methods",
+      "methodsDesc": "DHL/FedEx (3-7 days), Air Freight (7-12 days), Sea Freight (30-45 days)",
+      "payment": "Payment Terms",
+      "paymentDesc": "T/T (Bank Transfer), Credit Card (Stripe), PayPal for samples."
+    },
+    "relatedProducts": "Related Products"
+  },
     "pairs": "Pairs",
     "loginToView": "Login to View Price",
     "wholesaleOnly": "Wholesale pricing is available for members only",
