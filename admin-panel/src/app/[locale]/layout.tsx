@@ -5,7 +5,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import QueryProvider from '@/components/providers/QueryProvider';
-import { ToastContainer } from '@/components/ui/ToastContainer';
+import { ToastContainer } from '@/components/ToastContainer';
 
 const inter = Inter({ subsets: ["latin"] });
 
