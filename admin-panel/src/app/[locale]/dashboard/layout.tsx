@@ -38,18 +38,12 @@ export default function AdminDashboardLayout({
   }
 
   const navigation = [
-    { name: t('dashboard'), href: '/admin', icon: LayoutDashboard }, // Maps to /en/admin (rewritten to /)
-    // Wait, in this new app, /admin is the root of (dashboard)?
-    // No, the route is /en/(dashboard)/... -> /en/...
-    // So href should be '/' for dashboard?
-    // Let's assume (dashboard) is route group.
-    // So /en/page.tsx is the dashboard.
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'Products', href: '/products', icon: Package },
-    { name: 'Orders', href: '/orders', icon: ShoppingCart },
-    { name: 'Inquiries', href: '/inquiries', icon: MessageSquare },
-    { name: 'Companies', href: '/companies', icon: Users },
-    { name: 'Settings', href: '/settings', icon: Settings },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Products', href: '/dashboard/products', icon: Package },
+    { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
+    { name: 'Inquiries', href: '/dashboard/inquiries', icon: MessageSquare },
+    { name: 'Companies', href: '/dashboard/companies', icon: Users },
+    { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
 
   const handleLogout = () => {

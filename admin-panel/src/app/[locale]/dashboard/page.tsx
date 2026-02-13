@@ -48,7 +48,7 @@ export default function AdminDashboardPage() {
       {/* Quick Actions */}
       <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-4">Quick Actions</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link href="/products" className="group block p-6 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm hover:border-blue-500 transition-colors">
+        <Link href="/dashboard/products" className="group block p-6 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm hover:border-blue-500 transition-colors">
           <div className="flex items-center gap-4 mb-3">
             <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 group-hover:bg-blue-100 transition-colors">
               <Package className="h-6 w-6 text-blue-600" />
@@ -58,7 +58,7 @@ export default function AdminDashboardPage() {
           <p className="text-sm text-zinc-500">{t('productSubtitle')}</p>
         </Link>
 
-        <Link href="/inquiries" className="group block p-6 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm hover:border-orange-500 transition-colors">
+        <Link href="/dashboard/inquiries" className="group block p-6 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm hover:border-orange-500 transition-colors">
           <div className="flex items-center gap-4 mb-3">
             <div className="p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20 group-hover:bg-orange-100 transition-colors">
               <MessageSquare className="h-6 w-6 text-orange-600" />
@@ -68,7 +68,7 @@ export default function AdminDashboardPage() {
           <p className="text-sm text-zinc-500">{t('inquiryDesc')}</p>
         </Link>
 
-        <Link href="/companies" className="group block p-6 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm hover:border-purple-500 transition-colors">
+        <Link href="/dashboard/companies" className="group block p-6 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm hover:border-purple-500 transition-colors">
           <div className="flex items-center gap-4 mb-3">
             <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 group-hover:bg-purple-100 transition-colors">
               <Users className="h-6 w-6 text-purple-600" />
