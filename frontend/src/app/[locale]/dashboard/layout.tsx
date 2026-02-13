@@ -51,7 +51,6 @@ export default function DashboardLayout({
     { name: t('inquiries'), href: '/dashboard/inquiries', icon: FileText },
     { name: t('orders'), href: '/dashboard/orders', icon: Package },
     { name: t('subAccounts'), href: '/dashboard/users', icon: Users },
-    ...(user?.role === 'ADMIN' || user?.role === 'PLATFORM_ADMIN' ? [{ name: t('attributes'), href: '/dashboard/attributes', icon: Tags }] : []),
     { name: t('settings'), href: '/dashboard/settings', icon: Settings },
   ];
 

@@ -11,6 +11,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// 13. 尺码表 (SizeChart)
+// 管理多国尺码对照表 (如: US 8 = EU 41)
+model SizeChart {
+  id        String    @id @default(uuid())
+  name      String    // 表名称 (如: "Men's Standard Sneaker Chart")
+  data      String    // JSON: [{"us": "7", "eu": "40", "uk": "6", "cm": "25"}, ...]
+  products  Product[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
 // 1. 商品分类 (Category)
 // 用于管理商品的多级分类结构
 model Category {
@@ -113,6 +125,10 @@ model Product {
   // 关联 SKU (具体变体)
   skus          Sku[]
   
+  // 尺码表关联
+  sizeChartId   String?
+  sizeChart     SizeChart? @relation(fields: [sizeChartId], references: [id])
+  
   // 关联业务数据
   inquiryItems  InquiryItem[]
   orderItems    OrderItem[]
@@ -188,11 +204,9 @@ model Company {
   description   String?  // 公司简介
   documents     String?  // 资质文件 JSON: [{"type": "license", "url": "..."}]
   status        String   @default("PENDING") // 审核状态: PENDING(待审), APPROVED(通过), REJECTED(拒绝)
-  
-  // 销售代表 (负责该公司业务的内部员工)
-  salesRepId    String?
+  salesRepId    String?  // 销售代表ID
   salesRep      User?    @relation("SalesRepCompanies", fields: [salesRepId], references: [id])
-
+  
   users         User[]    // 公司下的员工账号
   inquiries     Inquiry[] // 询价记录
   orders        Order[]   // 订单记录
@@ -274,6 +288,8 @@ model InquiryItem {
   quantity      Int      // 询价数量
   targetPrice   Decimal? // 目标价格 (买家期望)
   quotedPrice   Decimal? // 报价价格 (卖家回复)
+  quoteValidUntil DateTime? // 报价有效期
+  paymentTerms  String?  // 付款条款 (如 "30% Deposit, 70% Balance")
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -370,6 +386,7 @@ model Notification {
   title     String   // 标题
   content   String   // 内容
   isRead    Boolean  @default(false) // 已读状态
+  updatedAt DateTime @updatedAt @default(now())
   
   // 关联实体跳转
   referenceId   String? // 关联ID (如 orderId)

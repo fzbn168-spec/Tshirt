@@ -14,7 +14,14 @@ export const useCurrencyStore = create<CurrencyStore>()(
   persist(
     (set, get) => ({
       currency: 'USD',
-      rates: { USD: 1, EUR: 0.92, CNY: 7.2 }, // Default fallbacks
+      rates: { 
+        USD: 1, 
+        EUR: 0.92, 
+        GBP: 0.79,
+        CNY: 7.20,
+        CAD: 1.35,
+        AUD: 1.52
+      }, // Default fallbacks
 
       setCurrency: (currency) => set({ currency }),
 
