@@ -1,6 +1,8 @@
-import { BadgeCheck, Info, Lock } from 'lucide-react';
+import { BadgeCheck, Lock } from 'lucide-react';
 import { Link } from '@/navigation';
 import { useTranslations } from 'next-intl';
+import { ShareButtons } from './ShareButtons';
+import { useCurrencyStore } from '@/store/useCurrencyStore';
 
 interface TieredPrice {
   minQty: number;
@@ -13,10 +15,12 @@ interface ProductInfoProps {
   description: string;
   prices: TieredPrice[];
   isAuth?: boolean;
+  soldCount?: number;
 }
 
-export function ProductInfo({ title, skuCode, description, prices, isAuth = false }: ProductInfoProps) {
+export function ProductInfo({ title, skuCode, description, prices, isAuth = false, soldCount = 0 }: ProductInfoProps) {
   const t = useTranslations('Product');
+  const { format } = useCurrencyStore();
 
   return (
     <div className="space-y-6">
@@ -26,6 +30,11 @@ export function ProductInfo({ title, skuCode, description, prices, isAuth = fals
             {t('inStock')}
           </span>
           <span className="text-sm text-zinc-500">{t('sku')}: {skuCode}</span>
+          {soldCount > 0 && (
+            <span className="text-sm text-orange-600 bg-orange-50 px-2 py-0.5 rounded dark:bg-orange-900/30 font-medium">
+              Sold: {soldCount.toLocaleString()}+
+            </span>
+          )}
         </div>
         <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">{title}</h1>
         
@@ -48,7 +57,7 @@ export function ProductInfo({ title, skuCode, description, prices, isAuth = fals
                 )}
                 <span className="text-sm text-zinc-500 mb-1">{tier.minQty}+ {t('pairs')}</span>
                 <span className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
-                  ${tier.price.toFixed(2)}
+                  {format(tier.price)}
                 </span>
               </div>
             ))}
@@ -68,6 +77,8 @@ export function ProductInfo({ title, skuCode, description, prices, isAuth = fals
       <div className="prose prose-sm dark:prose-invert text-zinc-600 dark:text-zinc-400">
         <p>{description}</p>
       </div>
+
+      <ShareButtons title={title} description={description} />
     </div>
   );
 }

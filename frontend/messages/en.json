@@ -293,6 +293,11 @@
     }
   },
   "Product": {
+    "share": "Share:",
+    "copyLink": "Copy Link",
+    "linkCopied": "Link copied to clipboard",
+    "copyFailed": "Failed to copy link",
+    "shareOn": "Share on {platform}",
     "sampleAdded": "Sample Request added to cart!",
     "addedToCart": "Item added to inquiry cart.",
     "selectOption": "Select Option",
@@ -311,6 +316,7 @@
     "selectOptions": "Select Options",
     "loginToAdd": "Login to Add",
     "loginToView": "Login to View Price",
+    "wholesaleOnly": "Wholesale pricing is available for members only",
     "requestSample": "Request Sample",
     "chatWhatsApp": "Chat on WhatsApp",
     "sku": "SKU",
@@ -344,8 +350,22 @@
       "payment": "Payment Terms",
       "paymentDesc": "T/T (Bank Transfer), Credit Card (Stripe), PayPal for samples."
     },
-    "relatedProducts": "Related Products"
+    "relatedProducts": "Related Products",
+    "reviews": {
+      "rating": "Rating",
+      "noReviews": "No reviews yet. Be the first to review!",
+      "writeReview": "Write a Review",
+    "summary": "{count} Reviews",
+    "stars": "Stars",
+    "yourName": "Your Name",
+    "reviewContent": "Review Content",
+    "submit": "Submit Review",
+    "cancel": "Cancel",
+    "uploadImage": "Upload Image",
+    "success": "Review submitted successfully!"
+    }
   },
+  "Cart": {
     "pairs": "Pairs",
     "loginToView": "Login to View Price",
     "wholesaleOnly": "Wholesale pricing is available for members only",

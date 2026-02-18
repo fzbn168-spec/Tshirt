@@ -8,6 +8,8 @@ import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import QueryProvider from '@/components/providers/QueryProvider';
 import { ToastContainer } from '@/components/ui/ToastContainer';
+import { GoogleTagManager } from '@/components/analytics/GoogleTagManager';
+import ErrorReporter from '@/components/providers/ErrorReporter';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -74,8 +76,10 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
+        <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID || ''} />
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
+            <ErrorReporter />
             <Header />
             <main className="flex-grow">
               {children}

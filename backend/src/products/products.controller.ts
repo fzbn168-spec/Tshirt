@@ -53,13 +53,13 @@ export class ProductsController {
   @Get('catalog/pdf')
   async downloadCatalog(@Res() res: Response) {
     const buffer = await this.productsService.generateCatalogPdf();
-    
+
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': 'attachment; filename=product-catalog.pdf',
       'Content-Length': buffer.length,
     });
-    
+
     res.end(buffer);
   }
 
@@ -68,6 +68,16 @@ export class ProductsController {
   @Roles('PLATFORM_ADMIN', 'ADMIN')
   create(@Body() createProductDto: CreateProductDto) {
     return this.productsService.create(createProductDto);
+  }
+
+  @Get('feed/:type')
+  async getFeed(@Param('type') type: string, @Res() res: Response) {
+    if (!['google', 'facebook', 'tiktok'].includes(type)) {
+      type = 'google'; // default
+    }
+    const xml = await this.productsService.generateFeed(type as any);
+    res.set('Content-Type', 'application/xml');
+    res.send(xml);
   }
 
   @Get()
@@ -99,14 +109,16 @@ export class ProductsController {
     const skip = (pageNum - 1) * limitNum;
 
     try {
-      return await this.productsService.findAll({ 
-        search, 
-        categoryId, 
-        minPrice: minPrice && !isNaN(Number(minPrice)) ? Number(minPrice) : undefined, 
-        maxPrice: maxPrice && !isNaN(Number(maxPrice)) ? Number(maxPrice) : undefined,
+      return await this.productsService.findAll({
+        search,
+        categoryId,
+        minPrice:
+          minPrice && !isNaN(Number(minPrice)) ? Number(minPrice) : undefined,
+        maxPrice:
+          maxPrice && !isNaN(Number(maxPrice)) ? Number(maxPrice) : undefined,
         attributes,
         skip,
-        take: limitNum
+        take: limitNum,
       });
     } catch (error) {
       console.error('FindAll Products Error:', error);
@@ -117,6 +129,16 @@ export class ProductsController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productsService.findOne(id);
+  }
+
+  @Patch(':id/sales')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PLATFORM_ADMIN', 'ADMIN')
+  updateSales(
+    @Param('id') id: string,
+    @Body('fakeSoldCount') fakeSoldCount: number,
+  ) {
+    return this.productsService.updateSalesCount(id, fakeSoldCount);
   }
 
   @Post(':id/skus')

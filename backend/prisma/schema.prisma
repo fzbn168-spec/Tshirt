@@ -56,6 +56,42 @@ model Attribute {
   updatedAt DateTime @updatedAt
 }
 
+// 15. 商品评价 (Review)
+model Review {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  
+  userId    String?  // 注册用户评价
+  user      User?    @relation(fields: [userId], references: [id])
+  
+  rating    Int      // 评分 1-5
+  content   String?  // 评价内容
+  images    String?  // 图片 JSON
+  
+  // 虚拟评价支持
+  authorName   String? // 虚拟用户名
+  authorAvatar String? // 虚拟头像
+  country      String? // 评价者国家
+  
+  isPublished Boolean @default(true) // 审核状态 (默认公开)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 14. 分析事件 (AnalyticsEvent)
+// 用于追踪用户行为漏斗和转化率
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  eventType String   // VIEW_PRODUCT, ADD_TO_CART, INITIATE_CHECKOUT, PURCHASE
+  userId    String?  // 可选，已登录用户ID
+  sessionId String?  // 游客会话ID (Fingerprint or Cookie)
+  metadata  String?  // JSON详情 (如 productId, cartValue)
+  
+  createdAt DateTime @default(now())
+}
+
 // 属性的具体选项值 (如: 颜色的"红色", "蓝色")
 model AttributeValue {
   id          String    @id @default(uuid())
@@ -128,11 +164,27 @@ model Product {
   // 尺码表关联
   sizeChartId   String?
   sizeChart     SizeChart? @relation(fields: [sizeChartId], references: [id])
+  sizeChartImage String? // 尺码表图片 (可选，替代结构化尺码表)
   
   // 关联业务数据
   inquiryItems  InquiryItem[]
   orderItems    OrderItem[]
+  reviews       Review[]
   attributes    ProductAttribute[]
+
+  // 1. 材质明细 (结构化，利于生成 PI)
+  materialDetail  String? // JSON: { "upper": "Leather", "lining": "Mesh", "outsole": "Rubber" }
+  
+  // 2. 贸易属性
+  originCountry   String  @default("China") // 原产地
+  loadingPort     String  @default("Xiamen") // 装运港
+  
+  // 3. 季节/系列 (Fashion Specific)
+  season          String? // e.g., "SS24", "FW24"
+
+  // 4. 销量统计
+  soldCount       Int     @default(0) // 真实销量
+  fakeSoldCount   Int     @default(0) // 虚拟销量 (用于冷启动)
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -170,6 +222,7 @@ model Sku {
   price     Decimal  // 该规格的具体批发价
   moq       Int      @default(1) // 最小起订量 (Minimum Order Quantity)
   stock     Int      @default(0) // 当前库存
+  image     String?  // SKU specific image (e.g. Red shoe image)
   leadTime  String?  // 生产/发货周期 (如: "7-14 days")
   tierPrices String? // 阶梯定价 JSON: [{"minQty": 100, "price": 9.5}]
 
@@ -180,6 +233,12 @@ model Sku {
   width          Decimal? // 包装宽 (cm)
   height         Decimal? // 包装高 (cm)
   itemsPerCarton Int?     // 每箱装箱数 (pcs/carton)
+  
+  // 1. 装箱核心数据 (用于算柜量)
+  cartonLength    Decimal? // 外箱长
+  cartonWidth     Decimal? // 外箱宽
+  cartonHeight    Decimal? // 外箱高
+  cartonGrossWeight Decimal? // 单箱毛重 (并非单只鞋重)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -234,6 +293,11 @@ model User {
   orders        Order[]
   notifications Notification[]
   messages      InquiryMessage[]
+  reviews       Review[]
+
+  // Social Login IDs
+  googleId      String?   @unique
+  facebookId    String?   @unique
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -256,6 +320,7 @@ model Inquiry {
   
   incoterms     String?       // 期望贸易条款 (e.g., FOB, CIF)
 
+  type          String        @default("STANDARD") // 询价类型: STANDARD(标准), SAMPLE(样品)
   status        String        @default("PENDING") // 状态: PENDING(待处理), QUOTED(已报价), ORDERED(已下单), CLOSED(关闭)
   
   items         InquiryItem[]    // 询价商品明细
@@ -311,6 +376,7 @@ model Order {
   inquiryId   String?     @unique
   inquiry     Inquiry?    @relation(fields: [inquiryId], references: [id])
 
+  type        String      @default("STANDARD") // 订单类型: STANDARD, SAMPLE
   status      String      @default("PENDING_PAYMENT") 
   // 状态流转: PENDING_PAYMENT(待付款) -> PAID(已付款) -> PROCESSING(备货中) -> SHIPPED(已发货) -> COMPLETED(已完成) | CANCELLED(已取消)
 
@@ -414,4 +480,12 @@ model ExchangeRate {
   currency  String   @unique // 货币代码 (CNY, EUR)
   rate      Decimal  // 对基准货币(USD)的汇率
   updatedAt DateTime @updatedAt
+}
+
+// 系统配置 (SystemSetting)
+model SystemSetting {
+  key         String   @id // e.g., "weight_unit", "length_unit"
+  value       String   // e.g., "kg", "cm"
+  description String?
+  updatedAt   DateTime @updatedAt
 }

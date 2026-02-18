@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import api from '@/lib/api';
 
 interface CurrencyStore {
   currency: string;
@@ -27,17 +28,13 @@ export const useCurrencyStore = create<CurrencyStore>()(
 
       fetchRates: async () => {
         try {
-          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-          const res = await fetch(`${API_URL}/exchange-rates`);
-          if (res.ok) {
-            const data = await res.json();
-            // Convert array [{currency: 'EUR', rate: 0.9}] to object {EUR: 0.9}
-            const ratesMap: Record<string, number> = { USD: 1 };
-            data.forEach((r: any) => {
-              ratesMap[r.currency] = Number(r.rate);
-            });
-            set({ rates: ratesMap });
-          }
+          const res = await api.get('/exchange-rates');
+          const data = res.data as Array<{ currency: string; rate: number }>;
+          const ratesMap: Record<string, number> = { USD: 1 };
+          data.forEach((r) => {
+            ratesMap[r.currency] = Number(r.rate);
+          });
+          set({ rates: ratesMap });
         } catch (err) {
           console.error('Failed to fetch exchange rates', err);
         }

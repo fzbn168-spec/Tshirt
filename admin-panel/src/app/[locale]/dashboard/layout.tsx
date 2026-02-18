@@ -13,7 +13,9 @@ import {
   Settings, 
   LogOut,
   Menu,
-  X
+  X,
+  BarChart3,
+  Star
 } from 'lucide-react';
 
 export default function AdminDashboardLayout({
@@ -26,24 +28,32 @@ export default function AdminDashboardLayout({
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     if (!isAuthenticated()) {
       router.push('/login');
     }
   }, [isAuthenticated, router]);
+
+  if (!isMounted) {
+    return null;
+  }
 
   if (!isAuthenticated()) {
     return null; 
   }
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Products', href: '/dashboard/products', icon: Package },
-    { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
-    { name: 'Inquiries', href: '/dashboard/inquiries', icon: MessageSquare },
-    { name: 'Companies', href: '/dashboard/companies', icon: Users },
-    { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+    { name: t('dashboard'), href: '/dashboard', icon: LayoutDashboard },
+    { name: t('analytics'), href: '/dashboard/analytics', icon: BarChart3 },
+    { name: t('productMgmt'), href: '/dashboard/products', icon: Package },
+    { name: t('reviews'), href: '/dashboard/reviews', icon: Star },
+    { name: t('orders'), href: '/dashboard/orders', icon: ShoppingCart },
+    { name: t('inquiries'), href: '/dashboard/inquiries', icon: MessageSquare },
+    { name: t('companyTitle'), href: '/dashboard/companies', icon: Users },
+    { name: t('settings'), href: '/dashboard/settings', icon: Settings },
   ];
 
   const handleLogout = () => {

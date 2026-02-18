@@ -4,12 +4,14 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Ruler, Truck, FileText, Star, ShieldCheck } from 'lucide-react';
+import { Reviews } from './Reviews';
 
 interface ProductTabsProps {
   description: string;
+  productId?: string;
 }
 
-export function ProductTabs({ description }: ProductTabsProps) {
+export function ProductTabs({ description, productId }: ProductTabsProps) {
   const t = useTranslations('Product');
   const [activeTab, setActiveTab] = useState<'details' | 'size' | 'shipping' | 'reviews'>('details');
 
@@ -25,7 +27,7 @@ export function ProductTabs({ description }: ProductTabsProps) {
 
   const displayDescription = parseDescription(description);
 
-  const tabs = [
+  const tabs: { id: 'details' | 'size' | 'shipping' | 'reviews'; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'details', label: t('tabs.details'), icon: FileText },
     { id: 'size', label: t('tabs.sizeGuide'), icon: Ruler },
     { id: 'shipping', label: t('tabs.shipping'), icon: Truck },
@@ -39,7 +41,7 @@ export function ProductTabs({ description }: ProductTabsProps) {
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
+            onClick={() => setActiveTab(tab.id)}
             className={cn(
               "flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
               activeTab === tab.id
@@ -123,12 +125,9 @@ export function ProductTabs({ description }: ProductTabsProps) {
           </div>
         )}
 
-        {/* Reviews Tab (Placeholder) */}
-        {activeTab === 'reviews' && (
-          <div className="text-center py-12 bg-zinc-50 dark:bg-zinc-900/30 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700">
-            <Star className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
-            <p className="text-zinc-500">Reviews are coming soon.</p>
-          </div>
+        {/* Reviews Tab */}
+        {activeTab === 'reviews' && productId && (
+          <Reviews productId={productId} />
         )}
       </div>
     </div>

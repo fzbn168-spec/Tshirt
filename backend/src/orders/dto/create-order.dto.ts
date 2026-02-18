@@ -38,6 +38,10 @@ export class CreateOrderDto {
   @IsString()
   inquiryId?: string;
 
+  @IsOptional()
+  @IsString()
+  type?: string; // 'STANDARD' | 'SAMPLE'
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemDto)

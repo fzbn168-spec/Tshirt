@@ -22,6 +22,7 @@ export interface CartItem {
   quantity: number;
   price: number;  // 预估单价
   image: string;
+  type?: 'STANDARD' | 'SAMPLE'; // 订单类型
 }
 
 interface CartStore {
@@ -32,6 +33,7 @@ interface CartStore {
   clearCart: () => void; // 清空购物车
   totalItems: () => number; // 获取总件数
   totalPrice: () => number; // 获取总金额
+  getCartType: () => 'STANDARD' | 'SAMPLE' | null; // 获取当前购物车类型
 }
 
 export const useCartStore = create<CartStore>()(
@@ -40,6 +42,25 @@ export const useCartStore = create<CartStore>()(
       items: [],
       
       addItem: (newItem) => set((state) => {
+        // 1. Check for Mixed Cart Conflict
+        const currentType = state.items.length > 0 ? (state.items[0].type || 'STANDARD') : null;
+        const newType = newItem.type || 'STANDARD';
+
+        if (currentType && currentType !== newType) {
+          // Ideally, we should throw an error or handle this in UI. 
+          // For now, we will replace the cart if types conflict to avoid invalid state, 
+          // but a better UX would be to ask the user.
+          // Since this is a void function, we can't return an error easily without changing signature.
+          // We will Assume the UI checks this using `getCartType` before calling addItem, 
+          // OR we strictly enforce it here by clearing if conflict (aggressive).
+          // Let's go with: Conflict -> Reject (do nothing) or Replace?
+          // Let's Replace for now (simplest "Switch Mode" logic), but arguably dangerous.
+          // Better: Append ONLY if matching.
+          // Actually, let's just allow it here and filter/split later? No, Backend Order has one type.
+          // Let's clear if type mismatch.
+          return { items: [newItem] }; 
+        }
+
         const existingItem = state.items.find(item => item.id === newItem.id);
         
         if (existingItem) {
@@ -74,6 +95,12 @@ export const useCartStore = create<CartStore>()(
 
       totalPrice: () => {
         return get().items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+      },
+
+      getCartType: () => {
+        const items = get().items;
+        if (items.length === 0) return null;
+        return items[0].type || 'STANDARD';
       }
     }),
     {

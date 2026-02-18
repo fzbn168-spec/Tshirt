@@ -1,5 +1,4 @@
 
-import { useTranslations } from 'next-intl';
 import { ProductFilters } from './_components/ProductFilters';
 import { ProductGrid } from './_components/ProductGrid';
 import { Suspense } from 'react';
@@ -8,8 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 export default function ProductsPage() {
-  const t = useTranslations('Home'); // Reusing Home translations for now or create generic ones
-
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Mobile Filter Button */}

@@ -12,6 +12,7 @@ import {
 import { Response } from 'express';
 import { OrdersService } from './orders.service';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import { CreateOrderDto } from './dto/create-order.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -23,6 +24,12 @@ import { RequestWithUser } from '../auth/request-with-user.interface';
 @Roles('PLATFORM_ADMIN')
 export class OrdersAdminController {
   constructor(private readonly ordersService: OrdersService) {}
+
+  @Post()
+  @ApiOperation({ summary: 'Create Order from Inquiry (Admin)' })
+  create(@Body() createOrderDto: CreateOrderDto) {
+    return this.ordersService.createFromInquiry(createOrderDto);
+  }
 
   @Get()
   findAll() {
@@ -42,13 +49,13 @@ export class OrdersAdminController {
     @Res() res: Response,
   ) {
     const buffer = await this.ordersService.generatePi(id, req.user);
-    
+
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename=PI-${id}.pdf`,
       'Content-Length': buffer.length,
     });
-    
+
     res.end(buffer);
   }
 
@@ -60,13 +67,13 @@ export class OrdersAdminController {
     @Res() res: Response,
   ) {
     const buffer = await this.ordersService.generateCi(id, req.user);
-    
+
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename=CI-${id}.pdf`,
       'Content-Length': buffer.length,
     });
-    
+
     res.end(buffer);
   }
 
@@ -78,13 +85,13 @@ export class OrdersAdminController {
     @Res() res: Response,
   ) {
     const buffer = await this.ordersService.generatePl(id, req.user);
-    
+
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename=PL-${id}.pdf`,
       'Content-Length': buffer.length,
     });
-    
+
     res.end(buffer);
   }
 
@@ -94,7 +101,9 @@ export class OrdersAdminController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update Order Details (Incoterms, Shipping Marks, etc.)' })
+  @ApiOperation({
+    summary: 'Update Order Details (Incoterms, Shipping Marks, etc.)',
+  })
   update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
     return this.ordersService.update(id, updateOrderDto);
   }

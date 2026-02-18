@@ -1,14 +1,13 @@
-
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = 'https://soletrade.com';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://soletrade.com';
 
   return {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/admin/', '/dashboard/', '/api/'],
+      disallow: ['/dashboard/', '/admin/', '/api/'],
     },
     sitemap: `${baseUrl}/sitemap.xml`,
   };

@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, SlidersHorizontal, X, RotateCcw } from 'lucide-react';
 import { useDebounce } from 'use-debounce';
+import api from '@/lib/api';
 
 interface Category {
   id: string;
@@ -43,71 +44,57 @@ export function ProductFilters() {
 
   // Fetch Data
   useEffect(() => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    
-    // Fetch Categories
-    fetch(`${API_URL}/products/categories`)
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setCategories(data);
-        } else {
-          console.error('Categories data is not an array:', data);
-          setCategories([]);
-        }
+    api.get('/products/categories')
+      .then(res => {
+        const data = res.data;
+        setCategories(Array.isArray(data) ? data : []);
       })
       .catch(err => console.error('Failed to fetch categories', err));
 
-    // Fetch Attributes (Optional for future advanced filtering)
-    fetch(`${API_URL}/attributes`)
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setAttributes(data);
-        } else {
-          console.error('Attributes data is not an array:', data);
-          setAttributes([]);
-        }
+    api.get('/attributes')
+      .then(res => {
+        const data = res.data;
+        setAttributes(Array.isArray(data) ? data : []);
       })
       .catch(err => console.error('Failed to fetch attributes', err));
   }, []);
 
-  const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string[]>>({});
-
-  // Parse initial attributes from URL
-  useEffect(() => {
+  const selectedAttributes: Record<string, string[]> = (() => {
     const attrStr = searchParams.get('attributes');
-    if (attrStr) {
-      try {
-        setSelectedAttributes(JSON.parse(attrStr));
-      } catch {
-        setSelectedAttributes({});
-      }
-    } else {
-      setSelectedAttributes({});
+    if (!attrStr) return {};
+    try {
+      const obj = JSON.parse(attrStr);
+      return typeof obj === 'object' && obj ? obj : {};
+    } catch {
+      return {};
     }
-  }, [searchParams]);
+  })();
 
   // Handle Attribute Toggle
   const toggleAttribute = (attrId: string, valueId: string) => {
-    setSelectedAttributes(prev => {
-      const current = prev[attrId] || [];
-      const isSelected = current.includes(valueId);
-      
-      let next;
-      if (isSelected) {
-        next = current.filter(id => id !== valueId);
-      } else {
-        next = [...current, valueId];
-      }
-
-      if (next.length === 0) {
-        const { [attrId]: _, ...rest } = prev;
-        return rest;
-      }
-      
-      return { ...prev, [attrId]: next };
-    });
+    const current = selectedAttributes[attrId] || [];
+    const isSelected = current.includes(valueId);
+    let nextForAttr: string[];
+    if (isSelected) {
+      nextForAttr = current.filter(id => id !== valueId);
+    } else {
+      nextForAttr = [...current, valueId];
+    }
+    const next: Record<string, string[]> = { ...selectedAttributes };
+    if (nextForAttr.length === 0) {
+      delete next[attrId];
+    } else {
+      next[attrId] = nextForAttr;
+    }
+    const params = new URLSearchParams(searchParams.toString());
+    if (Object.keys(next).length > 0) {
+      params.set('attributes', JSON.stringify(next));
+    } else {
+      params.delete('attributes');
+    }
+    if (params.toString() !== searchParams.toString()) {
+      router.push(`?${params.toString()}`);
+    }
   };
 
   // Sync URL
@@ -126,19 +113,12 @@ export function ProductFilters() {
     if (debouncedMaxPrice) params.set('maxPrice', debouncedMaxPrice);
     else params.delete('maxPrice');
 
-    if (Object.keys(selectedAttributes).length > 0) {
-      params.set('attributes', JSON.stringify(selectedAttributes));
-    } else {
-      params.delete('attributes');
-    }
-
     if (params.toString() !== searchParams.toString()) {
       router.push(`?${params.toString()}`);
     }
-  }, [debouncedSearch, categoryId, debouncedMinPrice, debouncedMaxPrice, selectedAttributes, router, searchParams]);
+  }, [debouncedSearch, categoryId, debouncedMinPrice, debouncedMaxPrice, router, searchParams]);
 
-  const parseJson = (str: any) => {
-    if (typeof str !== 'string') return '';
+  const parseJson = (str: string) => {
     try {
       const obj = JSON.parse(str);
       return obj.en || obj.zh || str;
@@ -154,7 +134,13 @@ export function ProductFilters() {
     setCategoryId('');
     setMinPrice('');
     setMaxPrice('');
-    setSelectedAttributes({});
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('search');
+    params.delete('categoryId');
+    params.delete('minPrice');
+    params.delete('maxPrice');
+    params.delete('attributes');
+    router.push(`?${params.toString()}`);
   };
 
   return (

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useState, useEffect, useCallback } from 'react';
+import api from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { DocumentUploadList } from '@/components/profile/DocumentUploadList';
@@ -9,7 +9,7 @@ import { useTranslations } from 'next-intl';
 
 export default function ProfilePage() {
   const t = useTranslations('Profile');
-  const { token } = useAuthStore();
+  useAuthStore(); // ensure auth initialized if needed
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -25,16 +25,9 @@ export default function ProfilePage() {
   });
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const res = await axios.get(`${API_URL}/companies/profile`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await api.get('/companies/profile');
       const data = res.data;
       setFormData({
         name: data.name || '',
@@ -53,17 +46,18 @@ export default function ProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setMessage('');
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      await axios.patch(`${API_URL}/companies/profile`, formData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.patch('/companies/profile', formData);
       setMessage(t('updateSuccess'));
     } catch (err) {
       console.error(err);

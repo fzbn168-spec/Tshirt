@@ -7,6 +7,7 @@ import {
   UseGuards,
   Get,
   Request,
+  Res,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -32,5 +33,39 @@ export class AuthController {
   @Get('profile')
   getProfile(@Request() req) {
     return req.user;
+  }
+
+  // Social Login Routes
+
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth(@Request() req) {}
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Request() req, @Res() res) {
+    const { access_token } = await this.authService.validateUserBySocial(
+      req.user,
+    );
+    // Redirect to frontend with token
+    res.redirect(
+      `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/callback?token=${access_token}`,
+    );
+  }
+
+  @Get('facebook')
+  @UseGuards(AuthGuard('facebook'))
+  async facebookAuth(@Request() req) {}
+
+  @Get('facebook/callback')
+  @UseGuards(AuthGuard('facebook'))
+  async facebookAuthRedirect(@Request() req, @Res() res) {
+    const { access_token } = await this.authService.validateUserBySocial(
+      req.user,
+    );
+    // Redirect to frontend with token
+    res.redirect(
+      `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/callback?token=${access_token}`,
+    );
   }
 }

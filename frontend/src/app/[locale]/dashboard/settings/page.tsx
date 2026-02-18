@@ -11,7 +11,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     fetchRates();
-  }, []);
+  }, [fetchRates]);
 
   return (
     <div className="space-y-6">

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Send, User, Shield } from 'lucide-react';
+import { Send, Shield } from 'lucide-react';
 import { format } from 'date-fns';
+import api from '@/lib/api';
 
 interface Message {
   id: string;
@@ -27,20 +28,14 @@ export function InquiryChat({ inquiryId }: InquiryChatProps) {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${API_URL}/inquiries/${inquiryId}/messages`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setMessages(data);
-      }
+      const res = await api.get(`/inquiries/${inquiryId}/messages`);
+      setMessages(res.data);
     } catch (err) {
       console.error('Failed to fetch messages', err);
     }
-  };
+  }, [inquiryId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -53,7 +48,7 @@ export function InquiryChat({ inquiryId }: InquiryChatProps) {
       const interval = setInterval(fetchMessages, 10000);
       return () => clearInterval(interval);
     }
-  }, [token, inquiryId]);
+  }, [token, inquiryId, fetchMessages]);
 
   useEffect(() => {
     scrollToBottom();
@@ -65,20 +60,9 @@ export function InquiryChat({ inquiryId }: InquiryChatProps) {
 
     setIsLoading(true);
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${API_URL}/inquiries/${inquiryId}/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ content: newMessage })
-      });
-
-      if (res.ok) {
-        setNewMessage('');
-        fetchMessages();
-      }
+      await api.post(`/inquiries/${inquiryId}/messages`, { content: newMessage });
+      setNewMessage('');
+      fetchMessages();
     } catch (err) {
       console.error('Failed to send message', err);
     } finally {

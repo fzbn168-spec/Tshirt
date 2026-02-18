@@ -3,14 +3,14 @@
 import { useState } from 'react';
 import { Link, useRouter } from '@/navigation';
 import { ArrowRight, Mail, Lock, Building, User } from 'lucide-react';
-import { useAuthStore } from '@/store/useAuthStore';
 import { useTranslations } from 'next-intl';
 import { PasswordInput } from '@/components/ui/password-input';
+import api from '@/lib/api';
+import { isAxiosError } from 'axios';
 
 export default function RegisterPage() {
   const t = useTranslations('Auth');
   const router = useRouter();
-  const setAuth = useAuthStore((state) => state.setAuth);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -28,21 +28,18 @@ export default function RegisterPage() {
     };
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.message || 'Registration failed');
-      }
+      await api.post('/auth/register', data);
 
       router.push('/login?registered=true');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      let msg = 'Registration failed';
+      if (isAxiosError(err)) {
+        const data = err.response?.data as { message?: string } | undefined;
+        msg = data?.message ?? msg;
+      } else if (err instanceof Error) {
+        msg = err.message;
+      }
+      setError(msg);
     } finally {
       setIsLoading(false);
     }

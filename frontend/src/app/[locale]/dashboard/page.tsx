@@ -1,9 +1,13 @@
+'use client';
+
 import { ArrowUpRight, Clock, FileText, Package } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { useNotifications } from '@/hooks/useNotifications';
 
 export default function DashboardPage() {
   const t = useTranslations('Dashboard');
+  const { notifications, isLoading: notifLoading, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const stats = [
     { name: t('stats.activeInquiries'), value: '12', icon: FileText, change: '+2 this week', color: 'text-blue-600 bg-blue-50' },
     { name: t('stats.pendingOrders'), value: '3', icon: Clock, change: '1 awaiting payment', color: 'text-orange-600 bg-orange-50' },
@@ -62,24 +66,41 @@ export default function DashboardPage() {
 
         {/* System Notifications */}
         <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-sm">
-          <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+          <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
             <h2 className="font-semibold">{t('sections.notifications')}</h2>
+            <button
+              disabled={!unreadCount}
+              onClick={() => markAllAsRead.mutate()}
+              className="text-xs px-3 py-1 rounded-md bg-blue-600 text-white disabled:opacity-50"
+            >
+              Mark all as read ({unreadCount})
+            </button>
           </div>
           <div className="p-6 space-y-6">
-            <div className="flex gap-4">
-              <div className="w-2 h-2 mt-2 rounded-full bg-blue-600 shrink-0" />
-              <div>
-                <div className="text-sm font-medium mb-1">{t('notifications.catalogTitle')}</div>
-                <p className="text-xs text-zinc-500">{t('notifications.catalogDesc')}</p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <div className="w-2 h-2 mt-2 rounded-full bg-zinc-300 shrink-0" />
-              <div>
-                <div className="text-sm font-medium mb-1">{t('notifications.maintenanceTitle')}</div>
-                <p className="text-xs text-zinc-500">{t('notifications.maintenanceDesc')}</p>
-              </div>
-            </div>
+            {notifLoading ? (
+              <div className="text-sm text-zinc-500">Loading...</div>
+            ) : notifications.length === 0 ? (
+              <div className="text-sm text-zinc-500">No notifications</div>
+            ) : (
+              notifications.slice(0, 5).map((n) => (
+                <div key={n.id} className="flex gap-4 items-start">
+                  <div className={`w-2 h-2 mt-2 rounded-full shrink-0 ${n.isRead ? 'bg-zinc-300' : 'bg-blue-600'}`} />
+                  <div className="flex-1">
+                    <div className="text-sm font-medium mb-1">{n.title || n.type}</div>
+                    <p className="text-xs text-zinc-500">{n.content}</p>
+                    <div className="text-[10px] text-zinc-400 mt-1">{new Date(n.createdAt).toLocaleString()}</div>
+                  </div>
+                  {!n.isRead && (
+                    <button
+                      onClick={() => markAsRead.mutate(n.id)}
+                      className="text-xs px-2 py-1 rounded-md border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50"
+                    >
+                      Mark as read
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

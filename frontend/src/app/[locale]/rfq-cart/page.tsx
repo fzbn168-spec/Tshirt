@@ -1,17 +1,22 @@
 'use client';
 
 import { useCartStore } from '@/store/useCartStore';
+import { useCurrencyStore } from '@/store/useCurrencyStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useToastStore } from '@/store/useToastStore';
-import { Minus, Plus, Trash2, Send, ArrowRight, Upload, X, MessageCircle } from 'lucide-react';
+import { Minus, Plus, Trash2, Send, Upload, X, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState, useRef } from 'react';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import api from '@/lib/api';
 
 export default function RFQCartPage() {
-  const { items, updateQuantity, removeItem, clearCart, totalPrice, totalItems } = useCartStore();
-  const { user } = useAuthStore();
+  const { items, updateQuantity, removeItem, clearCart, totalPrice, totalItems, getCartType } = useCartStore();
+  const { format } = useCurrencyStore();
+  const { user, token } = useAuthStore();
   const { addToast } = useToastStore();
+  const { trackEvent } = useAnalytics();
   const [mounted, setMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -20,7 +25,14 @@ export default function RFQCartPage() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (items.length > 0) {
+      trackEvent('INITIATE_CHECKOUT', {
+        cartValue: totalPrice(),
+        itemCount: totalItems(),
+        cartType: getCartType()
+      });
+    }
+  }, [items.length, trackEvent, getCartType, totalItems, totalPrice]);
 
   if (!mounted) return null;
 
@@ -36,11 +48,16 @@ export default function RFQCartPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!token) {
+        addToast('Please login to submit an inquiry', 'error');
+        return;
+    }
+
     setIsSubmitting(true);
 
     const formData = new FormData(e.target as HTMLFormElement);
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    let uploadedUrls: string[] = [];
+    const uploadedUrls: string[] = [];
 
     try {
         // 1. Upload Attachments if any
@@ -49,23 +66,20 @@ export default function RFQCartPage() {
             for (const file of attachments) {
                 const fData = new FormData();
                 fData.append('file', file);
-                const upRes = await fetch(`${API_URL}/uploads`, {
-                    method: 'POST',
-                    body: fData
+                const upRes = await api.post('/uploads', fData, {
+                  headers: { 'Content-Type': 'multipart/form-data' }
                 });
-                if (upRes.ok) {
-                    const upData = await upRes.json();
-                    uploadedUrls.push(upData.url);
-                }
+                uploadedUrls.push(upRes.data.url);
             }
         }
 
         const data = {
-            contactName: formData.get('companyName') as string,
-            contactEmail: formData.get('email') as string,
-            notes: formData.get('notes') as string,
-            attachments: JSON.stringify(uploadedUrls),
-            items: items.map(item => ({
+                contactName: formData.get('companyName') as string,
+                contactEmail: formData.get('email') as string,
+                notes: formData.get('notes') as string,
+                attachments: JSON.stringify(uploadedUrls),
+                type: getCartType() || 'STANDARD',
+                items: items.map(item => ({
                 productId: item.productId,
                 productName: item.productName,
                 skuId: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.skuId) ? item.skuId : undefined,
@@ -75,20 +89,20 @@ export default function RFQCartPage() {
             }))
         };
 
-        const response = await fetch(`${API_URL}/inquiries`, {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Failed to submit inquiry: ${response.status} ${errorText}`);
-        }
+        await api.post('/inquiries', data);
 
         setSubmitted(true);
+        trackEvent('PURCHASE', {
+            transactionId: Date.now().toString(), // Using timestamp as mock ID since Inquiry ID isn't returned in simple response
+            value: totalPrice(),
+            currency: 'USD',
+            items: items.map(i => ({
+                id: i.productId,
+                sku: i.skuCode,
+                quantity: i.quantity,
+                price: i.price
+            }))
+        });
         clearCart();
         addToast('Inquiry submitted successfully!', 'success');
     } catch (error) {
@@ -136,7 +150,14 @@ export default function RFQCartPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-8">Request for Quotation</h1>
+      <div className="flex items-center gap-3 mb-8">
+        <h1 className="text-2xl font-bold">Request for Quotation</h1>
+        {getCartType() === 'SAMPLE' && (
+            <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold border border-purple-200">
+                SAMPLE ORDER
+            </span>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Cart Items List */}
@@ -220,7 +241,7 @@ export default function RFQCartPage() {
               </div>
               <div className="flex justify-between border-t pt-3 mt-3">
                 <span className="font-bold">Estimated Value</span>
-                <span className="font-bold text-lg text-blue-600">${Number(totalPrice()).toFixed(2)}</span>
+                <span className="font-bold text-lg text-blue-600">{format(totalPrice())}</span>
               </div>
               <p className="text-xs text-zinc-400 mt-2">
                 * Final price including shipping will be confirmed in the official quotation.
@@ -314,7 +335,7 @@ export default function RFQCartPage() {
               <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 text-center">
                 <p className="text-xs text-zinc-500 mb-3">Need a faster response?</p>
                 <a 
-                  href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '8613800000000'}?text=${encodeURIComponent(`Hi, I'm interested in ${items.length} items (Value: $${totalPrice().toFixed(2)}) from SoleTrade.`)}`}
+                  href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '8613800000000'}?text=${encodeURIComponent(`Hi, I am interested in ${items.length} items (Value: ${format(totalPrice())}) from SoleTrade.`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full h-10 border border-green-500 text-green-600 rounded-md font-medium hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors flex items-center justify-center gap-2"

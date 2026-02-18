@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Plus, Trash2, X } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { PasswordInput } from '@/components/ui/password-input';
+import api from '@/lib/api';
 
 interface User {
   id: string;
@@ -17,8 +17,7 @@ interface User {
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { token, logout } = useAuthStore();
-  const router = useRouter();
+  const { token } = useAuthStore();
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,26 +30,9 @@ export default function UsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      console.log('Fetching users...');
-      const res = await fetch(`${API_URL}/users`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      if (!res.ok) {
-        if (res.status === 401) {
-          console.warn('Unauthorized access, logging out...');
-          logout();
-          router.push('/login');
-          return;
-        }
-        const errorText = await res.text();
-        throw new Error(`Failed to fetch users: ${res.status} ${res.statusText} - ${errorText}`);
-      }
-      const data = await res.json();
-      setUsers(data);
-    } catch (err: any) {
+      const res = await api.get('/users');
+      setUsers(res.data);
+    } catch (err) {
       console.error('Fetch users error:', err);
       // alert(err.message); // Optional: show error to user
     } finally {
@@ -67,26 +49,13 @@ export default function UsersPage() {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${API_URL}/users`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
-      
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || 'Failed to create user');
-      }
+      await api.post('/users', formData);
       
       setIsModalOpen(false);
       setFormData({ email: '', password: '', fullName: '', role: 'MEMBER' });
       fetchUsers();
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to create user');
     }
   };
 
@@ -94,19 +63,10 @@ export default function UsersPage() {
     if (!confirm('Are you sure you want to delete this user?')) return;
     
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${API_URL}/users/${id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
-      if (!res.ok) throw new Error('Failed to delete user');
-      
+      await api.delete(`/users/${id}`);
       fetchUsers();
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete user');
     }
   };
 

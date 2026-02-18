@@ -2,8 +2,8 @@
 
 import { useState, useRef } from 'react';
 import { Upload, X, Loader2, FileIcon } from 'lucide-react';
-import { useAuthStore } from '@/store/useAuthStore';
 import Image from 'next/image';
+import api from '@/lib/api';
 
 interface FileUploadProps {
   value?: string;
@@ -14,7 +14,6 @@ interface FileUploadProps {
 
 export function FileUpload({ value, onUpload, label = "Upload File", accept = "image/*,application/pdf" }: FileUploadProps) {
   const [loading, setLoading] = useState(false);
-  const { token } = useAuthStore();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,19 +25,10 @@ export function FileUpload({ value, onUpload, label = "Upload File", accept = "i
     formData.append('file', file);
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${API_URL}/uploads`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
+      const res = await api.post('/uploads', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
-
-      if (!res.ok) throw new Error('Upload failed');
-
-      const data = await res.json();
-      onUpload(data.url);
+      onUpload(res.data.url);
     } catch (error) {
       console.error(error);
       alert('Upload failed');

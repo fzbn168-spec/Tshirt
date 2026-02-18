@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PaymentModal } from '@/components/orders/PaymentModal';
+import api from '@/lib/api';
 
 interface OrderItem {
   id: string;
@@ -25,6 +26,7 @@ interface Order {
   inquiry?: {
     inquiryNo: string;
   };
+  type?: string;
 }
 
 export default function OrdersPage() {
@@ -43,16 +45,8 @@ export default function OrdersPage() {
 
     const fetchOrders = async () => {
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-        const res = await fetch(`${API_URL}/orders`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setOrders(data);
-        }
+        const res = await api.get('/orders');
+        setOrders(res.data);
       } catch (error) {
         console.error('Failed to fetch orders', error);
       } finally {
@@ -76,36 +70,16 @@ export default function OrdersPage() {
     if (!selectedOrder) return;
 
     try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-        const res = await fetch(`${API_URL}/payments`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                orderId: selectedOrder.id,
-                amount: Number(selectedOrder.totalAmount),
-                method,
-                proofUrl
-            })
+        await api.post('/payments', {
+          orderId: selectedOrder.id,
+          amount: Number(selectedOrder.totalAmount),
+          method,
+          proofUrl
         });
-        
-        if (res.ok) {
-            // Refresh orders
-            // Note: If WIRE, status might not change immediately, but we can refetch or just alert
-            alert('Payment Submitted Successfully!');
-            
-            // Refetch to be sure
-            const fetchRes = await fetch(`${API_URL}/orders`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (fetchRes.ok) {
-                setOrders(await fetchRes.json());
-            }
-        } else {
-            alert('Payment Failed');
-        }
+        alert('Payment Submitted Successfully!');
+        // Refetch orders
+        const res = await api.get('/orders');
+        setOrders(res.data);
     } catch (e) {
         console.error(e);
         alert('Payment Error');
@@ -124,6 +98,7 @@ export default function OrdersPage() {
             <thead className="[&_tr]:border-b">
               <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Order No</th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Type</th>
                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Date</th>
                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Source</th>
                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Total Amount</th>
@@ -134,7 +109,7 @@ export default function OrdersPage() {
             <tbody className="[&_tr:last-child]:border-0">
               {orders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-4 text-center text-muted-foreground">
+                  <td colSpan={7} className="p-4 text-center text-muted-foreground">
                     No orders found.
                   </td>
                 </tr>
@@ -142,6 +117,15 @@ export default function OrdersPage() {
                 orders.map((order) => (
                   <tr key={order.id} className="border-b transition-colors hover:bg-muted/50">
                     <td className="p-4 align-middle font-medium">{order.orderNo}</td>
+                    <td className="p-4 align-middle">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold border ${
+                        order.type === 'SAMPLE' 
+                          ? "bg-purple-100 text-purple-700 border-purple-200" 
+                          : "bg-blue-100 text-blue-700 border-blue-200"
+                      }`}>
+                        {order.type || 'STANDARD'}
+                      </span>
+                    </td>
                     <td className="p-4 align-middle">
                       {new Date(order.createdAt).toLocaleDateString()}
                     </td>
@@ -189,6 +173,7 @@ export default function OrdersPage() {
             onSubmit={handlePaymentSubmit}
             amount={Number(selectedOrder.totalAmount)}
             currency={selectedOrder.currency}
+            orderId={selectedOrder.id}
         />
       )}
     </div>

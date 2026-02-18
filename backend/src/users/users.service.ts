@@ -43,6 +43,20 @@ export class UsersService {
     });
   }
 
+  async findSalesReps() {
+    return this.prisma.user.findMany({
+      where: {
+        role: { in: ['PLATFORM_ADMIN', 'SALES_REP'] }, // Assuming we might add SALES_REP later, for now PLATFORM_ADMIN acts as sales
+      },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        role: true,
+      },
+    });
+  }
+
   async findAll(companyId?: string) {
     return this.prisma.user.findMany({
       where: companyId ? { companyId } : undefined,

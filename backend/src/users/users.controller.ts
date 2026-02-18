@@ -31,11 +31,14 @@ export class UsersController {
   @ApiOperation({ summary: 'Create a new user in my company' })
   create(@Body() createUserDto: CreateUserDto, @Req() req: RequestWithUser) {
     // Only Company Admin or Platform Admin can create users
-    const companyId = req.user.role === 'PLATFORM_ADMIN' ? undefined : req.user.companyId;
-    
+    const companyId =
+      req.user.role === 'PLATFORM_ADMIN' ? undefined : req.user.companyId;
+
     // For now, enforcing creation under a company context
     if (!req.user.companyId) {
-        throw new BadRequestException('Company context required to create user via this endpoint');
+      throw new BadRequestException(
+        'Company context required to create user via this endpoint',
+      );
     }
     return this.usersService.create(createUserDto, req.user.companyId);
   }
@@ -45,7 +48,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Get users in my company' })
   findAll(@Req() req: RequestWithUser) {
     if (!req.user.companyId) {
-        throw new BadRequestException('User must belong to a company');
+      throw new BadRequestException('User must belong to a company');
     }
     return this.usersService.findAll(req.user.companyId);
   }
@@ -55,7 +58,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Get user by ID in my company' })
   findOne(@Param('id') id: string, @Req() req: RequestWithUser) {
     if (!req.user.companyId) {
-        throw new BadRequestException('User must belong to a company');
+      throw new BadRequestException('User must belong to a company');
     }
     return this.usersService.findOne(id, req.user.companyId);
   }
@@ -69,7 +72,7 @@ export class UsersController {
     @Req() req: RequestWithUser,
   ) {
     if (!req.user.companyId) {
-        throw new BadRequestException('User must belong to a company');
+      throw new BadRequestException('User must belong to a company');
     }
     return this.usersService.update(id, updateUserDto, req.user.companyId);
   }
@@ -79,7 +82,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Delete user in my company' })
   remove(@Param('id') id: string, @Req() req: RequestWithUser) {
     if (!req.user.companyId) {
-        throw new BadRequestException('User must belong to a company');
+      throw new BadRequestException('User must belong to a company');
     }
     return this.usersService.remove(id, req.user.companyId);
   }

@@ -2,18 +2,12 @@
 
 import { useToastStore } from '@/store/useToastStore';
 import { X, CheckCircle, AlertCircle, Info } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 export function ToastContainer() {
   const { toasts, removeToast } = useToastStore();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
+  const isClient = typeof window !== 'undefined';
+  if (!isClient) return null;
 
   return (
     <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">

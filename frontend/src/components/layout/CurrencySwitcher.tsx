@@ -9,7 +9,7 @@ export function CurrencySwitcher() {
 
   useEffect(() => {
     fetchRates();
-  }, []);
+  }, [fetchRates]);
 
   const currencies = Object.keys(rates);
 

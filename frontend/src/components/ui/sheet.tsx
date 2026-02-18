@@ -4,10 +4,11 @@ import * as React from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const SheetContext = React.createContext<{
+type SheetContextValue = {
   open: boolean;
   setOpen: (open: boolean) => void;
-} | null>(null);
+};
+const SheetContext = React.createContext<SheetContextValue | null>(null);
 
 export const Sheet = ({ 
   children, 
@@ -36,7 +37,7 @@ export const Sheet = ({
   }, [isOpen]);
 
   return (
-    <SheetContext.Provider value={{ open: !!isOpen, setOpen: setIsOpen! }}>
+    <SheetContext.Provider value={{ open: !!isOpen, setOpen: (v) => (setIsOpen ?? setUncontrolledOpen)(v) }}>
       {children}
     </SheetContext.Provider>
   );
@@ -46,12 +47,11 @@ export const SheetTrigger = ({ asChild, children }: { asChild?: boolean, childre
   const context = React.useContext(SheetContext);
   if (!context) throw new Error("SheetTrigger used outside Sheet");
 
-  const child = asChild ? React.Children.only(children) as React.ReactElement : null;
+  const child = asChild ? React.Children.only(children) as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }> : null;
   
   if (child) {
-    return React.cloneElement(child as React.ReactElement<any>, {
+    return React.cloneElement(child, {
       onClick: (e: React.MouseEvent) => {
-        // @ts-ignore
         child.props.onClick?.(e);
         context.setOpen(true);
       }

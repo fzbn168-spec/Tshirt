@@ -1,6 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { InquiriesModule } from './inquiries/inquiries.module';
 import { PrismaService } from './prisma.service';
 import { AuthModule } from './auth/auth.module';
@@ -21,17 +19,24 @@ import { AttributesModule } from './attributes/attributes.module';
 import { ExchangeRatesModule } from './exchange-rates/exchange-rates.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { SizeChartsModule } from './size-charts/size-charts.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { SystemSettingsModule } from './system-settings/system-settings.module';
 
 @Module({
   imports: [
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 100,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
     }),
+    SystemSettingsModule,
     EmailModule,
     NotificationsModule,
     StripeModule,
@@ -47,10 +52,12 @@ import { APP_GUARD } from '@nestjs/core';
     PaymentsModule,
     ShippingsModule,
     ExchangeRatesModule,
+    SizeChartsModule,
+    ReviewsModule,
+    AnalyticsModule,
   ],
-  controllers: [AppController],
+  controllers: [],
   providers: [
-    AppService, 
     PrismaService,
     {
       provide: APP_GUARD,

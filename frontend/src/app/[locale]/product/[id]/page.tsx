@@ -29,6 +29,15 @@ const getLocStr = (jsonStr: string) => {
   }
 };
 
+function safeJsonParse<T>(str: string | null | undefined, fallback: T): T {
+  if (!str) return fallback;
+  try {
+    return JSON.parse(str) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 type Props = {
   params: Promise<{ id: string; locale: string }>;
 };
@@ -46,15 +55,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const title = getLocStr(product.title);
   const description = getLocStr(product.description);
-  const images = JSON.parse(product.images || '[]');
+  const images = safeJsonParse<string[]>(product.images, []);
+  const url = `https://soletrade.com/product/${id}`;
 
   return {
     title: title,
     description: description.substring(0, 160), // SEO optimal length
+    alternates: {
+      canonical: url,
+    },
     openGraph: {
       title: title,
       description: description,
-      images: images.map((url: string) => ({ url })),
+      url: url,
+      siteName: 'SoleTrade',
+      images: images.length > 0 ? [{ url: images[0] }] : [],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: title,
+      description: description.substring(0, 200),
+      images: images.length > 0 ? [images[0]] : [],
     },
   };
 }
@@ -70,7 +92,7 @@ export default async function ProductPage({ params }: Props) {
 
   const title = getLocStr(product.title);
   const description = getLocStr(product.description);
-  const images = JSON.parse(product.images || '[]');
+  const images = safeJsonParse<string[]>(product.images, []);
   const price = product.basePrice;
 
   // 3. Generate JSON-LD

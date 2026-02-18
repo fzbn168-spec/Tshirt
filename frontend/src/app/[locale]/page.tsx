@@ -4,6 +4,7 @@ import { ArrowRight, CheckCircle, Package, Truck } from 'lucide-react';
 import { Link } from '@/navigation';
 import { useTranslations } from 'next-intl';
 import { TrustSection } from '@/components/home/TrustSection';
+import Image from 'next/image';
 
 export default function Home() {
   const t = useTranslations('Home');
@@ -100,10 +101,13 @@ export default function Home() {
               { name: "Kids' Active", img: "https://images.unsplash.com/photo-1514989940723-e8e51635b782?auto=format&fit=crop&w=500&q=80" },
             ].map((cat, i) => (
               <Link key={i} href="#" className="group relative block aspect-[4/5] overflow-hidden rounded-xl bg-zinc-100">
-                <img 
-                  src={cat.img} 
+                <Image
+                  src={cat.img}
                   alt={cat.name}
-                  className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  priority={i < 2}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 <div className="absolute bottom-4 left-4 text-white">
@@ -130,7 +134,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="p-4">
-                  <div className="text-xs text-zinc-500 mb-1">Men's Running</div>
+                  <div className="text-xs text-zinc-500 mb-1">Men&apos;s Running</div>
                   <h3 className="font-medium text-lg mb-2">Ultra-Light Breathable Runner</h3>
                   <div className="flex justify-between items-end">
                     <div>

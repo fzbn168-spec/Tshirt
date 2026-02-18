@@ -67,6 +67,11 @@ export class CreateInquiryDto {
   @IsOptional()
   attachments?: string; // JSON string
 
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  type?: string; // 'STANDARD' | 'SAMPLE'
+
   @ApiProperty({ type: [CreateInquiryItemDto] })
   @IsArray()
   @ValidateNested({ each: true })

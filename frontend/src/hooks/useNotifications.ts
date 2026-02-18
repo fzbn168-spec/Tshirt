@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import api from '@/lib/api';
 
 export interface Notification {
   id: string;
@@ -18,33 +19,14 @@ export function useNotifications() {
   const { isAuthenticated, token, logout } = useAuthStore();
   const queryClient = useQueryClient();
   const router = useRouter();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['notifications'],
-    queryFn: async ({ signal }) => {
+    queryFn: async () => {
       if (!isAuthenticated() || !token) return [];
-      try {
-        const res = await fetch(`${API_URL}/notifications`, {
-          headers: { Authorization: `Bearer ${token}` },
-          signal
-        });
-        
-        if (!res.ok) {
-          if (res.status === 401) {
-            console.warn('Unauthorized access in notifications, logging out...');
-            throw new Error('Unauthorized');
-          }
-          throw new Error('Failed to fetch notifications');
-        }
-        return res.json() as Promise<Notification[]>;
-      } catch (err: any) {
-        if (err.name === 'AbortError') {
-          // Ignore abort errors
-          return [];
-        }
-        throw err;
-      }
+      // Axios does not support AbortSignal directly; for now, ignore signal
+      const res = await api.get<Notification[]>('/notifications');
+      return res.data;
     },
     enabled: isAuthenticated() && !!token,
     refetchInterval: 30000, // Poll every 30s
@@ -60,14 +42,72 @@ export function useNotifications() {
 
   const markAsRead = useMutation({
     mutationFn: async (id: string) => {
-       const res = await fetch(`${API_URL}/notifications/${id}/read`, {
-         method: 'PATCH',
-         headers: { Authorization: `Bearer ${token}` }
-       });
-       if (!res.ok) throw new Error('Failed to mark as read');
-       return res.json();
+       const res = await api.patch(`/notifications/${id}/read`);
+       return res.data;
     },
-    onSuccess: () => {
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+      const previous = queryClient.getQueryData<Notification[]>(['notifications']);
+      if (previous) {
+        const next = previous.map((n) => (n.id === id ? { ...n, isRead: true } : n));
+        queryClient.setQueryData(['notifications'], next);
+      }
+      return { previous };
+    },
+    onError: (_err, _id, ctx) => {
+      if (ctx?.previous) {
+        queryClient.setQueryData(['notifications'], ctx.previous);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    }
+  });
+
+  const markAllAsRead = useMutation({
+    mutationFn: async () => {
+      const res = await api.patch('/notifications/read-all');
+      return res.data;
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+      const previous = queryClient.getQueryData<Notification[]>(['notifications']);
+      if (previous) {
+        const next = previous.map((n) => ({ ...n, isRead: true }));
+        queryClient.setQueryData(['notifications'], next);
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) {
+        queryClient.setQueryData(['notifications'], ctx.previous);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    }
+  });
+
+  const markAsUnread = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.patch(`/notifications/${id}/unread`);
+      return res.data;
+    },
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+      const previous = queryClient.getQueryData<Notification[]>(['notifications']);
+      if (previous) {
+        const next = previous.map((n) => (n.id === id ? { ...n, isRead: false } : n));
+        queryClient.setQueryData(['notifications'], next);
+      }
+      return { previous };
+    },
+    onError: (_err, _id, ctx) => {
+      if (ctx?.previous) {
+        queryClient.setQueryData(['notifications'], ctx.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     }
   });
@@ -77,6 +117,8 @@ export function useNotifications() {
     unreadCount: (data || []).filter(n => !n.isRead).length,
     isLoading,
     error,
-    markAsRead
+    markAsRead,
+    markAllAsRead,
+    markAsUnread
   };
 }

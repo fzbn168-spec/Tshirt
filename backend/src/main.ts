@@ -3,9 +3,11 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
+import axios from 'axios';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Enable rawBody for Stripe Webhooks
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   // Security Headers
   app.use(helmet());
@@ -14,7 +16,38 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
   // Enable CORS for frontend
-  app.enableCors();
+  app.enableCors({
+    origin: true,
+    credentials: true,
+    exposedHeaders: ['X-Total-Count'],
+  });
+
+  const dsn = process.env.BACKEND_ERROR_DSN;
+  const sendErr = async (payload: Record<string, unknown>) => {
+    if (!dsn) return;
+    try {
+      await axios.post(dsn, payload).catch(() => {});
+    } catch {}
+  };
+  process.on('uncaughtException', (err) => {
+    void sendErr({
+      level: 'fatal',
+      message: err.message,
+      stack: err.stack || '',
+      ts: Date.now(),
+      service: 'backend',
+    });
+  });
+  process.on('unhandledRejection', (reason: unknown) => {
+    const r = reason as any;
+    void sendErr({
+      level: 'error',
+      message: r?.message || 'unhandledRejection',
+      stack: r?.stack || '',
+      ts: Date.now(),
+      service: 'backend',
+    });
+  });
 
   // Swagger Config
   const config = new DocumentBuilder()
@@ -36,7 +69,7 @@ async function bootstrap() {
     process.exit(1);
   }
 }
-bootstrap().catch(err => {
+bootstrap().catch((err) => {
   console.error('Fatal Error during bootstrap:', err);
   process.exit(1);
 });

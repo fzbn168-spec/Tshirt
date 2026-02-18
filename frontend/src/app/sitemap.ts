@@ -17,7 +17,7 @@ async function getProducts(): Promise<Product[]> {
     const res = await fetch(`${API_URL}/products?limit=1000`, { 
         signal: controller.signal,
         next: { revalidate: 3600 } 
-    }).catch(err => null); // Catch network errors
+    }).catch(() => null); // Catch network errors
     
     clearTimeout(timeoutId);
 
@@ -26,14 +26,15 @@ async function getProducts(): Promise<Product[]> {
     const data = await res.json().catch(() => null); // Catch JSON parse errors
     if (!data) return [];
 
-    let items: any[] = [];
+    type RawProduct = { id: string | number; updatedAt?: string };
+    let items: RawProduct[] = [];
     if (Array.isArray(data)) {
-        items = data;
-    } else if (typeof data === 'object' && Array.isArray(data.items)) {
-        items = data.items;
+        items = data as RawProduct[];
+    } else if (data && typeof data === 'object' && 'items' in data && Array.isArray((data as { items: unknown }).items)) {
+        items = (data as { items: RawProduct[] }).items;
     }
     
-    return items.map((item: any) => ({
+    return items.map((item) => ({
         id: String(item.id),
         updatedAt: item.updatedAt || new Date().toISOString()
     }));
@@ -44,7 +45,7 @@ async function getProducts(): Promise<Product[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://soletrade.com';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://soletrade.com';
   const products = await getProducts();
 
   const productUrls = products.map((product) => ({

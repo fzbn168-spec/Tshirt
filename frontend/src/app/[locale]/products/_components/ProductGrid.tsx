@@ -7,6 +7,8 @@ import { Link } from '@/navigation';
 import { Loader2, Package, Lock } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCurrencyStore } from '@/store/useCurrencyStore';
+import api from '@/lib/api';
+import Image from 'next/image';
 
 interface Product {
   id: string;
@@ -16,24 +18,19 @@ interface Product {
   images: string; // JSON array
   moq: number;
   category: { id: string; name: string };
-  skus: any[];
+  skus: { id: string }[];
 }
 
 export function ProductGrid() {
   const searchParams = useSearchParams();
-  // Using process.env.NEXT_PUBLIC_API_URL is handled by build time replacement in production
-  // But we provide a fallback for local dev if env is missing
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
   // Construct query string
   const queryString = searchParams.toString();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['products', queryString],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/products?${queryString}`);
-      if (!res.ok) throw new Error('Failed to fetch products');
-      return res.json();
+      const res = await api.get(`/products?${queryString}`);
+      return res.data;
     }
   });
 
@@ -44,8 +41,7 @@ export function ProductGrid() {
   const isAuth = isAuthenticated();
   const { format } = useCurrencyStore();
 
-  const parseJson = (str: any) => {
-    if (typeof str !== 'string') return '';
+  const parseJson = (str: string) => {
     try {
       const obj = JSON.parse(str);
       return obj.en || obj.zh || str;
@@ -54,8 +50,7 @@ export function ProductGrid() {
     }
   };
 
-  const getFirstImage = (jsonStr: any) => {
-    if (typeof jsonStr !== 'string') return null;
+  const getFirstImage = (jsonStr: string): string | null => {
     try {
       const arr = JSON.parse(jsonStr);
       return Array.isArray(arr) && arr.length > 0 ? arr[0] : null;
@@ -110,10 +105,12 @@ export function ProductGrid() {
             {/* Image Container */}
             <div className="aspect-[4/5] bg-zinc-100 dark:bg-zinc-800 relative overflow-hidden">
               {imageUrl ? (
-                <img 
-                  src={imageUrl} 
+                <Image
+                  src={imageUrl}
                   alt={title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  className="object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
                 />
               ) : (
                 <div className="flex items-center justify-center w-full h-full text-zinc-300 bg-zinc-50 dark:bg-zinc-800/50">

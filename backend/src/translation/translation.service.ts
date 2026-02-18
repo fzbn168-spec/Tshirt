@@ -17,7 +17,10 @@ export class TranslationService {
   }
 
   // Automatically fill missing keys in a localized object
-  async autoFill(localizedObj: { en?: string; zh?: string }): Promise<{ en: string; zh: string }> {
+  async autoFill(localizedObj: {
+    en?: string;
+    zh?: string;
+  }): Promise<{ en: string; zh: string }> {
     const res = { en: localizedObj.en || '', zh: localizedObj.zh || '' };
 
     if (res.en && !res.zh) {

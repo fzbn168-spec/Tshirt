@@ -45,14 +45,14 @@ describe('Acceptance Tests (CRM & Chat)', () => {
         companyName: buyerCompany,
       })
       .expect(201);
-      
+
     // Login Buyer
     const loginRes = await request(app.getHttpServer())
       .post('/auth/login')
       .send({ email: buyerEmail, password: 'password123' })
       .expect(200);
     buyerToken = loginRes.body.access_token;
-    
+
     // Get Buyer Profile to get Company ID
     const profileRes = await request(app.getHttpServer())
       .get('/auth/profile')
@@ -82,7 +82,7 @@ describe('Acceptance Tests (CRM & Chat)', () => {
       .get(`/platform/companies?salesRepId=${repId}`)
       .set('Authorization', `Bearer ${adminToken}`)
       .expect(200);
-      
+
     const company = res.body.find((c: any) => c.id === buyerCompanyId);
     expect(company).toBeDefined();
     expect(company.salesRepId).toBe(repId);
@@ -94,11 +94,11 @@ describe('Acceptance Tests (CRM & Chat)', () => {
     const prodRes = await request(app.getHttpServer())
       .get('/products')
       .expect(200);
-    
+
     // Check if products exist, if not, skip test or fail
     if (prodRes.body.length === 0) {
-        console.warn('No products found, skipping inquiry creation');
-        return;
+      console.warn('No products found, skipping inquiry creation');
+      return;
     }
 
     const product = prodRes.body[0];
@@ -110,17 +110,19 @@ describe('Acceptance Tests (CRM & Chat)', () => {
       .send({
         contactName: 'Buyer 1',
         contactEmail: buyerEmail,
-        items: [{
-          productId: product.id,
-          productName: 'Test Product',
-          skuId: sku.id,
-          skuSpecs: 'Test Specs',
-          quantity: 100,
-          price: 10,
-        }]
+        items: [
+          {
+            productId: product.id,
+            productName: 'Test Product',
+            skuId: sku.id,
+            skuSpecs: 'Test Specs',
+            quantity: 100,
+            price: 10,
+          },
+        ],
       })
       .expect(201);
-      
+
     inquiryId = res.body.id;
   });
 
@@ -142,7 +144,7 @@ describe('Acceptance Tests (CRM & Chat)', () => {
       .get(`/inquiries/${inquiryId}/messages`)
       .set('Authorization', `Bearer ${adminToken}`)
       .expect(200);
-      
+
     expect(msgRes.body.length).toBeGreaterThan(0);
     expect(msgRes.body[0].content).toBe('Hello Admin, I need a discount.');
 
@@ -161,7 +163,7 @@ describe('Acceptance Tests (CRM & Chat)', () => {
       .get(`/inquiries/${inquiryId}/messages`)
       .set('Authorization', `Bearer ${buyerToken}`)
       .expect(200);
-      
+
     expect(msgRes.body.length).toBeGreaterThan(1);
     expect(msgRes.body[1].content).toBe('Sure, we can discuss.');
   });

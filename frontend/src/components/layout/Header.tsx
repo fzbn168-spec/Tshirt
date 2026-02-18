@@ -4,7 +4,7 @@ import { Link } from '@/navigation';
 import { Search, ShoppingBag, User, Menu, LayoutDashboard, Bell } from 'lucide-react';
 import { useCartStore } from '@/store/useCartStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import LanguageSwitcher from './LanguageSwitcher';
 import { CurrencySwitcher } from './CurrencySwitcher';
@@ -18,14 +18,9 @@ export function Header() {
   const tHome = useTranslations('Home');
   const totalItems = useCartStore(state => state.totalItems());
   const { user, isAuthenticated } = useAuthStore();
-  const [mounted, setMounted] = useState(false);
+  const isClient = typeof window !== 'undefined';
   const { unreadCount } = useNotifications();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // Prevent hydration mismatch for persisted store
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white dark:bg-zinc-950 dark:border-zinc-800">
@@ -68,7 +63,7 @@ export function Header() {
                   <Link href="/products?sort=newest" className="text-blue-600" onClick={() => setIsMobileMenuOpen(false)}>{tNav('newArrivals')}</Link>
                 </nav>
                 <div className="border-t pt-6 flex flex-col gap-4">
-                  {isAuthenticated() && mounted ? (
+                  {isAuthenticated() && isClient ? (
                     <>
                       <Link href="/dashboard" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                         <LayoutDashboard className="h-5 w-5" />
@@ -115,7 +110,7 @@ export function Header() {
           <CurrencySwitcher />
           <LanguageSwitcher />
 
-          {isAuthenticated() && mounted && (
+          {isAuthenticated() && isClient && (
             <Link href="/dashboard/notifications" className="relative p-2 hover:bg-zinc-100 rounded-full dark:hover:bg-zinc-800">
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
@@ -128,14 +123,14 @@ export function Header() {
           
           <Link href="/rfq-cart" className="relative p-2 hover:bg-zinc-100 rounded-full dark:hover:bg-zinc-800">
             <ShoppingBag className="h-5 w-5" />
-            {mounted && totalItems > 0 && (
+            {isClient && totalItems > 0 && (
               <span className="absolute top-0 right-0 h-4 w-4 bg-blue-600 text-white text-[10px] flex items-center justify-center rounded-full">
                 {totalItems}
               </span>
             )}
           </Link>
           
-          {isAuthenticated() && mounted ? (
+          {isAuthenticated() && isClient ? (
              <div className="flex items-center gap-2">
                 <Link href="/dashboard" className="flex items-center gap-2 p-2 hover:bg-zinc-100 rounded-full dark:hover:bg-zinc-800">
                     <LayoutDashboard className="h-5 w-5" />

@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Loader2, ArrowLeft, Package, AlertCircle, CheckCircle2 } from 'lucide-react';
-import Link from 'next/link';
+import { Loader2, ArrowLeft, Package, AlertCircle } from 'lucide-react';
+import api from '@/lib/api';
 
 interface OrderItem {
   productId: string;
@@ -13,6 +13,16 @@ interface OrderItem {
   skuSpecs?: string;
   quantity: number;
   unitPrice: number;
+}
+
+interface InquiryItem {
+  productId: string;
+  skuId?: string;
+  productName: string;
+  skuSpecs?: string;
+  quantity: number | string;
+  quotedPrice?: number | string;
+  targetPrice?: number | string;
 }
 
 export default function CreateOrderPage() {
@@ -26,41 +36,39 @@ export default function CreateOrderPage() {
   const [error, setError] = useState('');
   const [items, setItems] = useState<OrderItem[]>([]);
   const [totalAmount, setTotalAmount] = useState(0);
+  const [type, setType] = useState('STANDARD');
+
+  const fetchInquiryDetails = useCallback(async () => {
+    try {
+      const res = await api.get(`/inquiries/${inquiryId}`);
+      const data = res.data;
+      
+      if (data.type) setType(data.type);
+
+      // Transform inquiry items to order items
+      const orderItems: OrderItem[] = (data.items as InquiryItem[]).map((item) => ({
+        productId: item.productId,
+        skuId: item.skuId,
+        productName: item.productName,
+        skuSpecs: item.skuSpecs,
+        quantity: Number(item.quantity),
+        unitPrice: Number(item.quotedPrice ?? item.targetPrice ?? 0) // Prefer quoted price
+      }));
+
+      setItems(orderItems);
+      calculateTotal(orderItems);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load inquiry');
+    } finally {
+      setInitLoading(false);
+    }
+  }, [inquiryId]);
 
   useEffect(() => {
     if (inquiryId && token) {
       fetchInquiryDetails();
     }
-  }, [inquiryId, token]);
-
-  const fetchInquiryDetails = async () => {
-    try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${API_URL}/inquiries/${inquiryId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error('Failed to load inquiry details');
-      
-      const data = await res.json();
-      
-      // Transform inquiry items to order items
-      const orderItems = data.items.map((item: any) => ({
-        productId: item.productId,
-        skuId: item.skuId,
-        productName: item.productName,
-        skuSpecs: item.skuSpecs,
-        quantity: item.quantity,
-        unitPrice: Number(item.quotedPrice || item.targetPrice || 0) // Prefer quoted price
-      }));
-
-      setItems(orderItems);
-      calculateTotal(orderItems);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setInitLoading(false);
-    }
-  };
+  }, [inquiryId, token, fetchInquiryDetails]);
 
   const calculateTotal = (currentItems: OrderItem[]) => {
     const total = currentItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
@@ -74,28 +82,15 @@ export default function CreateOrderPage() {
     try {
       const payload = {
         inquiryId: inquiryId || undefined,
-        items: items
+        items: items,
+        type: type
       };
 
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${API_URL}/orders`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || 'Failed to create order');
-      }
-
-      const order = await res.json();
+      const res = await api.post('/orders', payload);
+      const order = res.data as { orderNo: string };
       router.push(`/dashboard/orders?success=true&orderNo=${order.orderNo}`);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create order');
       setLoading(false);
     }
   };

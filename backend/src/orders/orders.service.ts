@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -8,6 +12,8 @@ import PDFDocument from 'pdfkit';
 
 import { UpdateOrderDto } from './dto/update-order.dto';
 
+import { BANK_INFO } from '../common/constants/payment-info';
+
 @Injectable()
 export class OrdersService {
   constructor(
@@ -16,16 +22,16 @@ export class OrdersService {
   ) {}
 
   /**
-    * 生成形式发票 (PI) PDF
-    * 
-    * 形式发票 (PI) 是在发货或交付货物之前发送给买方的初步销售清单。
-    * 它描述了购买的商品以及其他重要信息，如运输重量和运输费用。
-    * 
-    * @param id 订单 ID
-    * @param user 请求用户 (用于权限检查)
-    * @returns 包含 PDF 数据的 Buffer
-    */
-   async generatePi(id: string, user: any): Promise<Buffer> {
+   * 生成形式发票 (PI) PDF
+   *
+   * 形式发票 (PI) 是在发货或交付货物之前发送给买方的初步销售清单。
+   * 它描述了购买的商品以及其他重要信息，如运输重量和运输费用。
+   *
+   * @param id 订单 ID
+   * @param user 请求用户 (用于权限检查)
+   * @returns 包含 PDF 数据的 Buffer
+   */
+  async generatePi(id: string, user: any): Promise<Buffer> {
     const companyId =
       user.role === 'PLATFORM_ADMIN' ? undefined : user.companyId;
     const order = await this.findOne(id, companyId);
@@ -46,6 +52,7 @@ export class OrdersService {
       // --- Info Section ---
       doc.fontSize(10);
       doc.text(`Order No: ${order.orderNo}`, { align: 'right' });
+      doc.text(`Type: ${order.type || 'STANDARD'}`, { align: 'right' });
       doc.text(`Date: ${order.createdAt.toISOString().split('T')[0]}`, {
         align: 'right',
       });
@@ -63,12 +70,12 @@ export class OrdersService {
       // --- Table Layout Configuration ---
       // Define X coordinates for each column to ensure alignment
       const startY = doc.y;
-      const colX = { 
-          product: 50,  // Product Name
-          sku: 200,     // SKU/Specs
-          qty: 350,     // Quantity
-          price: 400,   // Unit Price
-          total: 480    // Total Price
+      const colX = {
+        product: 50, // Product Name
+        sku: 200, // SKU/Specs
+        qty: 350, // Quantity
+        price: 400, // Unit Price
+        total: 480, // Total Price
       };
 
       doc.font('Helvetica-Bold');
@@ -120,29 +127,32 @@ export class OrdersService {
         { align: 'right', width: 200 },
       );
 
-      // Payment Terms (Bank Info - Mock)
+      // Payment Terms (Bank Info - Configurable)
       doc.moveDown(4);
       doc.text('Payment Terms:', 50);
       doc.font('Helvetica').fontSize(9);
-      doc.text('Bank: Bank of America');
-      doc.text('Account Name: SoleTrade Inc.');
-      doc.text('Account No: 1234567890');
-      doc.text('Swift Code: BOFAUS3N');
+      doc.text(`Bank: ${BANK_INFO.bankName}`);
+      doc.text(`Account Name: ${BANK_INFO.accountName}`);
+      doc.text(`Account No: ${BANK_INFO.accountNo}`);
+      doc.text(`Swift Code: ${BANK_INFO.swiftCode}`);
+      if (BANK_INFO.address) {
+        doc.text(`Bank Address: ${BANK_INFO.address}`);
+      }
 
       doc.end();
     });
   }
 
   /**
-    * 生成商业发票 (CI) PDF
-    * 
-    * 商业发票 (CI) 是用于海关申报的主要单证。
-    * 与 PI 不同，CI 必须包含 HS 编码、原产国和确切的贸易条款 (Incoterms)。
-    * 
-    * @param id 订单 ID
-    * @param user 请求用户
-    */
-   async generateCi(id: string, user: any): Promise<Buffer> {
+   * 生成商业发票 (CI) PDF
+   *
+   * 商业发票 (CI) 是用于海关申报的主要单证。
+   * 与 PI 不同，CI 必须包含 HS 编码、原产国和确切的贸易条款 (Incoterms)。
+   *
+   * @param id 订单 ID
+   * @param user 请求用户
+   */
+  async generateCi(id: string, user: any): Promise<Buffer> {
     const companyId =
       user.role === 'PLATFORM_ADMIN' ? undefined : user.companyId;
     const order = await this.findOne(id, companyId);
@@ -162,11 +172,12 @@ export class OrdersService {
       // --- Document Info ---
       doc.fontSize(10);
       doc.text(`Invoice No: CI-${order.orderNo}`, { align: 'right' });
+      doc.text(`Type: ${order.type || 'STANDARD'}`, { align: 'right' });
       doc.text(`Date: ${new Date().toISOString().split('T')[0]}`, {
         align: 'right',
       });
       doc.text(`Order No: ${order.orderNo}`, { align: 'right' });
-      
+
       // Trade Terms (Crucial for Customs)
       if (order.incoterms) {
         doc.text(`Incoterms: ${order.incoterms}`, { align: 'right' });
@@ -175,7 +186,9 @@ export class OrdersService {
         doc.text(`Port of Loading: ${order.portOfLoading}`, { align: 'right' });
       }
       if (order.portOfDestination) {
-        doc.text(`Port of Destination: ${order.portOfDestination}`, { align: 'right' });
+        doc.text(`Port of Destination: ${order.portOfDestination}`, {
+          align: 'right',
+        });
       }
 
       doc.moveDown();
@@ -200,13 +213,13 @@ export class OrdersService {
 
       // --- Table Layout ---
       const startY = doc.y;
-      const colX = { 
-          product: 50, 
-          sku: 180, 
-          hsCode: 280, // HS Code Column (Required for Customs)
-          qty: 350, 
-          price: 400, 
-          total: 480 
+      const colX = {
+        product: 50,
+        sku: 180,
+        hsCode: 280, // HS Code Column (Required for Customs)
+        qty: 350,
+        price: 400,
+        total: 480,
       };
 
       doc.font('Helvetica-Bold');
@@ -283,6 +296,7 @@ export class OrdersService {
       // Info Section
       doc.fontSize(10);
       doc.text(`PL No: PL-${order.orderNo}`, { align: 'right' });
+      doc.text(`Type: ${order.type || 'STANDARD'}`, { align: 'right' });
       doc.text(`Date: ${new Date().toISOString().split('T')[0]}`, {
         align: 'right',
       });
@@ -293,7 +307,7 @@ export class OrdersService {
       doc.font('Helvetica-Bold').text('Consignee:', 50, doc.y);
       doc.font('Helvetica').text(order.company.name, 100, doc.y - 12);
       if (order.company.address) doc.text(order.company.address, 100);
-      
+
       doc.moveDown(2);
 
       // Shipping Marks
@@ -305,7 +319,14 @@ export class OrdersService {
 
       // Table Header
       const startY = doc.y;
-      const colX = { product: 50, sku: 180, qty: 320, cartons: 380, weight: 440, cbm: 500 };
+      const colX = {
+        product: 50,
+        sku: 180,
+        qty: 320,
+        cartons: 380,
+        weight: 440,
+        cbm: 500,
+      };
 
       doc.font('Helvetica-Bold');
       doc.text('Product', colX.product, startY);
@@ -336,20 +357,24 @@ export class OrdersService {
 
         const productName = item.productName;
         const specs = item.skuSpecs || '-';
-        
+
         // Logistics Calculation
         const itemsPerCarton = item.sku?.itemsPerCarton || 1; // Default to 1 if not set
         const cartons = Math.ceil(item.quantity / itemsPerCarton);
-        
+
         // Weight: Gross Weight per item * Qty
         const unitGw = item.sku?.grossWeight ? Number(item.sku.grossWeight) : 0;
         const gw = (item.quantity * unitGw).toFixed(2);
-        
+
         // Volume: (L*W*H / 1,000,000) * Cartons
         let cbm = 0;
         if (item.sku?.length && item.sku?.width && item.sku?.height) {
-            const volPerCarton = (Number(item.sku.length) * Number(item.sku.width) * Number(item.sku.height)) / 1000000;
-            cbm = volPerCarton * cartons;
+          const volPerCarton =
+            (Number(item.sku.length) *
+              Number(item.sku.width) *
+              Number(item.sku.height)) /
+            1000000;
+          cbm = volPerCarton * cartons;
         }
         const cbmStr = cbm.toFixed(3);
 
@@ -384,26 +409,61 @@ export class OrdersService {
     });
   }
 
+  async createFromInquiry(createOrderDto: CreateOrderDto) {
+    const { inquiryId } = createOrderDto;
+    if (!inquiryId) {
+      throw new BadRequestException(
+        'Inquiry ID is required for admin creation',
+      );
+    }
+    const inquiry = await this.prisma.inquiry.findUnique({
+      where: { id: inquiryId },
+    });
+    if (!inquiry) {
+      throw new NotFoundException('Inquiry not found');
+    }
+
+    // Find the user associated with the inquiry email
+    const user = await this.prisma.user.findUnique({
+      where: { email: inquiry.contactEmail },
+    });
+
+    if (!user) {
+      throw new BadRequestException(
+        `No registered user found for email: ${inquiry.contactEmail}. User must be registered to create an order.`,
+      );
+    }
+
+    const companyId = inquiry.companyId || user.companyId;
+    if (!companyId) {
+      throw new BadRequestException(
+        'Company information is missing for this inquiry/user.',
+      );
+    }
+
+    return this.create(user.id, companyId, createOrderDto);
+  }
+
   /**
-    * 🔒 事务性订单创建
-    * 
-    * 此方法实现了具有 ACID 保证的核心 B2B 交易逻辑：
-    * 1. 🛡️ 库存检查：悲观地检查实时库存。
-    * 2. 📉 库存扣减：原子性地扣减库存以防止超卖。
-    * 3. 💰 后端计价：忽略前端价格，根据数据库值重新计算。
-    * 4. 📊 阶梯定价：根据数量自动应用批量折扣。
-    * 
-    * @param userId 买家 ID
-    * @param companyId 买家公司 ID
-    * @param createOrderDto 订单数据
-    * @returns 创建的订单
-    */
-   async create(
+   * 🔒 事务性订单创建
+   *
+   * 此方法实现了具有 ACID 保证的核心 B2B 交易逻辑：
+   * 1. 🛡️ 库存检查：悲观地检查实时库存。
+   * 2. 📉 库存扣减：原子性地扣减库存以防止超卖。
+   * 3. 💰 后端计价：忽略前端价格，根据数据库值重新计算。
+   * 4. 📊 阶梯定价：根据数量自动应用批量折扣。
+   *
+   * @param userId 买家 ID
+   * @param companyId 买家公司 ID
+   * @param createOrderDto 订单数据
+   * @returns 创建的订单
+   */
+  async create(
     userId: string,
     companyId: string,
     createOrderDto: CreateOrderDto,
   ) {
-    const { inquiryId, items } = createOrderDto;
+    const { inquiryId, items, type = 'STANDARD' } = createOrderDto;
 
     // Generate Order No (Format: ORD-YYYYMMDD-RRR)
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -431,13 +491,14 @@ export class OrdersService {
 
       // 1. Validate & Calculate Items (Backend Pricing & Stock Check)
       let calculatedTotalAmount = 0;
-      const orderItemsData: Prisma.OrderItemUncheckedCreateWithoutOrderInput[] = [];
+      const orderItemsData: Prisma.OrderItemUncheckedCreateWithoutOrderInput[] =
+        [];
 
       for (const item of items) {
         // Fetch SKU to get real price and stock (Locking strategy relies on Prisma default isolation)
         const sku = await tx.sku.findUnique({
           where: { id: item.skuId },
-          include: { product: true }
+          include: { product: true },
         });
 
         if (!sku) {
@@ -446,18 +507,27 @@ export class OrdersService {
 
         // Critical Stock Check
         if (sku.stock < item.quantity) {
-          throw new Error(`Insufficient stock for SKU: ${sku.skuCode} (Requested: ${item.quantity}, Available: ${sku.stock})`);
+          throw new BadRequestException(
+            `Insufficient stock for SKU: ${sku.skuCode} (Requested: ${item.quantity}, Available: ${sku.stock})`,
+          );
+        }
+
+        // MOQ Check (Skip for Sample Orders)
+        if (type !== 'SAMPLE' && item.quantity < sku.moq) {
+          throw new BadRequestException(
+            `Quantity below MOQ for SKU: ${sku.skuCode} (Requested: ${item.quantity}, MOQ: ${sku.moq})`,
+          );
         }
 
         // Atomic Decrement (Prevents race conditions)
         await tx.sku.update({
           where: { id: sku.id },
-          data: { stock: { decrement: item.quantity } }
+          data: { stock: { decrement: item.quantity } },
         });
 
         // Determine Unit Price (Tiered Pricing Logic)
         let unitPrice = Number(sku.price);
-        
+
         // Tiered Pricing Strategy:
         // Parse JSON config: [{minQty: 10, price: 90}, {minQty: 50, price: 80}]
         // Sort descending by minQty to find the highest applicable tier.
@@ -467,14 +537,19 @@ export class OrdersService {
             if (Array.isArray(tiers)) {
               // Sort tiers by minQty descending to find the best match
               const sortedTiers = tiers.sort((a, b) => b.minQty - a.minQty);
-              const matchedTier = sortedTiers.find(t => item.quantity >= t.minQty);
-              
+              const matchedTier = sortedTiers.find(
+                (t) => item.quantity >= t.minQty,
+              );
+
               if (matchedTier) {
                 unitPrice = Number(matchedTier.price);
               }
             }
           } catch (e) {
-            console.warn(`Failed to parse tier prices for SKU ${sku.skuCode}`, e);
+            console.warn(
+              `Failed to parse tier prices for SKU ${sku.skuCode}`,
+              e,
+            );
           }
         }
 
@@ -484,7 +559,9 @@ export class OrdersService {
         orderItemsData.push({
           productId: item.productId,
           skuId: item.skuId,
-          productName: sku.product.title ? JSON.parse(sku.product.title).en : 'Product', // Source of Truth: DB
+          productName: sku.product.title
+            ? JSON.parse(sku.product.title).en
+            : 'Product', // Source of Truth: DB
           skuSpecs: item.skuSpecs, // Note: Specs string is currently from frontend, consider reconstructing from DB attributes for stricter consistency
           quantity: item.quantity,
           unitPrice: new Prisma.Decimal(unitPrice), // Source of Truth: Backend Calculation
@@ -499,6 +576,7 @@ export class OrdersService {
           companyId,
           userId,
           inquiryId,
+          type,
           totalAmount: calculatedTotalAmount,
           status: 'PENDING_PAYMENT',
           items: {
@@ -614,22 +692,22 @@ export class OrdersService {
   }
 
   /**
-    * 更新订单状态并处理库存回滚逻辑
-    * 
-    * 处理状态转换和副作用：
-    * - CANCELLED: 自动将库存释放回 SKU。
-    * - SHIPPED/DELIVERED: 触发通知。
-    * 
-    * @param id 订单 ID
-    * @param status 新状态
-    */
-   async updateStatus(id: string, status: string) {
+   * 更新订单状态并处理库存回滚逻辑
+   *
+   * 处理状态转换和副作用：
+   * - CANCELLED: 自动将库存释放回 SKU。
+   * - SHIPPED/DELIVERED: 触发通知。
+   *
+   * @param id 订单 ID
+   * @param status 新状态
+   */
+  async updateStatus(id: string, status: string) {
     // Wrap in transaction to ensure inventory rollback is atomic with status change
     const order = await this.prisma.$transaction(async (tx) => {
       // 1. Get current order status
       const currentOrder = await tx.order.findUnique({
         where: { id },
-        include: { items: true }
+        include: { items: true },
       });
 
       if (!currentOrder) {
@@ -643,12 +721,12 @@ export class OrdersService {
           if (item.skuId) {
             await tx.sku.update({
               where: { id: item.skuId },
-              data: { stock: { increment: item.quantity } }
+              data: { stock: { increment: item.quantity } },
             });
           }
         }
       }
-      
+
       // NOTE: Re-opening a cancelled order is currently NOT supported automatically.
       // If manually re-opening, stock must be checked and decremented manually.
 

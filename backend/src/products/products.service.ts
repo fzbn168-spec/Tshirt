@@ -1,4 +1,8 @@
-import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -26,26 +30,33 @@ export class ProductsService {
       errors: [] as string[],
     };
 
+    // Pre-fetch or create common attributes
+    // 预先确保系统中有 Color 和 Size 属性
+    const colorAttr = await this.ensureAttribute('Color', 'color');
+    const sizeAttr = await this.ensureAttribute('Size', 'size');
+
     for (const [index, row] of data.entries()) {
       try {
-        const { 
-          Title, 
-          Description, 
-          BasePrice, 
-          CategorySlug, 
-          MOQ, 
-          SKUCode, 
-          Color, 
-          Size 
+        const {
+          Title,
+          Description,
+          BasePrice,
+          CategorySlug,
+          MOQ,
+          SKUCode,
+          Color,
+          Size,
         } = row as any;
 
         if (!Title || !BasePrice || !CategorySlug) {
-          throw new Error('Missing required fields: Title, BasePrice, CategorySlug');
+          throw new Error(
+            'Missing required fields: Title, BasePrice, CategorySlug',
+          );
         }
 
         // 1. Find or Create Category
         const category = await this.prisma.category.findUnique({
-          where: { slug: CategorySlug }
+          where: { slug: CategorySlug },
         });
 
         if (!category) {
@@ -53,11 +64,10 @@ export class ProductsService {
         }
 
         // 2. Find or Create Product (by Title)
-        // Note: This assumes unique titles for simplicity in import
         let product = await this.prisma.product.findFirst({
-          where: { 
-            title: { contains: Title } // Simple check, ideally strict match
-          }
+          where: {
+            title: { contains: Title },
+          },
         });
 
         if (!product) {
@@ -70,18 +80,38 @@ export class ProductsService {
               images: JSON.stringify([]),
               specsTemplate: JSON.stringify({}),
               isPublished: true,
-            }
+            },
           });
         }
 
         // 3. Create SKU if SKUCode provided
         if (SKUCode) {
+          // A. 处理属性值 (Color/Size)
+          const attributeValueIds: string[] = [];
+
+          if (Color) {
+            const val = await this.ensureAttributeValue(colorAttr.id, Color);
+            attributeValueIds.push(val.id);
+            // 同时也关联到 Product 上
+            await this.linkAttributeToProduct(product.id, colorAttr.id);
+          }
+
+          if (Size) {
+            const val = await this.ensureAttributeValue(
+              sizeAttr.id,
+              String(Size),
+            );
+            attributeValueIds.push(val.id);
+            await this.linkAttributeToProduct(product.id, sizeAttr.id);
+          }
+
+          // B. 构建 Specs JSON (为了向后兼容)
           const specs: any = {};
           if (Color) specs.color = Color;
           if (Size) specs.size = Size;
 
           const existingSku = await this.prisma.sku.findUnique({
-            where: { skuCode: String(SKUCode) }
+            where: { skuCode: String(SKUCode) },
           });
 
           if (!existingSku) {
@@ -89,11 +119,17 @@ export class ProductsService {
               data: {
                 productId: product.id,
                 skuCode: String(SKUCode),
-                price: Number(BasePrice), // Default to base price
+                price: Number(BasePrice),
                 moq: Number(MOQ) || 1,
                 specs: JSON.stringify(specs),
-                stock: 100, // Default stock
-              }
+                stock: 100,
+                // C. 关联结构化属性值
+                attributeValues: {
+                  create: attributeValueIds.map((id) => ({
+                    attributeValueId: id,
+                  })),
+                },
+              },
             });
           }
         }
@@ -106,6 +142,68 @@ export class ProductsService {
     }
 
     return results;
+  }
+
+  // Helper: Ensure Attribute exists
+  private async ensureAttribute(nameEn: string, code: string) {
+    let attr = await this.prisma.attribute.findUnique({
+      where: { code },
+    });
+    if (!attr) {
+      attr = await this.prisma.attribute.create({
+        data: {
+          name: JSON.stringify({
+            en: nameEn,
+            zh: nameEn === 'Color' ? '颜色' : '尺码',
+          }),
+          code,
+          type: 'text',
+        },
+      });
+    }
+    return attr;
+  }
+
+  // Helper: Ensure AttributeValue exists
+  private async ensureAttributeValue(attributeId: string, valueEn: string) {
+    // 简单的查找逻辑 (实际可能需要更复杂的匹配，忽略大小写等)
+    let val = await this.prisma.attributeValue.findFirst({
+      where: {
+        attributeId,
+        value: { contains: valueEn }, // 简化匹配
+      },
+    });
+
+    if (!val) {
+      val = await this.prisma.attributeValue.create({
+        data: {
+          attributeId,
+          value: JSON.stringify({ en: valueEn, zh: valueEn }), // 暂时 zh = en
+        },
+      });
+    }
+    return val;
+  }
+
+  // Helper: Link Attribute to Product (Idempotent)
+  private async linkAttributeToProduct(productId: string, attributeId: string) {
+    try {
+      await this.prisma.productAttribute.upsert({
+        where: {
+          productId_attributeId: {
+            productId,
+            attributeId,
+          },
+        },
+        update: {},
+        create: {
+          productId,
+          attributeId,
+        },
+      });
+    } catch (e) {
+      // Ignore race conditions
+    }
   }
 
   async generateCatalogPdf(): Promise<Buffer> {
@@ -128,28 +226,37 @@ export class ProductsService {
 
       // Title
       doc.fontSize(24).text('Product Catalog', { align: 'center' });
-      doc.fontSize(10).text(`Generated on ${new Date().toLocaleDateString()}`, { align: 'center' });
+      doc.fontSize(10).text(`Generated on ${new Date().toLocaleDateString()}`, {
+        align: 'center',
+      });
       doc.moveDown(2);
 
       // List
       products.forEach((product, index) => {
-         // Avoid page break inside item if possible, or just let it flow
-         if (doc.y > 700) doc.addPage();
+        // Avoid page break inside item if possible, or just let it flow
+        if (doc.y > 700) doc.addPage();
 
-         const title = JSON.parse(product.title).en || 'Product';
-         doc.fontSize(14).font('Helvetica-Bold').text(title);
-         doc.fontSize(10).font('Helvetica').text(`Category: ${product.category?.name ? (JSON.parse(product.category.name).en || '-') : '-'}`);
-         doc.text(`Price: From $${Number(product.basePrice).toFixed(2)}`);
-         doc.text(`MOQ: ${product.skus[0]?.moq || 1}`);
-         doc.moveDown(0.5);
-         
-         const desc = JSON.parse(product.description).en || '';
-         doc.fontSize(9).text(desc.substring(0, 200) + (desc.length > 200 ? '...' : ''), {
-             width: 500,
-             align: 'justify'
-         });
-         
-         doc.moveDown(1.5);
+        const title = JSON.parse(product.title).en || 'Product';
+        doc.fontSize(14).font('Helvetica-Bold').text(title);
+        doc
+          .fontSize(10)
+          .font('Helvetica')
+          .text(
+            `Category: ${product.category?.name ? JSON.parse(product.category.name).en || '-' : '-'}`,
+          );
+        doc.text(`Price: From $${Number(product.basePrice).toFixed(2)}`);
+        doc.text(`MOQ: ${product.skus[0]?.moq || 1}`);
+        doc.moveDown(0.5);
+
+        const desc = JSON.parse(product.description).en || '';
+        doc
+          .fontSize(9)
+          .text(desc.substring(0, 200) + (desc.length > 200 ? '...' : ''), {
+            width: 500,
+            align: 'justify',
+          });
+
+        doc.moveDown(1.5);
       });
 
       doc.end();
@@ -180,6 +287,7 @@ export class ProductsService {
       return await this.prisma.product.create({
         data: {
           ...productData,
+          sizeChartId: createProductDto.sizeChartId,
           attributes: attributeIds
             ? {
                 create: attributeIds.map((id) => ({ attributeId: id })),
@@ -212,11 +320,12 @@ export class ProductsService {
           attributes: {
             include: {
               attribute: {
-                include: { values: true }
-              }
+                include: { values: true },
+              },
             },
           },
           category: true,
+          sizeChart: true,
         },
       });
     } catch (error) {
@@ -238,8 +347,9 @@ export class ProductsService {
     skip?: number;
     take?: number;
   }) {
-    const { search, categoryId, minPrice, maxPrice, attributes, skip, take } = params || {};
-    
+    const { search, categoryId, minPrice, maxPrice, attributes, skip, take } =
+      params || {};
+
     const where: any = {};
 
     if (search) {
@@ -263,32 +373,34 @@ export class ProductsService {
     // Attribute Filtering
     if (attributes && Object.keys(attributes).length > 0) {
       /**
-        * 复杂筛选逻辑：
-        * 
-        * 我们需要找到那些“至少有一个 SKU 匹配所有选定属性值”的商品。
-        * 
-        * 示例：
-        * 用户选择了 颜色: [红, 蓝] 且 尺码: [40, 41]
-        * 
-        * 1. `attributeConditions` 为每种属性类型创建一个条件数组。
-        *    例如 [{ attributeValues: { some: { id: IN [红, 蓝] } } }, { attributeValues: { some: { id: IN [40, 41] } } }]
-        * 
-        * 2. `where.skus` 使用 `some` -> `AND` 逻辑：
-        *    "找到一个商品，它有一些 SKU 满足 (Sku.Color 是 红 或 蓝) 且 (Sku.Size 是 40 或 41)"
-        */
-       const attributeConditions = Object.entries(attributes).map(([attrId, valueIds]) => ({
-        attributeValues: {
-          some: {
-            attributeValueId: { in: valueIds }
-          }
-        }
-      }));
+       * 复杂筛选逻辑：
+       *
+       * 我们需要找到那些“至少有一个 SKU 匹配所有选定属性值”的商品。
+       *
+       * 示例：
+       * 用户选择了 颜色: [红, 蓝] 且 尺码: [40, 41]
+       *
+       * 1. `attributeConditions` 为每种属性类型创建一个条件数组。
+       *    例如 [{ attributeValues: { some: { id: IN [红, 蓝] } } }, { attributeValues: { some: { id: IN [40, 41] } } }]
+       *
+       * 2. `where.skus` 使用 `some` -> `AND` 逻辑：
+       *    "找到一个商品，它有一些 SKU 满足 (Sku.Color 是 红 或 蓝) 且 (Sku.Size 是 40 或 41)"
+       */
+      const attributeConditions = Object.entries(attributes).map(
+        ([attrId, valueIds]) => ({
+          attributeValues: {
+            some: {
+              attributeValueId: { in: valueIds },
+            },
+          },
+        }),
+      );
 
       // Ensure at least one SKU matches ALL attribute conditions
       where.skus = {
         some: {
-          AND: attributeConditions
-        }
+          AND: attributeConditions,
+        },
       };
     }
 
@@ -306,8 +418,8 @@ export class ProductsService {
         attributes: {
           include: {
             attribute: {
-              include: { values: true }
-            }
+              include: { values: true },
+            },
           },
         },
         category: true,
@@ -321,7 +433,7 @@ export class ProductsService {
   }
 
   async findOne(id: string) {
-    return this.prisma.product.findUnique({
+    const product = await this.prisma.product.findUnique({
       where: { id },
       include: {
         skus: {
@@ -334,17 +446,30 @@ export class ProductsService {
         attributes: {
           include: {
             attribute: {
-              include: { values: true }
-            }
+              include: { values: true },
+            },
           },
         },
         category: true,
+        sizeChart: true,
+        // Include summary of reviews or just count?
+        // Let's include basic stats if needed, or rely on ReviewsService.
+        // For now, product.soldCount and fakeSoldCount are already fetched by default.
       },
+    });
+    return product;
+  }
+
+  async updateSalesCount(id: string, fakeSoldCount: number) {
+    return this.prisma.product.update({
+      where: { id },
+      data: { fakeSoldCount },
     });
   }
 
   async update(id: string, updateProductDto: UpdateProductDto) {
-    const { skus, attributeIds, ...productData } = updateProductDto;
+    const { skus, attributeIds, fakeSoldCount, ...productData } =
+      updateProductDto;
 
     // Auto Translate Title & Description
     if (productData.title) {
@@ -365,79 +490,111 @@ export class ProductsService {
 
     // Update product fields and attributes
     try {
-      if (Object.keys(productData).length > 0 || attributeIds) {
+      if (
+        Object.keys(productData).length > 0 ||
+        attributeIds ||
+        fakeSoldCount !== undefined
+      ) {
         await this.prisma.$transaction(async (tx) => {
-           // 1. Update basic fields
-           if (Object.keys(productData).length > 0) {
-              await tx.product.update({
-                where: { id },
-                data: productData,
+          // 1. Update basic fields
+          const updateData: any = { ...productData };
+          if (fakeSoldCount !== undefined) {
+            updateData.fakeSoldCount = fakeSoldCount;
+          }
+
+          if (Object.keys(updateData).length > 0) {
+            await tx.product.update({
+              where: { id },
+              data: updateData,
+            });
+          }
+
+          // 2. Update Attributes Relation if provided
+          if (attributeIds) {
+            // ⚠️ DESTRUCTIVE OPERATION ⚠️
+            // We delete all existing ProductAttribute relations and recreate them.
+            // This is simpler than diffing (finding which to add/remove),
+            // but it means we lose `createdAt` history for these relations.
+            // Ensure this side effect is acceptable.
+            await tx.productAttribute.deleteMany({ where: { productId: id } });
+
+            // Create new relations
+            if (attributeIds.length > 0) {
+              await tx.productAttribute.createMany({
+                data: attributeIds.map((aid) => ({
+                  productId: id,
+                  attributeId: aid,
+                })),
               });
-           }
-           
-           // 2. Update Attributes Relation if provided
-           if (attributeIds) {
-             // ⚠️ DESTRUCTIVE OPERATION ⚠️
-             // We delete all existing ProductAttribute relations and recreate them.
-             // This is simpler than diffing (finding which to add/remove), 
-             // but it means we lose `createdAt` history for these relations.
-             // Ensure this side effect is acceptable.
-             await tx.productAttribute.deleteMany({ where: { productId: id } });
-             
-             // Create new relations
-             if (attributeIds.length > 0) {
-               await tx.productAttribute.createMany({
-                 data: attributeIds.map(aid => ({
-                   productId: id,
-                   attributeId: aid
-                 }))
-               });
-             }
-           }
+            }
+          }
         });
       }
     } catch (error) {
-       console.error("Update Product Error:", error);
-       throw error;
+      console.error('Update Product Error:', error);
+      throw error;
     }
 
-
-    // Handle SKU updates if provided (Replace strategy)
+    // Handle SKU updates if provided (Diffing strategy)
     if (skus) {
       try {
-        /**
-          * ⚠️ 高风险操作：SKU 替换 ⚠️
-          * 
-          * 我们将删除该商品的所有现有 SKU 并重新创建它们。
-          * 
-          * 风险：
-          * 1. 外键约束：如果现有订单引用了这些 SKU ID，这将失败
-          *    除非设置了级联删除（这对订单来说很危险）。
-          * 2. 历史丢失：如果 ID 发生变化，历史订单数据可能会丢失与 SKU 的链接。
-          * 
-          * TODO: 实现“差异对比 (Diffing)”策略：
-          * - 按 ID 更新现有 SKU
-          * - 创建新 SKU
-          * - 仅删除已移除的 SKU（检查使用情况后）
-          */
-         await this.prisma.$transaction(async (tx) => {
-          await tx.sku.deleteMany({ where: { productId: id } });
-          
-          for (const sku of skus) {
-            const { attributeValueIds, ...skuData } = sku;
-            await tx.sku.create({
-              data: {
-                ...skuData,
-                productId: id,
-                attributeValues: attributeValueIds
-                  ? {
-                      create: attributeValueIds.map((aid) => ({
-                        attributeValueId: aid,
-                      })),
-                    }
-                  : undefined,
-              },
+        await this.prisma.$transaction(async (tx) => {
+          // 1. Fetch existing SKUs
+          const existingSkus = await tx.sku.findMany({
+            where: { productId: id },
+          });
+          const existingSkuIds = new Set(existingSkus.map((s) => s.id));
+          const incomingSkuIds = new Set(
+            skus.map((s) => (s as any).id).filter(Boolean),
+          );
+
+          // 2. Identify SKUs to Delete (Existing but not in Incoming)
+          const toDelete = existingSkus.filter(
+            (s) => !incomingSkuIds.has(s.id),
+          );
+          if (toDelete.length > 0) {
+            await tx.sku.deleteMany({
+              where: { id: { in: toDelete.map((s) => s.id) } },
             });
+          }
+
+          // 3. Upsert (Update or Create)
+          for (const sku of skus) {
+            const skuId = (sku as any).id;
+            const { attributeValueIds, id: _ignoreId, ...skuData } = sku as any;
+
+            if (skuId && existingSkuIds.has(skuId)) {
+              // Update
+              await tx.sku.update({
+                where: { id: skuId },
+                data: {
+                  ...skuData,
+                  attributeValues: attributeValueIds
+                    ? {
+                        deleteMany: {}, // Clear old relations
+                        create: attributeValueIds.map((aid: string) => ({
+                          attributeValueId: aid,
+                        })),
+                      }
+                    : undefined,
+                },
+              });
+            } else {
+              // Create
+              await tx.sku.create({
+                data: {
+                  ...skuData,
+                  productId: id,
+                  attributeValues: attributeValueIds
+                    ? {
+                        create: attributeValueIds.map((aid: string) => ({
+                          attributeValueId: aid,
+                        })),
+                      }
+                    : undefined,
+                },
+              });
+            }
           }
         });
       } catch (error) {
@@ -473,5 +630,53 @@ export class ProductsService {
         productId,
       },
     });
+  }
+
+  async generateFeed(type: 'google' | 'facebook' | 'tiktok'): Promise<string> {
+    const products = await this.prisma.product.findMany({
+      where: { isPublished: true },
+      include: {
+        category: true,
+        skus: true,
+      },
+    });
+
+    const baseUrl = process.env.FRONTEND_URL || 'https://soletrade.com';
+    let xml = `<?xml version="1.0"?>
+<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
+<channel>
+<title>SoleTrade Product Feed</title>
+<link>${baseUrl}</link>
+<description>SoleTrade Wholesale Catalog</description>
+`;
+
+    for (const product of products) {
+      const title = JSON.parse(product.title).en || 'Untitled';
+      const description =
+        JSON.parse(product.description).en || 'No description';
+      const images = JSON.parse(product.images || '[]');
+      const image = images.length > 0 ? images[0] : '';
+      const price = Number(product.basePrice).toFixed(2);
+
+      xml += `
+<item>
+<g:id>${product.id}</g:id>
+<g:title><![CDATA[${title}]]></g:title>
+<g:description><![CDATA[${description}]]></g:description>
+<g:link>${baseUrl}/product/${product.id}</g:link>
+<g:image_link>${image}</g:image_link>
+<g:condition>new</g:condition>
+<g:availability>in stock</g:availability>
+<g:price>${price} USD</g:price>
+<g:brand>SoleTrade</g:brand>
+${product.category ? `<g:product_type><![CDATA[${JSON.parse(product.category.name).en || ''}]]></g:product_type>` : ''}
+</item>`;
+    }
+
+    xml += `
+</channel>
+</rss>`;
+
+    return xml;
   }
 }

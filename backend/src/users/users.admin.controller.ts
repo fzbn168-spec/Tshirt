@@ -26,6 +26,12 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 export class UsersAdminController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Get('sales-reps')
+  @ApiOperation({ summary: 'Get all sales representatives' })
+  findSalesReps() {
+    return this.usersService.findSalesReps();
+  }
+
   @Get()
   @ApiOperation({ summary: 'Get all users (Admin)' })
   findAll() {

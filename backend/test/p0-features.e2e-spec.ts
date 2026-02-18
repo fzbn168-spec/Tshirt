@@ -36,9 +36,9 @@ describe('P0 Features (Excel Import & Docs)', () => {
     // and expect at least a 201 or specific error structure, but ideally we should valid structure.
     // For simplicity, we check if the endpoint is protected and accepts files.
     // To do a real test, we would need to generate a valid XLSX buffer.
-    
-    // Let's create a minimal CSV/XLSX buffer simulation if possible, 
-    // but without 'xlsx' lib in devDependencies it is hard. 
+
+    // Let's create a minimal CSV/XLSX buffer simulation if possible,
+    // but without 'xlsx' lib in devDependencies it is hard.
     // So we will just check if endpoint responds correctly to "Bad Request" (missing file)
     // and "File Uploaded" logic.
 
@@ -47,7 +47,7 @@ describe('P0 Features (Excel Import & Docs)', () => {
       .set('Authorization', `Bearer ${adminToken}`)
       .attach('file', Buffer.from('dummy'), 'test.xlsx')
       .expect(201) // The service returns results even if file is invalid content, it returns { success: 0, failed: 0, errors: [...] }
-      .then(res => {
+      .then((res) => {
         expect(res.body).toHaveProperty('success');
         expect(res.body).toHaveProperty('failed');
         expect(res.body).toHaveProperty('errors');
@@ -59,33 +59,33 @@ describe('P0 Features (Excel Import & Docs)', () => {
     // Assuming seed data might have created an order, or we need to rely on previous tests.
     // Let's list orders first.
     const ordersRes = await request(app.getHttpServer())
-        .get('/platform/orders')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .expect(200);
+      .get('/platform/orders')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
 
     if (ordersRes.body.items && ordersRes.body.items.length > 0) {
-        orderId = ordersRes.body.items[0].id;
+      orderId = ordersRes.body.items[0].id;
     } else if (Array.isArray(ordersRes.body) && ordersRes.body.length > 0) {
-        orderId = ordersRes.body[0].id;
+      orderId = ordersRes.body[0].id;
     }
 
     if (!orderId) {
-        console.warn('No orders found, skipping CI/PL test');
-        return;
+      console.warn('No orders found, skipping CI/PL test');
+      return;
     }
 
     // Test CI
     await request(app.getHttpServer())
-        .get(`/platform/orders/${orderId}/ci`)
-        .set('Authorization', `Bearer ${adminToken}`)
-        .expect(200)
-        .expect('Content-Type', 'application/pdf');
+      .get(`/platform/orders/${orderId}/ci`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200)
+      .expect('Content-Type', 'application/pdf');
 
     // Test PL
     await request(app.getHttpServer())
-        .get(`/platform/orders/${orderId}/pl`)
-        .set('Authorization', `Bearer ${adminToken}`)
-        .expect(200)
-        .expect('Content-Type', 'application/pdf');
+      .get(`/platform/orders/${orderId}/pl`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200)
+      .expect('Content-Type', 'application/pdf');
   });
 });

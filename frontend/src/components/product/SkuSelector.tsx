@@ -1,21 +1,48 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { ShoppingBag, Check, Lock, Box, MessageCircle } from 'lucide-react';
+import { ShoppingBag, Lock, Box, MessageCircle, Ruler } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useCartStore } from '@/store/useCartStore';
 import { useToastStore } from '@/store/useToastStore';
 import { useTranslations } from 'next-intl';
+import { SizeChartModal } from './SizeChartModal';
+import { useAnalytics } from '@/hooks/useAnalytics';
+
+import { useCurrencyStore } from '@/store/useCurrencyStore';
+
+type AttributeValue = { id: string; value: string };
+type ProductAttribute = {
+  attribute: {
+    id: string;
+    name: string;
+    values: AttributeValue[];
+  };
+};
+
+type TierPrice = { minQty: number; price: number };
+type Sku = {
+  id: string;
+  skuCode: string;
+  price: number | string;
+  stock: number;
+  attributeValues: { attributeValueId: string }[];
+  tierPrices?: TierPrice[] | string;
+};
 
 interface SkuSelectorProps {
   productId: string;
   productName: string;
   productImage: string;
   basePrice: number;
-  attributes: any[];
-  skus: any[];
+  attributes: ProductAttribute[];
+  skus: Sku[];
   isAuth?: boolean;
+  sizeChart?: {
+    name: string;
+    data: string;
+  };
 }
 
 export function SkuSelector({ 
@@ -25,15 +52,19 @@ export function SkuSelector({
   basePrice,
   attributes = [],
   skus = [],
-  isAuth = false
+  isAuth = false,
+  sizeChart
 }: SkuSelectorProps) {
   const router = useRouter();
   const t = useTranslations('Product');
   const addItem = useCartStore(state => state.addItem);
   const { addToast } = useToastStore();
+  const { trackEvent } = useAnalytics();
+  const { format } = useCurrencyStore();
   const [selectedValues, setSelectedValues] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
   const [customNote, setCustomNote] = useState('');
+  const [isSizeChartOpen, setIsSizeChartOpen] = useState(false);
 
   // Helper to parse JSON strings
   const parseJson = (str: string) => {
@@ -46,10 +77,10 @@ export function SkuSelector({
   };
 
   // Filter values that are actually used in SKUs
-  const availableValues = useMemo(() => {
+  const availableValues = useMemo<Set<string>>(() => {
     const valueIds = new Set<string>();
-    skus.forEach(sku => {
-      sku.attributeValues.forEach((av: any) => {
+    skus.forEach((sku) => {
+      sku.attributeValues.forEach((av) => {
         valueIds.add(av.attributeValueId);
       });
     });
@@ -62,10 +93,10 @@ export function SkuSelector({
     if (attributes.length === 0) return skus[0]; // No attributes product?
     if (Object.keys(selectedValues).length !== attributes.length) return null;
 
-    return skus.find(sku => {
-      return attributes.every(attr => {
+    return skus.find((sku) => {
+      return attributes.every((attr) => {
         const selectedValId = selectedValues[attr.attribute.id];
-        return sku.attributeValues.some((av: any) => av.attributeValueId === selectedValId);
+        return sku.attributeValues.some((av) => av.attributeValueId === selectedValId);
       });
     });
   }, [selectedValues, attributes, skus]);
@@ -78,13 +109,14 @@ export function SkuSelector({
   };
 
   // Calculate tier prices
-  const tierPrices = useMemo(() => {
+  const tierPrices = useMemo<TierPrice[]>(() => {
     if (!matchingSku || !matchingSku.tierPrices) return [];
     try {
-      const parsed = typeof matchingSku.tierPrices === 'string' 
-        ? JSON.parse(matchingSku.tierPrices) 
+      const parsed: unknown = typeof matchingSku.tierPrices === 'string' 
+        ? JSON.parse(matchingSku.tierPrices as string) 
         : matchingSku.tierPrices;
-      return Array.isArray(parsed) ? parsed.sort((a: any, b: any) => a.minQty - b.minQty) : [];
+      const arr = Array.isArray(parsed) ? (parsed as TierPrice[]) : [];
+      return arr.slice().sort((a, b) => a.minQty - b.minQty);
     } catch {
       return [];
     }
@@ -96,7 +128,7 @@ export function SkuSelector({
     let price = Number(matchingSku.price);
     
     if (tierPrices.length > 0) {
-      const tier = [...tierPrices].reverse().find((t: any) => quantity >= t.minQty);
+      const tier = [...tierPrices].reverse().find((t) => quantity >= t.minQty);
       if (tier) {
         price = Number(tier.price);
       }
@@ -113,9 +145,9 @@ export function SkuSelector({
     if (!matchingSku) return;
 
     // Create a description of selected attributes
-    let specsDescription = attributes.map(attr => {
+    let specsDescription = attributes.map((attr) => {
         const valId = selectedValues[attr.attribute.id];
-        const val = attr.attribute.values.find((v: any) => v.id === valId);
+        const val = attr.attribute.values.find((v) => v.id === valId);
         return `${parseJson(attr.attribute.name)}: ${val ? parseJson(val.value) : ''}`;
     }).join(', ');
 
@@ -138,7 +170,17 @@ export function SkuSelector({
       specs: specsDescription,
       quantity: isSample ? 1 : quantity, // Samples usually qty 1
       price: currentPrice, // Samples might be free or paid, logic can be adjusted
-      image: productImage
+      image: productImage,
+      type: isSample ? 'SAMPLE' : 'STANDARD'
+    });
+
+    // Track Event
+    trackEvent('ADD_TO_CART', {
+      productId,
+      skuId: matchingSku.id,
+      quantity: isSample ? 1 : quantity,
+      price: currentPrice,
+      isSample
     });
 
     // Reset or show feedback
@@ -146,31 +188,45 @@ export function SkuSelector({
     setCustomNote(''); // Reset note
   };
 
-  // If no attributes, show simple quantity selector for base product (if applicable)
-  // But our products usually have SKUs.
-
   return (
     <div className="space-y-6">
       {/* Attribute Selectors */}
       <div className="space-y-6">
-        {attributes.map((pa: any) => {
+        {attributes.map((pa) => {
             const attr = pa.attribute;
             const attrName = parseJson(attr.name);
-            const values = attr.values.filter((v: any) => availableValues.has(v.id));
+            const values = attr.values.filter((v) => availableValues.has(v.id));
 
             if (values.length === 0) return null;
 
+            // Check if this is a size attribute (simple check by name)
+            const isSizeAttribute = /size|尺码/i.test(attrName);
+
             return (
                 <div key={attr.id} className="space-y-3">
-                    <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                        {attrName}: <span className="text-zinc-500 font-normal">
-                            {selectedValues[attr.id] 
-                                ? parseJson(values.find((v: any) => v.id === selectedValues[attr.id])?.value || '') 
-                                : t('selectOption')}
-                        </span>
-                    </h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                          {attrName}: <span className="text-zinc-500 font-normal">
+                          {selectedValues[attr.id] 
+                                  ? parseJson(values.find((v) => v.id === selectedValues[attr.id])?.value || '') 
+                                  : t('selectOption')}
+                          </span>
+                      </h3>
+                      
+                      {/* Size Chart Button */}
+                      {isSizeAttribute && sizeChart && (
+                        <button 
+                          onClick={() => setIsSizeChartOpen(true)}
+                          className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 hover:underline"
+                        >
+                          <Ruler className="w-4 h-4" />
+                          {t('sizeGuide') || 'Size Guide'}
+                        </button>
+                      )}
+                    </div>
+
                     <div className="flex flex-wrap gap-3">
-                        {values.map((val: any) => {
+                        {values.map((val) => {
                             const isSelected = selectedValues[attr.id] === val.id;
                             const valName = parseJson(val.value);
                             
@@ -203,8 +259,8 @@ export function SkuSelector({
           <div className="font-medium mb-2 text-zinc-700 dark:text-zinc-300">{t('volumePricing')}</div>
           <div className="grid grid-cols-2 gap-2">
              <div className="text-zinc-500">1+</div>
-             <div className="text-right">${Number(matchingSku.price).toFixed(2)}</div>
-             {tierPrices.map((tier: any, idx: number) => (
+             <div className="text-right">${(matchingSku ? Number(matchingSku.price) : Number(basePrice)).toFixed(2)}</div>
+             {tierPrices.map((tier, idx: number) => (
                 <div key={idx} className={cn("contents", quantity >= tier.minQty && "font-bold text-blue-600")}>
                     <div className="text-zinc-500">{tier.minQty}+</div>
                     <div className="text-right">${Number(tier.price).toFixed(2)}</div>
@@ -220,7 +276,7 @@ export function SkuSelector({
             <div className="text-sm text-zinc-500 mb-1">{t('price')}</div>
             {isAuth ? (
               <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-                  {matchingSku ? `$${currentPrice.toFixed(2)}` : `$${Number(basePrice).toFixed(2)}+`}
+                  {matchingSku ? format(currentPrice) : `${format(Number(basePrice))}+`}
               </div>
             ) : (
               <div className="flex items-center gap-2 text-zinc-500 py-1">
@@ -315,6 +371,15 @@ export function SkuSelector({
             </div>
           )}
       </div>
+
+      {/* Size Chart Modal */}
+      {sizeChart && (
+        <SizeChartModal 
+          isOpen={isSizeChartOpen} 
+          onClose={() => setIsSizeChartOpen(false)} 
+          sizeChart={sizeChart} 
+        />
+      )}
     </div>
   );
 }

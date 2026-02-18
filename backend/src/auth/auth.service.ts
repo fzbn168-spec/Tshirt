@@ -21,14 +21,14 @@ export class AuthService {
 
   /**
    * 用户注册 (B2B 公司入驻)
-   * 
+   *
    * 逻辑说明:
    * 1. 检查邮箱是否已存在。
    * 2. 加密密码 (bcrypt)。
    * 3. 事务性创建: 同时创建 `Company` 和 `User` 记录。
    *    - 默认将注册用户设为该公司管理员 (ADMIN)。
    * 4. 发送欢迎通知。
-   * 
+   *
    * @param registerDto 注册信息 (含公司名)
    */
   async register(registerDto: RegisterDto) {
@@ -96,13 +96,98 @@ export class AuthService {
   }
 
   /**
+   * 社交登录验证 (Google/Facebook)
+   */
+  async validateUserBySocial(profile: any) {
+    const { email, googleId, facebookId, firstName, lastName } = profile;
+
+    // 1. Check by Social ID
+    let user = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { googleId: googleId || undefined },
+          { facebookId: facebookId || undefined },
+        ],
+      },
+    });
+
+    if (user) {
+      return this.generateToken(user);
+    }
+
+    // 2. Check by Email (Link account)
+    if (email) {
+      user = await this.prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (user) {
+        // Link social ID to existing user
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            googleId: googleId || user.googleId,
+            facebookId: facebookId || user.facebookId,
+          },
+        });
+        return this.generateToken(user);
+      }
+    }
+
+    // 3. Create new user
+    // Note: Password is not required for social login users, but schema might require it?
+    // Schema: passwordHash String (not optional in Read output line 223? Wait, let me check schema again)
+    // Looking at Read output for schema.prisma line 223: "passwordHash String". It is NOT optional.
+    // So we need to generate a random password or make it optional.
+    // I should check if I can make it optional or fill it with garbage.
+    // Making it optional is better design, but editing schema again might be risky if I don't want to break existing logic.
+    // I'll fill it with a random hash for now.
+
+    const randomPassword = Math.random().toString(36).slice(-8);
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+    user = await this.prisma.user.create({
+      data: {
+        email: email || `social_${Date.now()}@example.com`, // Fallback if no email
+        passwordHash: hashedPassword,
+        fullName: `${firstName} ${lastName}`.trim(),
+        googleId,
+        facebookId,
+        role: 'MEMBER', // Default role
+      },
+    });
+
+    return this.generateToken(user);
+  }
+
+  private generateToken(user: any) {
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      role: user.role,
+      companyId: user.companyId,
+    };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+        companyId: user.companyId,
+      },
+    };
+  }
+
+  /**
    * 用户登录 (JWT 签发)
-   * 
+   *
    * 逻辑说明:
    * 1. 根据邮箱查找用户。
    * 2. 验证密码哈希。
    * 3. 签发 JWT 令牌 (包含 userId, role, companyId)。
-   * 
+   *
    * @param loginDto 登录凭证
    */
   async login(loginDto: LoginDto) {

@@ -293,6 +293,12 @@
     }
   },
   "Product": {
+    "share": "分享:",
+    "pairs": "双",
+    "copyLink": "复制链接",
+    "linkCopied": "链接已复制到剪贴板",
+    "copyFailed": "复制链接失败",
+    "shareOn": "分享到 {platform}",
     "sampleAdded": "拿样申请已加入购物车！",
     "addedToCart": "商品已加入询价单。",
     "selectOption": "请选择",
@@ -311,6 +317,7 @@
     "selectOptions": "请选择规格",
     "loginToAdd": "登录后添加",
     "loginToView": "登录查看价格",
+    "wholesaleOnly": "批发价格仅对会员可见",
     "requestSample": "申请拿样",
     "chatWhatsApp": "WhatsApp 在线咨询",
     "sku": "SKU",
@@ -320,7 +327,7 @@
       "details": "商品详情",
       "sizeGuide": "尺码指南",
       "shipping": "物流与支付",
-      "reviews": "客户评价"
+      "reviews": "用户评价"
     },
     "service": {
       "shipping": "全球发货",
@@ -344,8 +351,22 @@
       "payment": "付款方式",
       "paymentDesc": "T/T (银行转账), 信用卡 (Stripe), PayPal (仅限样品)"
     },
-    "relatedProducts": "相关产品推荐"
+    "relatedProducts": "相关产品推荐",
+    "reviews": {
+      "rating": "评分",
+      "noReviews": "暂无评价。成为第一个评价的人！",
+      "writeReview": "撰写评价",
+      "summary": "{count} 条评价",
+      "stars": "星",
+      "yourName": "您的姓名",
+      "reviewContent": "评价内容",
+      "submit": "提交评价",
+      "cancel": "取消",
+      "uploadImage": "上传图片",
+      "success": "评价提交成功！"
+    }
   },
+  "Cart": {
     "pairs": "双",
     "loginToView": "登录查看价格",
     "wholesaleOnly": "批发价格仅对会员可见",

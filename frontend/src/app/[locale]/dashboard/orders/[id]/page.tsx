@@ -6,6 +6,7 @@ import { useCartStore } from '@/store/useCartStore';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Download, RefreshCw } from 'lucide-react';
+import api from '@/lib/api';
 
 interface OrderItem {
   id: string;
@@ -29,6 +30,7 @@ interface Order {
   inquiry?: {
     inquiryNo: string;
   };
+  type?: string;
   user: {
     fullName: string;
     email: string;
@@ -51,18 +53,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
     const fetchOrder = async () => {
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-        const res = await fetch(`${API_URL}/orders/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setOrder(data);
-        } else {
-          console.error('Order not found');
-        }
+        const res = await api.get(`/orders/${id}`);
+        setOrder(res.data);
       } catch (error) {
         console.error('Failed to fetch order', error);
       } finally {
@@ -98,23 +90,50 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const handleDownloadPi = async () => {
     if (!order) return;
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${API_URL}/orders/${id}/pi`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      
-      if (!res.ok) {
-        alert('Failed to download PI');
-        return;
-      }
-      
-      const blob = await res.blob();
+      const res = await api.get(`/orders/${id}/pi`, { responseType: 'blob' });
+      const blob = res.data as Blob;
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `PI-${order.orderNo}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download failed', error);
+      alert('Download failed');
+    }
+  };
+
+  const handleDownloadCi = async () => {
+    if (!order) return;
+    try {
+      const res = await api.get(`/orders/${id}/ci`, { responseType: 'blob' });
+      const blob = res.data as Blob;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `CI-${order.orderNo}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download failed', error);
+      alert('Download failed');
+    }
+  };
+
+  const handleDownloadPl = async () => {
+    if (!order) return;
+    try {
+      const res = await api.get(`/orders/${id}/pl`, { responseType: 'blob' });
+      const blob = res.data as Blob;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `PL-${order.orderNo}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -139,6 +158,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         </Link>
         <h1 className="text-2xl font-bold tracking-tight">Order {order.orderNo}</h1>
         <StatusBadge status={order.status} />
+        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold border ${
+          order.type === 'SAMPLE' 
+            ? "bg-purple-100 text-purple-700 border-purple-200" 
+            : "bg-blue-100 text-blue-700 border-blue-200"
+        }`}>
+          {order.type || 'STANDARD'}
+        </span>
         
         <div className="ml-auto flex items-center gap-2">
             <button
@@ -154,6 +180,20 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             >
               <Download className="h-4 w-4" />
               Download PI
+            </button>
+            <button
+              onClick={handleDownloadCi}
+              className="flex items-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            >
+              <Download className="h-4 w-4" />
+              Download CI
+            </button>
+            <button
+              onClick={handleDownloadPl}
+              className="flex items-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            >
+              <Download className="h-4 w-4" />
+              Download PL
             </button>
         </div>
       </div>
@@ -266,7 +306,7 @@ function parseSpecs(specs: string | null) {
     const obj = JSON.parse(specs);
     // If it's an object like {color: "Red", size: "40"}, join values
     return Object.values(obj).join(' / ');
-  } catch (e) {
+  } catch {
     return specs;
   }
 }

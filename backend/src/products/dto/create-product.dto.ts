@@ -26,6 +26,10 @@ export class CreateSkuDto {
 
   @IsString()
   @IsOptional()
+  image?: string;
+
+  @IsString()
+  @IsOptional()
   leadTime?: string;
 
   @IsString()
@@ -36,6 +40,23 @@ export class CreateSkuDto {
   @IsString({ each: true })
   @IsOptional()
   attributeValueIds?: string[];
+
+  // Packing Info
+  @IsNumber()
+  @IsOptional()
+  cartonLength?: number;
+
+  @IsNumber()
+  @IsOptional()
+  cartonWidth?: number;
+
+  @IsNumber()
+  @IsOptional()
+  cartonHeight?: number;
+
+  @IsNumber()
+  @IsOptional()
+  cartonGrossWeight?: number;
 }
 
 export class CreateProductDto {
@@ -70,4 +91,32 @@ export class CreateProductDto {
   @IsString({ each: true })
   @IsOptional()
   attributeIds?: string[];
+
+  @IsString()
+  @IsOptional()
+  sizeChartId?: string;
+
+  @IsNumber()
+  @IsOptional()
+  fakeSoldCount?: number;
+
+  @IsString()
+  @IsOptional()
+  sizeChartImage?: string;
+
+  @IsString()
+  @IsOptional()
+  materialDetail?: string; // JSON
+
+  @IsString()
+  @IsOptional()
+  originCountry?: string;
+
+  @IsString()
+  @IsOptional()
+  loadingPort?: string;
+
+  @IsString()
+  @IsOptional()
+  season?: string;
 }

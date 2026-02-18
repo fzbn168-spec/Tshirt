@@ -4,7 +4,7 @@ import { Search, Filter, MoreHorizontal, Loader2, Eye, Upload, FileDown } from '
 import { useEffect, useState, useRef } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import api from '@/lib/api';
 
 interface Inquiry {
   id: string;
@@ -22,24 +22,13 @@ export default function InquiriesPage() {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
   const { token } = useAuthStore();
-  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
   const fetchInquiries = () => {
     setLoading(true);
-    fetch(`${API_URL}/inquiries`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
+    api.get('/inquiries')
       .then(res => {
-        if (res.status === 401) {
-             throw new Error('Unauthorized');
-        }
-        return res.json();
-      })
-      .then(data => {
+        const data = res.data;
         setInquiries(Array.isArray(data) ? data : []);
         setLoading(false);
       })
@@ -63,23 +52,13 @@ export default function InquiriesPage() {
 
     try {
         setLoading(true);
-        const res = await fetch(`${API_URL}/inquiries/import`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            body: formData
+        await api.post('/inquiries/import', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
         });
-        
-        if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.message || 'Import failed');
-        }
-        
         alert('Import successful!');
         fetchInquiries();
-    } catch (err: any) {
-        alert(err.message);
+    } catch (err) {
+        alert(err instanceof Error ? err.message : 'Import failed');
         setLoading(false);
     } finally {
         if (fileInputRef.current) {

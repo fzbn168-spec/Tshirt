@@ -3,7 +3,7 @@ services:
     container_name: soletrade-backend
     build: ./backend
     environment:
-      - DATABASE_URL=file:/app/data/prod.db
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-securepassword}@postgres:5432/${POSTGRES_DB:-soletrade}?schema=public
       - JWT_SECRET=${JWT_SECRET}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
@@ -14,14 +14,30 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
     volumes:
-      - ./backend/data:/app/data
       - ./backend/uploads:/app/uploads
+    depends_on:
+      - postgres
     restart: always
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+    networks:
+      - soletrade-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: soletrade-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-securepassword}
+      POSTGRES_DB: ${POSTGRES_DB:-soletrade}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - soletrade-network
 
@@ -97,6 +113,9 @@ services:
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
     networks:
       - soletrade-network
+
+volumes:
+  postgres_data:
 
 networks:
   soletrade-network:

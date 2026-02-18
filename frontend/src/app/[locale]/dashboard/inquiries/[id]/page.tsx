@@ -10,13 +10,13 @@ import {
   User, 
   Mail, 
   FileText, 
-  CheckCircle2, 
   Clock,
   AlertCircle,
   FileDown
 } from 'lucide-react';
 import Link from 'next/link';
 import { InquiryChat } from '@/components/inquiry/InquiryChat';
+import api from '@/lib/api';
 
 interface InquiryItem {
   id: string;
@@ -34,6 +34,7 @@ interface Inquiry {
   contactEmail: string;
   notes?: string;
   status: string;
+  type: string;
   createdAt: string;
   items: InquiryItem[];
   company?: {
@@ -44,29 +45,17 @@ interface Inquiry {
 export default function InquiryDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { token, user } = useAuthStore();
+  const { token } = useAuthStore();
   const [inquiry, setInquiry] = useState<Inquiry | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
   useEffect(() => {
     if (!token) return;
 
-    fetch(`${API_URL}/inquiries/${params.id}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-      .then(async res => {
-        if (!res.ok) {
-            const txt = await res.text();
-            throw new Error(txt || res.statusText);
-        }
-        return res.json();
-      })
-      .then(data => {
-        setInquiry(data);
+    api.get(`/inquiries/${params.id}`)
+      .then(res => {
+        setInquiry(res.data);
         setLoading(false);
       })
       .catch(err => {
@@ -79,22 +68,15 @@ export default function InquiryDetailPage() {
   const downloadPdf = async () => {
     if (!inquiry) return;
     try {
-        const res = await fetch(`${API_URL}/inquiries/${params.id}/pdf`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        if (!res.ok) throw new Error('Download failed');
-        
-        const blob = await res.blob();
+        const res = await api.get(`/inquiries/${params.id}/pdf`, { responseType: 'blob' });
+        const blob = res.data as Blob;
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = `Inquiry-${inquiry.inquiryNo}.pdf`;
         a.click();
         window.URL.revokeObjectURL(url);
-    } catch (e) {
+    } catch {
         alert('Failed to download PDF');
     }
   };
@@ -152,6 +134,9 @@ export default function InquiryDetailPage() {
               {inquiry.inquiryNo}
               <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(inquiry.status)}`}>
                 {inquiry.status}
+              </span>
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${inquiry.type === 'SAMPLE' ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800' : 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800'}`}>
+                {inquiry.type || 'STANDARD'}
               </span>
             </h1>
             <p className="text-sm text-zinc-500 mt-1 flex items-center gap-2">

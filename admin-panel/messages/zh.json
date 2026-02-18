@@ -141,11 +141,19 @@
   },
   "Admin": {
     "dashboard": "控制台",
+    "analytics": "数据分析",
+    "reviews": "评价管理",
+    "settings": "设置",
     "adminLabel": "管理员",
     "inquiries": "询价 (报价)",
     "orders": "订单 (发货)",
     "backToUser": "返回用户控制台",
     "title": "管理后台",
+    "subtitle": "欢迎使用平台管理控制台。",
+    "quickActions": "快捷操作",
+    "productDesc": "管理您的产品目录、SKU 和定价。",
+    "orders": "订单",
+    "ordersDesc": "查看和管理客户订单及发货。",
     "inquiryMgmt": "询价管理",
     "inquiryDesc": "审核待处理询价并向客户发送报价。",
     "orderMgmt": "订单管理",
@@ -171,7 +179,8 @@
       "companyName": "公司名称",
       "contactEmail": "联系邮箱",
       "stats": "统计",
-      "registered": "注册时间"
+      "registered": "注册时间",
+      "type": "类型"
     },
     "actions": {
       "manageQuote": "管理 / 报价",
@@ -197,6 +206,7 @@
     "productSubtitle": "管理您的产品目录、SKU 和定价。",
     "companyTitle": "企业审核",
     "companySubtitle": "审核并批准企业注册。",
+    "productMgmt": "产品管理",
     "noProducts": "未找到产品。点击“添加产品”创建一个。",
     "noCompanies": "未找到公司。",
     "deleteConfirm": "您确定要删除此产品吗？",
@@ -290,6 +300,23 @@
       "unassigned": "未分配",
       "viewLicense": "查看执照",
       "noDocuments": "无文档"
+    },
+    "productList": {
+      "title": "产品管理",
+      "subtitle": "管理您的产品目录",
+      "create": "创建新产品",
+      "deleteConfirm": "确定要删除此产品吗？",
+      "deleteSuccess": "产品删除成功",
+      "deleteError": "删除产品失败",
+      "loadError": "加载产品失败，请重试。",
+      "noProducts": "暂无产品，请创建新产品。",
+      "headers": {
+        "name": "产品名称",
+        "skus": "SKU 数量",
+        "basePrice": "基础价格",
+        "sizeChart": "尺码表",
+        "actions": "操作"
+      }
     }
   },
   "Product": {
@@ -344,28 +371,9 @@
       "payment": "付款方式",
       "paymentDesc": "T/T (银行转账), 信用卡 (Stripe), PayPal (仅限样品)"
     },
-    "relatedProducts": "相关产品推荐"
-  },
+    "relatedProducts": "相关产品推荐",
     "pairs": "双",
-    "loginToView": "登录查看价格",
-    "wholesaleOnly": "批发价格仅对会员可见",
-    "volumePricing": "阶梯价格",
-    "price": "价格",
-    "stock": "库存",
-    "available": "可用",
-    "outOfStock": "缺货",
-    "selectOptions": "选择规格",
-    "addToRfq": "加入询价单",
-    "addedToCart": "已加入询价单",
-    "loginToAdd": "登录后加入询价单",
-    "selectOption": "选择选项",
-    "customization": {
-      "title": "定制与备注",
-      "placeholder": "请输入定制要求 (例如: 印Logo, 队名, 印号...)",
-      "label": "特殊说明"
-    },
-    "requestSample": "申请拿样",
-    "sampleAdded": "样品申请已加入询价单"
+    "wholesaleOnly": "批发价格仅对会员可见"
   },
   "Settings": {
     "title": "设置",
