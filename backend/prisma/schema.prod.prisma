@@ -400,7 +400,7 @@ model Order {
 }
 
 // 9. 订单明细 (OrderItem)
-// 记录订单中每一项商品的详情
+// 订单中购买的具体商品快照
 model OrderItem {
   id          String   @id @default(uuid())
   
@@ -410,74 +410,84 @@ model OrderItem {
   productId   String
   product     Product  @relation(fields: [productId], references: [id])
   
-  skuId       String
-  sku         Sku      @relation(fields: [skuId], references: [id])
+  skuId       String?
+  sku         Sku?     @relation(fields: [skuId], references: [id])
   
-  quantity    Int      // 订购数量
-  unitPrice   Decimal  // 成交单价
-  currency    String   @default("USD")
-
-  // 商品快照 (防止商品变更影响历史订单)
-  productName String
-  skuSpecs    String   // 如: "Color: Red, Size: 42"
-  hsCode      String?  // 报关编码
-  originCountry String? // 原产国
+  // 交易快照 (价格变动不影响历史订单)
+  productName String   // 下单时的商品名
+  skuSpecs    String?  // 下单时的规格
+  
+  quantity    Int      // 购买数量
+  unitPrice   Decimal  // 下单时的单价
+  totalPrice  Decimal  // 总价 (数量 * 单价)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
 // 10. 支付记录 (Payment)
-// 记录订单的付款信息
+// 记录每一笔资金往来
 model Payment {
-  id          String   @id @default(uuid())
-  orderId     String
-  order       Order    @relation(fields: [orderId], references: [id])
+  id            String   @id @default(uuid())
+  orderId       String
+  order         Order    @relation(fields: [orderId], references: [id])
   
-  method      String   // 支付方式: CARD, WIRE_TRANSFER
-  status      String   @default("PENDING") 
-  // 状态: PENDING(待确认), CONFIRMED(已确认), FAILED(失败)
+  amount        Decimal  // 支付金额
+  method        String   // 方式: WIRE(电汇), PAYPAL, STRIPE
+  transactionId String?  // 第三方流水号
+  proofUrl      String?  // 线下转账凭证图片URL
+  status        String   // 状态: PENDING(确认中), COMPLETED(成功), FAILED(失败)
   
-  amount      Decimal  // 支付金额
-  currency    String   @default("USD")
-  transactionId String? // 第三方支付流水号
-  proofUrl    String?  // 汇款水单 (截图/文件 URL)
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  paidAt        DateTime? // 实际付款时间
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
-// 12. 通知 (Notification)
-// 用于站内消息 & 邮件通知
+// 12. 系统通知 (Notification)
+// 站内信通知
 model Notification {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  
-  type        String   // NEW_INQUIRY, ORDER_STATUS_UPDATE, PAYMENT_CONFIRMED, SHIPMENT_UPDATED
-  title       String
-  content     String
-  isRead      Boolean  @default(false)
+  id        String   @id @default(uuid())
+  userId    String?  // 接收人 (为空则为系统广播)
+  user      User?    @relation(fields: [userId], references: [id])
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  type      String   // 类型: SYSTEM, INQUIRY, ORDER
+  title     String   // 标题
+  content   String   // 内容
+  isRead    Boolean  @default(false) // 已读状态
+  updatedAt DateTime @updatedAt @default(now())
+  
+  // 关联实体跳转
+  referenceId   String? // 关联ID (如 orderId)
+  referenceType String? // 关联类型 (如 "ORDER")
+
+  createdAt DateTime @default(now())
 }
 
-// 13. 询价消息 (InquiryMessage)
-// 询价单内的往来沟通记录
+// 询价沟通记录 (消息)
 model InquiryMessage {
-  id          String   @id @default(uuid())
+  id        String   @id @default(uuid())
+  inquiryId String
+  inquiry   Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
   
-  inquiryId   String
-  inquiry     Inquiry  @relation(fields: [inquiryId], references: [id])
+  senderId  String   // 发送人
+  sender    User     @relation(fields: [senderId], references: [id])
   
-  senderId    String
-  sender      User     @relation(fields: [senderId], references: [id])
-  
-  content     String   // 文本内容
-  attachments String?  // 附件 JSON
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  content   String   // 消息内容
+  createdAt DateTime @default(now())
 }
 
+// 汇率表 (ExchangeRate)
+model ExchangeRate {
+  id        String   @id @default(uuid())
+  currency  String   @unique // 货币代码 (CNY, EUR)
+  rate      Decimal  // 对基准货币(USD)的汇率
+  updatedAt DateTime @updatedAt
+}
+
+// 系统配置 (SystemSetting)
+model SystemSetting {
+  key         String   @id // e.g., "weight_unit", "length_unit"
+  value       String   // e.g., "kg", "cm"
+  description String?
+  updatedAt   DateTime @updatedAt
+}
