@@ -1,0 +1,483 @@
+// Production Prisma schema (PostgreSQL)
+// 与开发环境保持同一套模型结构，仅调整 provider
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 以下模型定义与 schema.prisma 完全一致，确保类型一致性
+
+// 13. 尺码表 (SizeChart)
+// 管理多国尺码对照表 (如: US 8 = EU 41)
+model SizeChart {
+  id        String    @id @default(uuid())
+  name      String    // 表名称 (如: "Men's Standard Sneaker Chart")
+  data      String    // JSON: [{"us": "7", "eu": "40", "uk": "6", "cm": "25"}, ...]
+  products  Product[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// 1. 商品分类 (Category)
+// 用于管理商品的多级分类结构
+model Category {
+  id        String     @id @default(uuid())
+  slug      String     @unique // URL友好的标识符 (如: men-shoes)
+  name      String     // 多语言名称 JSON字符串: {"en": "Men Shoes", "zh": "男鞋"}
+  
+  // 自关联实现多级分类 (父子关系)
+  parentId  String?    
+  parent    Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryHierarchy")
+  
+  products  Product[]
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+// 1.5 商品属性 (Attribute)
+// 定义商品的动态属性 (如: 颜色, 尺码, 材质)
+model Attribute {
+  id        String   @id @default(uuid())
+  name      String   // 多语言名称 JSON: {"en": "Color", "zh": "颜色"}
+  code      String   @unique // 系统内部编码 (如: "color", "size")
+  type      String   @default("text") // 属性类型: text(文本), color(色块), image(图片)
+  
+  values    AttributeValue[]
+  productAttributes ProductAttribute[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 15. 商品评价 (Review)
+model Review {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  
+  userId    String?  // 注册用户评价
+  user      User?    @relation(fields: [userId], references: [id])
+  
+  rating    Int      // 评分 1-5
+  content   String?  // 评价内容
+  images    String?  // 图片 JSON
+  
+  // 虚拟评价支持
+  authorName   String? // 虚拟用户名
+  authorAvatar String? // 虚拟头像
+  country      String? // 评价者国家
+  
+  isPublished Boolean @default(true) // 审核状态 (默认公开)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 14. 分析事件 (AnalyticsEvent)
+// 用于追踪用户行为漏斗和转化率
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  eventType String   // VIEW_PRODUCT, ADD_TO_CART, INITIATE_CHECKOUT, PURCHASE
+  userId    String?  // 可选，已登录用户ID
+  sessionId String?  // 游客会话ID (Fingerprint or Cookie)
+  metadata  String?  // JSON详情 (如 productId, cartValue)
+  
+  createdAt DateTime @default(now())
+}
+
+// 属性的具体选项值 (如: 颜色的"红色", "蓝色")
+model AttributeValue {
+  id          String    @id @default(uuid())
+  attributeId String
+  attribute   Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  
+  value       String    // 多语言值 JSON: {"en": "Red", "zh": "红色"}
+  meta        String?   // 元数据 (如: 颜色的HEX码 "#FF0000")
+  
+  skuValues   SkuAttributeValue[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// 商品与属性的关联表 (多对多)
+// 记录某个商品拥有哪些属性维度 (如: 这双鞋有"颜色"和"尺码")
+model ProductAttribute {
+  id          String    @id @default(uuid())
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  attributeId String
+  attribute   Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, attributeId])
+}
+
+// SKU与具体属性值的关联表
+// 记录某个SKU的具体规格 (如: SKU-001 是 "红色" + "42码")
+model SkuAttributeValue {
+  id               String         @id @default(uuid())
+  skuId            String
+  sku              Sku            @relation(fields: [skuId], references: [id], onDelete: Cascade)
+  
+  attributeValueId String
+  attributeValue   AttributeValue @relation(fields: [attributeValueId], references: [id], onDelete: Cascade)
+
+  @@unique([skuId, attributeValueId])
+}
+
+// 2. 商品主表 (SPU - Standard Product Unit)
+// 代表一个标准化产品 (如: "耐克Air Max 2024款")，不包含具体规格
+model Product {
+  id            String   @id @default(uuid())
+  
+  // 关联分类
+  categoryId    String   
+  category      Category @relation(fields: [categoryId], references: [id])
+
+  // 内容管理 (多语言)
+  title         String   // 标题 JSON: {"en": "Hiking Boots", "zh": "登山靴"}
+  description   String   // 描述 JSON
+  
+  // 媒体资源
+  images        String   // 图片列表 JSON: ["url1", "url2"]
+  images360     String?  // 360度全景帧 JSON: ["frame1.jpg", ...]
+
+  // 基础信息
+  basePrice     Decimal  // 基础起售价
+  specsTemplate String   // 规格模版 JSON (用于前端快速渲染筛选器)
+  hsCode        String?  // 海关编码 (用于报关)
+  material      String?  // 材质成分
+  
+  isPublished   Boolean  @default(false) // 上架状态
+  
+  // 关联 SKU (具体变体)
+  skus          Sku[]
+  
+  // 尺码表关联
+  sizeChartId   String?
+  sizeChart     SizeChart? @relation(fields: [sizeChartId], references: [id])
+  sizeChartImage String? // 尺码表图片 (可选，替代结构化尺码表)
+  
+  // 关联业务数据
+  inquiryItems  InquiryItem[]
+  orderItems    OrderItem[]
+  reviews       Review[]
+  attributes    ProductAttribute[]
+
+  // 1. 材质明细 (结构化，利于生成 PI)
+  materialDetail  String? // JSON: { "upper": "Leather", "lining": "Mesh", "outsole": "Rubber" }
+  
+  // 2. 贸易属性
+  originCountry   String  @default("China") // 原产地
+  loadingPort     String  @default("Xiamen") // 装运港
+  
+  // 3. 季节/系列 (Fashion Specific)
+  season          String? // e.g., "SS24", "FW24"
+
+  // 4. 销量统计
+  soldCount       Int     @default(0) // 真实销量
+  fakeSoldCount   Int     @default(0) // 虚拟销量 (用于冷启动)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// 11. 发货记录 (Shipping)
+// 记录订单的物流发货信息
+model Shipping {
+  id            String   @id @default(uuid())
+  orderId       String
+  order         Order    @relation(fields: [orderId], references: [id])
+  
+  trackingNo    String   // 运单号
+  carrier       String   // 承运商 (DHL, UPS, FedEx)
+  shippedAt     DateTime @default(now()) // 发货时间
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// 3. 库存量单位 (SKU - Stock Keeping Unit)
+// 代表可售卖的具体单品 (如: "红色 42码 的耐克Air Max")
+model Sku {
+  id        String   @id @default(uuid())
+  
+  productId String   
+  product   Product  @relation(fields: [productId], references: [id])
+
+  skuCode   String   @unique // 商家唯一编码 (如: HB-RED-40)
+  
+  // 规格快照 (冗余存储，方便查询)
+  specs     String   // JSON: {"color": "Red", "size": "40"}
+  
+  // B2B 交易属性
+  price     Decimal  // 该规格的具体批发价
+  moq       Int      @default(1) // 最小起订量 (Minimum Order Quantity)
+  stock     Int      @default(0) // 当前库存
+  image     String?  // SKU specific image (e.g. Red shoe image)
+  leadTime  String?  // 生产/发货周期 (如: "7-14 days")
+  tierPrices String? // 阶梯定价 JSON: [{"minQty": 100, "price": 9.5}]
+
+  // 物流与包装属性 (用于计算运费和装箱单)
+  netWeight      Decimal? // 单件净重 (kg)
+  grossWeight    Decimal? // 单件毛重 (kg)
+  length         Decimal? // 包装长 (cm)
+  width          Decimal? // 包装宽 (cm)
+  height         Decimal? // 包装高 (cm)
+  itemsPerCarton Int?     // 每箱装箱数 (pcs/carton)
+  
+  // 1. 装箱核心数据 (用于算柜量)
+  cartonLength    Decimal? // 外箱长
+  cartonWidth     Decimal? // 外箱宽
+  cartonHeight    Decimal? // 外箱高
+  cartonGrossWeight Decimal? // 单箱毛重 (并非单只鞋重)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // 关联业务
+  inquiryItems InquiryItem[]
+  orderItems   OrderItem[]
+  attributeValues SkuAttributeValue[]
+}
+
+// 4. 企业客户 (Company)
+// B2B 业务的核心实体，代表买家公司
+model Company {
+  id            String   @id @default(uuid())
+  name          String   // 公司名称
+  taxId         String?  // 税号
+  address       String?  // 公司地址
+  contactEmail  String   @unique // 联系邮箱
+  phone         String?  // 联系电话
+  logo          String?  // 公司Logo
+  website       String?  // 公司官网
+  description   String?  // 公司简介
+  documents     String?  // 资质文件 JSON: [{"type": "license", "url": "..."}]
+  status        String   @default("PENDING") // 审核状态: PENDING(待审), APPROVED(通过), REJECTED(拒绝)
+  salesRepId    String?  // 销售代表ID
+  salesRep      User?    @relation("SalesRepCompanies", fields: [salesRepId], references: [id])
+  
+  users         User[]    // 公司下的员工账号
+  inquiries     Inquiry[] // 询价记录
+  orders        Order[]   // 订单记录
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// 5. 用户 (User)
+// 系统登录账户，包括买家员工、平台管理员
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String   // 加密后的密码
+  fullName      String?  // 真实姓名
+  role          String   @default("MEMBER") // 角色: ADMIN(公司管理员), MEMBER(普通员工), PLATFORM_ADMIN(平台超管)
+  
+  // 所属买家公司
+  companyId     String?   
+  company       Company?  @relation(fields: [companyId], references: [id])
+
+  // 作为销售代表管理的客户公司
+  managedCompanies Company[] @relation("SalesRepCompanies")
+
+  orders        Order[]
+  notifications Notification[]
+  messages      InquiryMessage[]
+  reviews       Review[]
+
+  // Social Login IDs
+  googleId      String?   @unique
+  facebookId    String?   @unique
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// 6. 询价单 (Inquiry / RFQ)
+// 买家发起的询价请求
+model Inquiry {
+  id            String        @id @default(uuid())
+  inquiryNo     String        @unique // 询价单号 (如: RFQ-2024-001)
+  
+  companyId     String?       // 关联公司 (可为空，支持游客询价)
+  company       Company?      @relation(fields: [companyId], references: [id])
+  
+  // 联系人快照 (防止用户离职后信息丢失)
+  contactName   String
+  contactEmail  String
+  notes         String?       // 备注需求
+  attachments   String?       // 附件 JSON: ["url1", ...] (如: OEM设计图)
+  
+  incoterms     String?       // 期望贸易条款 (e.g., FOB, CIF)
+
+  type          String        @default("STANDARD") // 询价类型: STANDARD(标准), SAMPLE(样品)
+  status        String        @default("PENDING") // 状态: PENDING(待处理), QUOTED(已报价), ORDERED(已下单), CLOSED(关闭)
+  
+  items         InquiryItem[]    // 询价商品明细
+  messages      InquiryMessage[] // 沟通记录
+
+  orders        Order[]       // 转化生成的订单
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+// 7. 询价单明细 (InquiryItem)
+// 询价单中包含的具体商品列表
+model InquiryItem {
+  id            String   @id @default(uuid())
+  
+  inquiryId     String   
+  inquiry       Inquiry  @relation(fields: [inquiryId], references: [id])
+  
+  productId     String   
+  product       Product  @relation(fields: [productId], references: [id])
+  
+  skuId         String?  // 可选 (用户可能只选了款式没选具体尺码)
+  sku           Sku?     @relation(fields: [skuId], references: [id])
+  
+  // 商品快照 (防止商品删除后历史记录失效)
+  productName   String
+  skuSpecs      String?  // 规格描述 (如: "Color: Red, Size: 42")
+  
+  quantity      Int      // 询价数量
+  targetPrice   Decimal? // 目标价格 (买家期望)
+  quotedPrice   Decimal? // 报价价格 (卖家回复)
+  quoteValidUntil DateTime? // 报价有效期
+  paymentTerms  String?  // 付款条款 (如 "30% Deposit, 70% Balance")
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// 8. 订单 (Order)
+// 正式交易记录
+model Order {
+  id          String      @id @default(uuid())
+  orderNo     String      @unique // 订单号 (如: ORD-2024-001)
+  
+  companyId   String
+  company     Company     @relation(fields: [companyId], references: [id])
+  
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+
+  // 关联来源询价单 (可选)
+  inquiryId   String?     @unique
+  inquiry     Inquiry?    @relation(fields: [inquiryId], references: [id])
+
+  type        String      @default("STANDARD") // 订单类型: STANDARD, SAMPLE
+  status      String      @default("PENDING_PAYMENT") 
+  // 状态流转: PENDING_PAYMENT(待付款) -> PAID(已付款) -> PROCESSING(备货中) -> SHIPPED(已发货) -> COMPLETED(已完成) | CANCELLED(已取消)
+
+  totalAmount Decimal     // 订单总金额
+  currency    String      @default("USD") // 结算货币
+  
+  // 国际贸易与物流信息
+  incoterms         String? // 贸易条款 (FOB, CIF)
+  shippingMarks     String? // 唛头 (外箱标记)
+  portOfLoading     String? // 起运港
+  portOfDestination String? // 目的港
+
+  items       OrderItem[] // 订单商品明细
+  shippings   Shipping[]  // 发货记录
+  payments    Payment[]   // 支付记录
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+// 9. 订单明细 (OrderItem)
+// 记录订单中每一项商品的详情
+model OrderItem {
+  id          String   @id @default(uuid())
+  
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id])
+  
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  
+  skuId       String
+  sku         Sku      @relation(fields: [skuId], references: [id])
+  
+  quantity    Int      // 订购数量
+  unitPrice   Decimal  // 成交单价
+  currency    String   @default("USD")
+
+  // 商品快照 (防止商品变更影响历史订单)
+  productName String
+  skuSpecs    String   // 如: "Color: Red, Size: 42"
+  hsCode      String?  // 报关编码
+  originCountry String? // 原产国
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// 10. 支付记录 (Payment)
+// 记录订单的付款信息
+model Payment {
+  id          String   @id @default(uuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id])
+  
+  method      String   // 支付方式: CARD, WIRE_TRANSFER
+  status      String   @default("PENDING") 
+  // 状态: PENDING(待确认), CONFIRMED(已确认), FAILED(失败)
+  
+  amount      Decimal  // 支付金额
+  currency    String   @default("USD")
+  transactionId String? // 第三方支付流水号
+  proofUrl    String?  // 汇款水单 (截图/文件 URL)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// 12. 通知 (Notification)
+// 用于站内消息 & 邮件通知
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  type        String   // NEW_INQUIRY, ORDER_STATUS_UPDATE, PAYMENT_CONFIRMED, SHIPMENT_UPDATED
+  title       String
+  content     String
+  isRead      Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// 13. 询价消息 (InquiryMessage)
+// 询价单内的往来沟通记录
+model InquiryMessage {
+  id          String   @id @default(uuid())
+  
+  inquiryId   String
+  inquiry     Inquiry  @relation(fields: [inquiryId], references: [id])
+  
+  senderId    String
+  sender      User     @relation(fields: [senderId], references: [id])
+  
+  content     String   // 文本内容
+  attachments String?  // 附件 JSON
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+

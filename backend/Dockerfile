@@ -13,8 +13,8 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Generate Prisma Client
-RUN npx prisma generate
+# Generate Prisma Client for production (PostgreSQL schema)
+RUN npx prisma generate --schema=./prisma/schema.prod.prisma
 
 # Build application
 RUN npm run build
