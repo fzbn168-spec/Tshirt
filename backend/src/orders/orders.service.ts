@@ -65,6 +65,42 @@ export class OrdersService {
       if (order.company.address) doc.text(order.company.address, 100);
       if (order.company.contactEmail) doc.text(order.company.contactEmail, 100);
 
+      if (
+        order.consigneeName ||
+        order.consigneeAddress1 ||
+        order.consigneeCity ||
+        order.consigneeCountry
+      ) {
+        doc.moveDown();
+        doc.font('Helvetica-Bold').text('Consignee:', 50, doc.y);
+        doc.font('Helvetica');
+        const baseY = doc.y - 12;
+        if (order.consigneeName) {
+          doc.text(order.consigneeName, 100, baseY);
+        }
+        const line1Parts = [
+          order.consigneeAddress1 || '',
+          order.consigneeAddress2 || '',
+        ].filter(Boolean);
+        if (line1Parts.length) {
+          doc.text(line1Parts.join(', '), 100);
+        }
+        const line2Parts = [
+          order.consigneeCity || '',
+          order.consigneeState || '',
+          order.consigneePostalCode || '',
+        ].filter(Boolean);
+        if (line2Parts.length) {
+          doc.text(line2Parts.join(', '), 100);
+        }
+        if (order.consigneeCountry) {
+          doc.text(order.consigneeCountry, 100);
+        }
+        if (order.consigneePhone) {
+          doc.text(order.consigneePhone, 100);
+        }
+      }
+
       doc.moveDown(2);
 
       // --- Table Layout Configuration ---
@@ -206,6 +242,42 @@ export class OrdersService {
       if (order.company.address) doc.text(order.company.address, 100);
       if (order.company.contactEmail) doc.text(order.company.contactEmail, 100);
 
+      if (
+        order.consigneeName ||
+        order.consigneeAddress1 ||
+        order.consigneeCity ||
+        order.consigneeCountry
+      ) {
+        doc.moveDown();
+        doc.font('Helvetica-Bold').text('Consignee:', 50, doc.y);
+        doc.font('Helvetica');
+        const baseY = doc.y - 12;
+        if (order.consigneeName) {
+          doc.text(order.consigneeName, 100, baseY);
+        }
+        const line1Parts = [
+          order.consigneeAddress1 || '',
+          order.consigneeAddress2 || '',
+        ].filter(Boolean);
+        if (line1Parts.length) {
+          doc.text(line1Parts.join(', '), 100);
+        }
+        const line2Parts = [
+          order.consigneeCity || '',
+          order.consigneeState || '',
+          order.consigneePostalCode || '',
+        ].filter(Boolean);
+        if (line2Parts.length) {
+          doc.text(line2Parts.join(', '), 100);
+        }
+        if (order.consigneeCountry) {
+          doc.text(order.consigneeCountry, 100);
+        }
+        if (order.consigneePhone) {
+          doc.text(order.consigneePhone, 100);
+        }
+      }
+
       doc.moveDown(2);
       // Mandatory for Export
       doc.text('Country of Origin: China', 50);
@@ -303,10 +375,45 @@ export class OrdersService {
       doc.text(`Order No: ${order.orderNo}`, { align: 'right' });
       doc.moveDown();
 
-      // Buyer Info
       doc.font('Helvetica-Bold').text('Consignee:', 50, doc.y);
-      doc.font('Helvetica').text(order.company.name, 100, doc.y - 12);
-      if (order.company.address) doc.text(order.company.address, 100);
+      doc.font('Helvetica');
+      const consigneeBaseY = doc.y - 12;
+      if (
+        order.consigneeName ||
+        order.consigneeAddress1 ||
+        order.consigneeCity ||
+        order.consigneeCountry
+      ) {
+        if (order.consigneeName) {
+          doc.text(order.consigneeName, 100, consigneeBaseY);
+        }
+        const line1Parts = [
+          order.consigneeAddress1 || '',
+          order.consigneeAddress2 || '',
+        ].filter(Boolean);
+        if (line1Parts.length) {
+          doc.text(line1Parts.join(', '), 100);
+        }
+        const line2Parts = [
+          order.consigneeCity || '',
+          order.consigneeState || '',
+          order.consigneePostalCode || '',
+        ].filter(Boolean);
+        if (line2Parts.length) {
+          doc.text(line2Parts.join(', '), 100);
+        }
+        if (order.consigneeCountry) {
+          doc.text(order.consigneeCountry, 100);
+        }
+        if (order.consigneePhone) {
+          doc.text(order.consigneePhone, 100);
+        }
+      } else {
+        doc.text(order.company.name, 100, consigneeBaseY);
+        if (order.company.address) {
+          doc.text(order.company.address, 100);
+        }
+      }
 
       doc.moveDown(2);
 
@@ -463,7 +570,19 @@ export class OrdersService {
     companyId: string,
     createOrderDto: CreateOrderDto,
   ) {
-    const { inquiryId, items, type = 'STANDARD' } = createOrderDto;
+    const {
+      inquiryId,
+      items,
+      type = 'STANDARD',
+      consigneeName,
+      consigneePhone,
+      consigneeCountry,
+      consigneeState,
+      consigneeCity,
+      consigneePostalCode,
+      consigneeAddress1,
+      consigneeAddress2,
+    } = createOrderDto;
 
     // Generate Order No (Format: ORD-YYYYMMDD-RRR)
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -579,6 +698,14 @@ export class OrdersService {
           type,
           totalAmount: calculatedTotalAmount,
           status: 'PENDING_PAYMENT',
+          consigneeName,
+          consigneePhone,
+          consigneeCountry,
+          consigneeState,
+          consigneeCity,
+          consigneePostalCode,
+          consigneeAddress1,
+          consigneeAddress2,
           items: {
             create: orderItemsData,
           },
@@ -636,6 +763,19 @@ export class OrdersService {
         items: true,
         inquiry: {
           select: { inquiryNo: true },
+        },
+        company: {
+          select: {
+            name: true,
+            contactEmail: true,
+            address: true,
+          },
+        },
+        user: {
+          select: {
+            fullName: true,
+            email: true,
+          },
         },
       },
       orderBy: { createdAt: 'desc' },

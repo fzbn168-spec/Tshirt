@@ -17,6 +17,8 @@ interface Product {
   basePrice: string; // Decimal string
   images: string; // JSON array
   moq: number;
+  soldCount?: number;
+  fakeSoldCount?: number;
   category: { id: string; name: string };
   skus: { id: string }[];
 }
@@ -95,6 +97,8 @@ export function ProductGrid() {
       {products.map((product: Product) => {
         const imageUrl = getFirstImage(product.images);
         const title = parseJson(product.title);
+        const sold =
+          (product.soldCount || 0) + (product.fakeSoldCount || 0);
         
         return (
           <Link 
@@ -141,13 +145,22 @@ export function ProductGrid() {
                     </div>
                   )}
                 </div>
-                {product.moq && (
-                  <div className="text-right">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
-                      MOQ: {product.moq}
-                    </span>
-                  </div>
-                )}
+                <div className="text-right space-y-1">
+                  {product.moq && (
+                    <div>
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+                        MOQ: {product.moq}
+                      </span>
+                    </div>
+                  )}
+                  {sold > 0 && (
+                    <div>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-orange-50 text-orange-700 border border-orange-100">
+                        Sold: {sold.toLocaleString()}+
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </Link>

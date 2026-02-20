@@ -389,6 +389,16 @@ model Order {
   portOfLoading     String? // 起运港
   portOfDestination String? // 目的港
 
+  // 收货信息快照
+  consigneeName        String?
+  consigneePhone       String?
+  consigneeCountry     String?
+  consigneeState       String?
+  consigneeCity        String?
+  consigneePostalCode  String?
+  consigneeAddress1    String?
+  consigneeAddress2    String?
+
   items       OrderItem[] // 订单商品明细
   shippings   Shipping[]  // 发货记录
   payments    Payment[]   // 支付记录

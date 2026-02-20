@@ -22,11 +22,16 @@ export class SystemSettingsService {
 
     const settings = await this.prisma.systemSetting.findMany();
 
-    // Merge defaults with stored settings
-    return defaults.map((def) => {
+    const mergedDefaults = defaults.map((def) => {
       const stored = settings.find((s) => s.key === def.key);
       return stored || def;
     });
+
+    const extraSettings = settings.filter(
+      (s) => !defaults.find((def) => def.key === s.key),
+    );
+
+    return [...mergedDefaults, ...extraSettings];
   }
 
   async updateMany(

@@ -23,6 +23,7 @@ export interface SkuRow {
   key: string; // Unique key based on attribute value IDs
   skuCode: string;
   price: string;
+  tierPrices?: string;
   stock: string;
   moq: string;
   imageUrl: string;
@@ -109,6 +110,7 @@ export default function SkuMatrix({ attributes, baseProductCode, basePrice, onCh
         key,
         skuCode: defaultSku,
         price: basePrice || '0',
+        tierPrices: '',
         stock: '100',
         moq: '1',
         imageUrl: '',
@@ -175,6 +177,7 @@ export default function SkuMatrix({ attributes, baseProductCode, basePrice, onCh
               <th className="px-4 py-3">Variant</th>
               <th className="px-4 py-3 w-48">SKU Code (Editable)</th>
               <th className="px-4 py-3 w-32">Price ($)</th>
+              <th className="px-4 py-3 w-40">Tier Prices (Qty:Price)</th>
               <th className="px-4 py-3 w-24">Stock</th>
               <th className="px-4 py-3 w-24">MOQ</th>
               <th className="px-4 py-3 w-64">Image URL</th>
@@ -205,6 +208,14 @@ export default function SkuMatrix({ attributes, baseProductCode, basePrice, onCh
                     value={row.price} 
                     onChange={(e) => updateRow(idx, 'price', e.target.value)}
                     className="h-8"
+                  />
+                </td>
+                <td className="px-4 py-3">
+                  <Input
+                    value={row.tierPrices || ''}
+                    onChange={(e) => updateRow(idx, 'tierPrices', e.target.value)}
+                    placeholder="e.g. 10:95,50:90"
+                    className="h-8 text-xs"
                   />
                 </td>
                 <td className="px-4 py-3">

@@ -6,6 +6,7 @@ import {
   Body,
   UseGuards,
   Query,
+  Header,
 } from '@nestjs/common';
 import { PlatformService } from './platform.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -26,6 +27,13 @@ export class PlatformController {
   @Get('companies')
   findAllCompanies(@Query('salesRepId') salesRepId?: string) {
     return this.platformService.findAllCompanies(salesRepId);
+  }
+
+  @Get('companies/export')
+  @Header('Content-Type', 'text/csv; charset=utf-8')
+  @Header('Content-Disposition', 'attachment; filename="companies.csv"')
+  exportCompanies() {
+    return this.platformService.exportCompanies();
   }
 
   @Get('sales-reps')

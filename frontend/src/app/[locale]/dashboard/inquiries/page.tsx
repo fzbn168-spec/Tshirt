@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Filter, MoreHorizontal, Loader2, Eye, Upload, FileDown } from 'lucide-react';
+import { Search, Filter, MoreHorizontal, Loader2, Eye, Upload } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import Link from 'next/link';
@@ -67,17 +67,6 @@ export default function InquiriesPage() {
     }
   };
 
-  const downloadTemplate = () => {
-    const csvContent = "SkuCode,Quantity,TargetPrice\nSKU-001,100,50.00\nSKU-002,200,";
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'inquiry_template.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
-
   return (
     <div className="space-y-6">
       {/* Toolbar */}
@@ -110,14 +99,6 @@ export default function InquiriesPage() {
              <Upload className="w-4 h-4" />
              Import Excel
           </button>
-          <button 
-             onClick={downloadTemplate}
-             className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md text-sm font-medium hover:bg-zinc-50"
-          >
-             <FileDown className="w-4 h-4" />
-             Template
-          </button>
-
           <button className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">
             New Inquiry
           </button>

@@ -72,4 +72,51 @@ export class PlatformService {
       totalUsers,
     };
   }
+
+  async exportCompanies() {
+    const companies = await this.prisma.company.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const headers = [
+      'id',
+      'name',
+      'taxId',
+      'contactEmail',
+      'phone',
+      'address',
+      'website',
+      'description',
+      'status',
+      'createdAt',
+    ];
+
+    const escape = (value: unknown) => {
+      if (value === null || typeof value === 'undefined') {
+        return '';
+      }
+      const str =
+        value instanceof Date ? value.toISOString() : String(value);
+      const escaped = str.replace(/"/g, '""').replace(/\r?\n/g, ' ');
+      return `"${escaped}"`;
+    };
+
+    const lines = companies.map((company) => {
+      const row = [
+        escape(company.id),
+        escape(company.name),
+        escape(company.taxId),
+        escape(company.contactEmail),
+        escape(company.phone),
+        escape(company.address),
+        escape(company.website),
+        escape(company.description),
+        escape(company.status),
+        escape(company.createdAt),
+      ];
+      return row.join(',');
+    });
+
+    return [headers.join(','), ...lines].join('\n');
+  }
 }

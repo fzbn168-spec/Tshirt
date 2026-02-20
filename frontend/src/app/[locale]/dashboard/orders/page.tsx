@@ -36,6 +36,8 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [exportingOrders, setExportingOrders] = useState(false);
+  const [exportingPayments, setExportingPayments] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -60,6 +62,52 @@ export default function OrdersPage() {
   if (loading) {
     return <div className="p-8">Loading orders...</div>;
   }
+
+  const handleExport = async () => {
+    try {
+      setExportingOrders(true);
+      const res = await api.get('/orders/export', {
+        responseType: 'blob',
+      });
+      const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'orders-history.csv';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (e) {
+      console.error(e);
+      alert('Export failed');
+    } finally {
+      setExportingOrders(false);
+    }
+  };
+
+  const handleExportPayments = async () => {
+    try {
+      setExportingPayments(true);
+      const res = await api.get('/payments/export/orders', {
+        responseType: 'blob',
+      });
+      const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'payments-history.csv';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (e) {
+      console.error(e);
+      alert('Export failed');
+    } finally {
+      setExportingPayments(false);
+    }
+  };
 
   const openPayModal = (order: Order) => {
     setSelectedOrder(order);
@@ -90,6 +138,22 @@ export default function OrdersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">My Orders</h1>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExport}
+            disabled={exportingOrders}
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground disabled:opacity-50 h-9 px-4"
+          >
+            {exportingOrders ? 'Exporting Orders...' : 'Export Orders CSV'}
+          </button>
+          <button
+            onClick={handleExportPayments}
+            disabled={exportingPayments}
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground disabled:opacity-50 h-9 px-4"
+          >
+            {exportingPayments ? 'Exporting Payments...' : 'Export Payments CSV'}
+          </button>
+        </div>
       </div>
 
       <div className="rounded-md border bg-white dark:bg-zinc-950">

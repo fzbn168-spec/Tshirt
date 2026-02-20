@@ -343,31 +343,46 @@ export class ProductsService {
     categoryId?: string;
     minPrice?: number;
     maxPrice?: number;
-    attributes?: Record<string, string[]>; // { attrId: [valId1, valId2] }
+    attributes?: Record<string, string[]>;
+    sort?: string;
     skip?: number;
     take?: number;
+    ids?: string[];
   }) {
-    const { search, categoryId, minPrice, maxPrice, attributes, skip, take } =
-      params || {};
+    const {
+      search,
+      categoryId,
+      minPrice,
+      maxPrice,
+      attributes,
+      sort,
+      skip,
+      take,
+      ids,
+    } = params || {};
 
     const where: any = {};
 
-    if (search) {
-      where.OR = [
-        { title: { contains: search } },
-        { description: { contains: search } },
-        { skus: { some: { skuCode: { contains: search } } } },
-      ];
-    }
+    if (ids && ids.length > 0) {
+      where.id = { in: ids };
+    } else {
+      if (search) {
+        where.OR = [
+          { title: { contains: search } },
+          { description: { contains: search } },
+          { skus: { some: { skuCode: { contains: search } } } },
+        ];
+      }
 
-    if (categoryId) {
-      where.categoryId = categoryId;
-    }
+      if (categoryId) {
+        where.categoryId = categoryId;
+      }
 
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      where.basePrice = {};
-      if (minPrice !== undefined) where.basePrice.gte = minPrice;
-      if (maxPrice !== undefined) where.basePrice.lte = maxPrice;
+      if (minPrice !== undefined || maxPrice !== undefined) {
+        where.basePrice = {};
+        if (minPrice !== undefined) where.basePrice.gte = minPrice;
+        if (maxPrice !== undefined) where.basePrice.lte = maxPrice;
+      }
     }
 
     // Attribute Filtering
@@ -405,6 +420,30 @@ export class ProductsService {
     }
 
     const total = await this.prisma.product.count({ where });
+
+    let orderBy: any = { createdAt: 'desc' };
+
+    if (sort === 'priceAsc') {
+      orderBy = { basePrice: 'asc' };
+    } else if (sort === 'priceDesc') {
+      orderBy = { basePrice: 'desc' };
+    } else if (sort === 'sales') {
+      orderBy = {
+        soldCount: 'desc',
+      };
+    } else if (sort === 'hot') {
+      orderBy = [
+        {
+          soldCount: 'desc',
+        },
+        {
+          fakeSoldCount: 'desc',
+        },
+        {
+          createdAt: 'desc',
+        },
+      ];
+    }
     const items = await this.prisma.product.findMany({
       where,
       include: {
@@ -424,10 +463,19 @@ export class ProductsService {
         },
         category: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy,
       skip,
       take,
     });
+
+    if (ids && ids.length > 0) {
+      const orderMap = new Map(ids.map((id, index) => [id, index]));
+      items.sort((a, b) => {
+        const ai = orderMap.get(a.id) ?? 0;
+        const bi = orderMap.get(b.id) ?? 0;
+        return ai - bi;
+      });
+    }
 
     return { total, items };
   }

@@ -4,13 +4,22 @@ import { Link } from '@/navigation';
 import { Search, ShoppingBag, User, Menu, LayoutDashboard, Bell } from 'lucide-react';
 import { useCartStore } from '@/store/useCartStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import LanguageSwitcher from './LanguageSwitcher';
 import { CurrencySwitcher } from './CurrencySwitcher';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import api from '@/lib/api';
+
+interface LayoutNavItem {
+  id: string;
+  label: string;
+  href: string;
+  enabled?: boolean;
+  sortOrder?: number;
+}
 
 export function Header() {
   const t = useTranslations('Common');
@@ -21,6 +30,46 @@ export function Header() {
   const isClient = typeof window !== 'undefined';
   const { unreadCount } = useNotifications();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const defaultNavItems: LayoutNavItem[] = [
+    { id: 'men', label: tNav('men'), href: '/products?search=Men' },
+    { id: 'women', label: tNav('women'), href: '/products?search=Women' },
+    { id: 'kids', label: tNav('kids'), href: '/products?search=Kids' },
+    { id: 'apparel', label: tNav('apparel'), href: '/products?search=Apparel' },
+    { id: 'new', label: tNav('newArrivals'), href: '/products?sort=newest' },
+  ];
+  const [navItems, setNavItems] = useState<LayoutNavItem[]>(defaultNavItems);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadLayout = async () => {
+      try {
+        const res = await api.get<{ key: string; value: string }[]>('/system-settings');
+        const setting = res.data.find((s) => s.key === 'layout_config');
+        if (!setting || !setting.value) return;
+        const parsed = JSON.parse(setting.value) as { navItems?: LayoutNavItem[] };
+        if (!parsed.navItems || parsed.navItems.length === 0) return;
+        const items = parsed.navItems
+          .filter((item) => item.enabled !== false)
+          .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        if (items.length === 0) return;
+        if (!cancelled) {
+          setNavItems(
+            items.map((item) => ({
+              id: item.id,
+              label: item.label || item.id,
+              href: item.href || '/products',
+              enabled: item.enabled,
+              sortOrder: item.sortOrder,
+            })),
+          );
+        }
+      } catch {}
+    };
+    loadLayout();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white dark:bg-zinc-950 dark:border-zinc-800">
@@ -56,11 +105,16 @@ export function Header() {
                   SOLE<span className="text-blue-600">TRADE</span>
                 </Link>
                 <nav className="flex flex-col gap-4 text-lg font-medium">
-                  <Link href="/products?search=Men" onClick={() => setIsMobileMenuOpen(false)}>{tNav('men')}</Link>
-                  <Link href="/products?search=Women" onClick={() => setIsMobileMenuOpen(false)}>{tNav('women')}</Link>
-                  <Link href="/products?search=Kids" onClick={() => setIsMobileMenuOpen(false)}>{tNav('kids')}</Link>
-                  <Link href="/products?search=Apparel" onClick={() => setIsMobileMenuOpen(false)}>{tNav('apparel')}</Link>
-                  <Link href="/products?sort=newest" className="text-blue-600" onClick={() => setIsMobileMenuOpen(false)}>{tNav('newArrivals')}</Link>
+                  {navItems.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={item.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={item.id === 'new' ? 'text-blue-600' : undefined}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
                 </nav>
                 <div className="border-t pt-6 flex flex-col gap-4">
                   {isAuthenticated() && isClient ? (
@@ -89,11 +143,19 @@ export function Header() {
 
         {/* Desktop Nav */}
         <nav className="hidden lg:flex items-center gap-8 text-sm font-medium">
-          <Link href="/products?search=Men" className="hover:text-blue-600 transition-colors">{tNav('men')}</Link>
-          <Link href="/products?search=Women" className="hover:text-blue-600 transition-colors">{tNav('women')}</Link>
-          <Link href="/products?search=Kids" className="hover:text-blue-600 transition-colors">{tNav('kids')}</Link>
-          <Link href="/products?search=Apparel" className="hover:text-blue-600 transition-colors">{tNav('apparel')}</Link>
-          <Link href="/products?sort=newest" className="text-blue-600">{tNav('newArrivals')}</Link>
+          {navItems.map((item) => (
+            <Link
+              key={item.id}
+              href={item.href}
+              className={
+                item.id === 'new'
+                  ? 'text-blue-600'
+                  : 'hover:text-blue-600 transition-colors'
+              }
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
 
         {/* Icons / Actions */}

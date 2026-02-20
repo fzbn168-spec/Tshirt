@@ -89,8 +89,7 @@ export function SkuSelector({
 
   // Find matching SKU based on selection
   const matchingSku = useMemo(() => {
-    // Check if all attributes are selected
-    if (attributes.length === 0) return skus[0]; // No attributes product?
+    if (attributes.length === 0) return skus[0];
     if (Object.keys(selectedValues).length !== attributes.length) return null;
 
     return skus.find((sku) => {
@@ -125,15 +124,21 @@ export function SkuSelector({
   // Calculate dynamic price based on quantity
   const currentPrice = useMemo(() => {
     if (!matchingSku) return basePrice;
+
     let price = Number(matchingSku.price);
-    
+    if (!price || price <= 0) {
+      price = basePrice;
+    }
+
     if (tierPrices.length > 0) {
       const tier = [...tierPrices].reverse().find((t) => quantity >= t.minQty);
       if (tier) {
-        price = Number(tier.price);
+        const tierPrice = Number(tier.price);
+        price = tierPrice > 0 ? tierPrice : price;
       }
     }
-    return price;
+
+    return price > 0 ? price : basePrice;
   }, [matchingSku, tierPrices, quantity, basePrice]);
 
   const handleAddToRFQ = (isSample = false) => {
@@ -258,8 +263,14 @@ export function SkuSelector({
         <div className="bg-zinc-50 dark:bg-zinc-900 rounded-md p-3 text-sm">
           <div className="font-medium mb-2 text-zinc-700 dark:text-zinc-300">{t('volumePricing')}</div>
           <div className="grid grid-cols-2 gap-2">
-             <div className="text-zinc-500">1+</div>
-             <div className="text-right">${(matchingSku ? Number(matchingSku.price) : Number(basePrice)).toFixed(2)}</div>
+                 <div className="text-zinc-500">1+</div>
+                 <div className="text-right">
+                   {(() => {
+                     const raw = matchingSku ? Number(matchingSku.price) : Number(basePrice);
+                     const value = !raw || raw <= 0 ? Number(basePrice) : raw;
+                     return `$${value.toFixed(2)}`;
+                   })()}
+                 </div>
              {tierPrices.map((tier, idx: number) => (
                 <div key={idx} className={cn("contents", quantity >= tier.minQty && "font-bold text-blue-600")}>
                     <div className="text-zinc-500">{tier.minQty}+</div>

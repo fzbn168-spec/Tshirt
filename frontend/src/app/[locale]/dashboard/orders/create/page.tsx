@@ -37,6 +37,14 @@ export default function CreateOrderPage() {
   const [items, setItems] = useState<OrderItem[]>([]);
   const [totalAmount, setTotalAmount] = useState(0);
   const [type, setType] = useState('STANDARD');
+  const [consigneeName, setConsigneeName] = useState('');
+  const [consigneePhone, setConsigneePhone] = useState('');
+  const [consigneeCountry, setConsigneeCountry] = useState('');
+  const [consigneeState, setConsigneeState] = useState('');
+  const [consigneeCity, setConsigneeCity] = useState('');
+  const [consigneePostalCode, setConsigneePostalCode] = useState('');
+  const [consigneeAddress1, setConsigneeAddress1] = useState('');
+  const [consigneeAddress2, setConsigneeAddress2] = useState('');
 
   const fetchInquiryDetails = useCallback(async () => {
     try {
@@ -83,7 +91,15 @@ export default function CreateOrderPage() {
       const payload = {
         inquiryId: inquiryId || undefined,
         items: items,
-        type: type
+        type: type,
+        consigneeName: consigneeName || undefined,
+        consigneePhone: consigneePhone || undefined,
+        consigneeCountry: consigneeCountry || undefined,
+        consigneeState: consigneeState || undefined,
+        consigneeCity: consigneeCity || undefined,
+        consigneePostalCode: consigneePostalCode || undefined,
+        consigneeAddress1: consigneeAddress1 || undefined,
+        consigneeAddress2: consigneeAddress2 || undefined
       };
 
       const res = await api.post('/orders', payload);
@@ -157,6 +173,98 @@ export default function CreateOrderPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+            <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/50">
+              <h2 className="font-semibold flex items-center gap-2">
+                <Package className="w-4 h-4 text-zinc-500" />
+                Shipping / Consignee
+              </h2>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs text-zinc-500">Consignee Name</label>
+                  <input
+                    value={consigneeName}
+                    onChange={(e) => setConsigneeName(e.target.value)}
+                    className="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm"
+                    placeholder="Contact person"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-zinc-500">Consignee Phone</label>
+                  <input
+                    value={consigneePhone}
+                    onChange={(e) => setConsigneePhone(e.target.value)}
+                    className="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm"
+                    placeholder="+86..."
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs text-zinc-500">Country</label>
+                  <input
+                    value={consigneeCountry}
+                    onChange={(e) => setConsigneeCountry(e.target.value)}
+                    className="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm"
+                    placeholder="Country"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-zinc-500">State / Province</label>
+                  <input
+                    value={consigneeState}
+                    onChange={(e) => setConsigneeState(e.target.value)}
+                    className="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm"
+                    placeholder="State / Province"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-zinc-500">City</label>
+                  <input
+                    value={consigneeCity}
+                    onChange={(e) => setConsigneeCity(e.target.value)}
+                    className="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm"
+                    placeholder="City"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2 space-y-1">
+                  <label className="text-xs text-zinc-500">Address Line 1</label>
+                  <input
+                    value={consigneeAddress1}
+                    onChange={(e) => setConsigneeAddress1(e.target.value)}
+                    className="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm"
+                    placeholder="Street, building, etc."
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-zinc-500">Postal Code</label>
+                  <input
+                    value={consigneePostalCode}
+                    onChange={(e) => setConsigneePostalCode(e.target.value)}
+                    className="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm"
+                    placeholder="ZIP / Postal"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs text-zinc-500">Address Line 2</label>
+                <input
+                  value={consigneeAddress2}
+                  onChange={(e) => setConsigneeAddress2(e.target.value)}
+                  className="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm"
+                  placeholder="Apartment, floor, etc. (optional)"
+                />
+              </div>
             </div>
           </div>
         </div>

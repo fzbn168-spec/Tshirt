@@ -45,6 +45,101 @@ export class OrdersController {
     return this.ordersService.findAll(req.user.companyId);
   }
 
+  @Get('export')
+  @Roles('MEMBER', 'ADMIN')
+  async export(@Req() req: RequestWithUser, @Res() res: Response) {
+    if (!req.user.companyId) {
+      throw new Error('User does not belong to a company');
+    }
+    const { companyId } = req.user;
+    const orders = await this.ordersService.findAll(companyId);
+
+    const headers = [
+      'Order No',
+      'Order Date',
+      'Company Name',
+      'Company Email',
+      'Company Address',
+      'Buyer Name',
+      'Buyer Email',
+      'Consignee Name',
+      'Consignee Phone',
+      'Consignee Country',
+      'Consignee State',
+      'Consignee City',
+      'Consignee Postal Code',
+      'Consignee Address1',
+      'Consignee Address2',
+      'Type',
+      'Status',
+      'Incoterms',
+      'Port Of Loading',
+      'Port Of Destination',
+      'Total Amount',
+      'Currency',
+      'Source',
+    ];
+
+    const rows = orders.map((order: any) => {
+      const source = order.inquiry
+        ? `RFQ:${order.inquiry.inquiryNo}`
+        : 'Direct';
+      const createdAt = order.createdAt
+        ? new Date(order.createdAt).toISOString()
+        : '';
+      return [
+        order.orderNo,
+        createdAt,
+        order.company?.name || '',
+        order.company?.contactEmail || '',
+        order.company?.address || '',
+        order.user?.fullName || '',
+        order.user?.email || '',
+        order.consigneeName || '',
+        order.consigneePhone || '',
+        order.consigneeCountry || '',
+        order.consigneeState || '',
+        order.consigneeCity || '',
+        order.consigneePostalCode || '',
+        order.consigneeAddress1 || '',
+        order.consigneeAddress2 || '',
+        order.type || 'STANDARD',
+        order.status,
+        order.incoterms || '',
+        order.portOfLoading || '',
+        order.portOfDestination || '',
+        Number(order.totalAmount).toFixed(2),
+        order.currency || '',
+        source,
+      ];
+    });
+
+    const csvLines = [
+      headers.join(','),
+      ...rows.map((r) =>
+        r
+          .map((field) => {
+            if (field == null) return '';
+            const value = String(field);
+            if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+              return `"${value.replace(/"/g, '""')}"`;
+            }
+            return value;
+          })
+          .join(','),
+      ),
+    ];
+
+    const csv = csvLines.join('\n');
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=orders-${companyId}.csv`,
+    );
+    res.send(csv);
+  }
+
   @Get(':id')
   @Roles('MEMBER', 'ADMIN')
   findOne(@Req() req: RequestWithUser, @Param('id') id: string) {

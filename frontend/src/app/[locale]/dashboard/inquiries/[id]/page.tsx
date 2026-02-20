@@ -11,8 +11,7 @@ import {
   Mail, 
   FileText, 
   Clock,
-  AlertCircle,
-  FileDown
+  AlertCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { InquiryChat } from '@/components/inquiry/InquiryChat';
@@ -64,22 +63,6 @@ export default function InquiryDetailPage() {
         setLoading(false);
       });
   }, [params.id, token]);
-
-  const downloadPdf = async () => {
-    if (!inquiry) return;
-    try {
-        const res = await api.get(`/inquiries/${params.id}/pdf`, { responseType: 'blob' });
-        const blob = res.data as Blob;
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Inquiry-${inquiry.inquiryNo}.pdf`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-    } catch {
-        alert('Failed to download PDF');
-    }
-  };
 
   if (loading) {
     return (
@@ -145,23 +128,16 @@ export default function InquiryDetailPage() {
             </p>
           </div>
         </div>
-        
+
         <div className="flex gap-2">
-            <button 
-                onClick={downloadPdf}
-                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md text-sm font-medium hover:bg-zinc-50"
+          {inquiry.status === 'QUOTED' && (
+            <button
+              onClick={() => router.push(`/dashboard/orders/create?inquiryId=${inquiry.id}`)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 shadow-sm transition-colors"
             >
-                <FileDown className="w-4 h-4" />
-                Download PDF
+              Place Order
             </button>
-            {inquiry.status === 'QUOTED' && (
-                <button 
-                    onClick={() => router.push(`/dashboard/orders/create?inquiryId=${inquiry.id}`)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 shadow-sm transition-colors"
-                >
-                    Place Order
-                </button>
-            )}
+          )}
         </div>
       </div>
 

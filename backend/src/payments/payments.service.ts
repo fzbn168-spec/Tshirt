@@ -86,6 +86,30 @@ export class PaymentsService {
     });
   }
 
+  async findForUser(userId: string) {
+    return this.prisma.payment.findMany({
+      where: {
+        order: {
+          userId,
+        },
+      },
+      include: {
+        order: {
+          include: {
+            company: {
+              select: {
+                name: true,
+                contactEmail: true,
+                address: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async updateStatus(id: string, status: string) {
     const result = await this.prisma.$transaction(async (tx) => {
       const payment = await tx.payment.update({

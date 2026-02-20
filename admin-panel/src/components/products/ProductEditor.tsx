@@ -76,6 +76,25 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
         imgs = JSON.parse(initialData.images || '[]');
       } catch (e) {}
 
+      const parseTierPricesForInput = (tier: any) => {
+        if (!tier) return '';
+        try {
+          const parsed = typeof tier === 'string' ? JSON.parse(tier) : tier;
+          if (!Array.isArray(parsed)) return '';
+          return parsed
+            .map((t: any) => {
+              const minQty = Number(t.minQty);
+              const price = Number(t.price);
+              if (!minQty || !price) return null;
+              return `${minQty}:${price}`;
+            })
+            .filter(Boolean)
+            .join(',');
+        } catch {
+          return '';
+        }
+      };
+
       setFormData({
         title: initialData.title ? JSON.parse(initialData.title).en : '',
         description: initialData.description ? JSON.parse(initialData.description).en : '',
@@ -142,10 +161,11 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                   .join('-');
                
                return {
-                  id: sku.id, // Keep ID for updates
+                  id: sku.id,
                   key,
                   skuCode: sku.skuCode,
                   price: sku.price.toString(),
+                  tierPrices: parseTierPricesForInput(sku.tierPrices),
                   stock: sku.stock.toString(),
                   moq: sku.moq.toString(),
                   imageUrl: sku.image || '',
@@ -228,6 +248,28 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
         cartonGrossWeight: payload.cartonGrossWeight ? Number(payload.cartonGrossWeight) : undefined,
       };
 
+      const serializeTierPrices = (input?: string) => {
+        if (!input) return undefined;
+        const parts = input
+          .split(',')
+          .map((p: string) => p.trim())
+          .filter(Boolean);
+        if (parts.length === 0) return undefined;
+
+        const tiers = parts
+          .map((p) => {
+            const [qtyStr, priceStr] = p.split(':').map((v) => v.trim());
+            const minQty = Number(qtyStr);
+            const price = Number(priceStr);
+            if (!minQty || !price) return null;
+            return { minQty, price };
+          })
+          .filter(Boolean) as { minQty: number; price: number }[];
+
+        if (tiers.length === 0) return undefined;
+        return JSON.stringify(tiers);
+      };
+
       // Determine SKUs: Matrix vs Simple
       let skusToSubmit: any[] = [];
       if (generatedSkus.length > 0) {
@@ -240,6 +282,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
             stock: Number(sku.stock),
             image: sku.imageUrl || undefined,
             specs: JSON.stringify({}),
+            tierPrices: serializeTierPrices((sku as any).tierPrices),
             attributeValueIds: sku.attributes.map((a) => a.valueId),
             ...packingData,
           };

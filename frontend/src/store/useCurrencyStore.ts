@@ -30,11 +30,18 @@ export const useCurrencyStore = create<CurrencyStore>()(
         try {
           const res = await api.get('/exchange-rates');
           const data = res.data as Array<{ currency: string; rate: number }>;
-          const ratesMap: Record<string, number> = { USD: 1 };
+          const current = get().rates;
+          const serverRates: Record<string, number> = {};
           data.forEach((r) => {
-            ratesMap[r.currency] = Number(r.rate);
+            serverRates[r.currency] = Number(r.rate);
           });
-          set({ rates: ratesMap });
+          set({
+            rates: {
+              ...current,
+              ...serverRates,
+              USD: 1,
+            },
+          });
         } catch (err) {
           console.error('Failed to fetch exchange rates', err);
         }

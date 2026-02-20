@@ -87,8 +87,10 @@ export class ProductsController {
     @Query('minPrice') minPrice?: string,
     @Query('maxPrice') maxPrice?: string,
     @Query('attributes') attributesStr?: string,
+    @Query('ids') idsStr?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('sort') sort?: string,
   ) {
     let attributes: Record<string, string[]> | undefined;
     if (attributesStr) {
@@ -97,6 +99,14 @@ export class ProductsController {
       } catch (e) {
         console.error('Failed to parse attributes filter:', e);
       }
+    }
+
+    let ids: string[] | undefined;
+    if (idsStr) {
+      ids = idsStr
+        .split(',')
+        .map((v) => v.trim())
+        .filter((v) => v.length > 0);
     }
 
     // Safety check for pagination params
@@ -117,8 +127,10 @@ export class ProductsController {
         maxPrice:
           maxPrice && !isNaN(Number(maxPrice)) ? Number(maxPrice) : undefined,
         attributes,
+        sort,
         skip,
         take: limitNum,
+      ids,
       });
     } catch (error) {
       console.error('FindAll Products Error:', error);

@@ -28,6 +28,7 @@ export function ProductFilters() {
   const initialCategory = searchParams.get('categoryId') || '';
   const initialMinPrice = searchParams.get('minPrice') || '';
   const initialMaxPrice = searchParams.get('maxPrice') || '';
+  const initialSort = searchParams.get('sort') || 'new';
 
   const [search, setSearch] = useState(initialSearch);
   const [debouncedSearch] = useDebounce(search, 500);
@@ -37,6 +38,7 @@ export function ProductFilters() {
   const [maxPrice, setMaxPrice] = useState(initialMaxPrice);
   const [debouncedMinPrice] = useDebounce(minPrice, 500);
   const [debouncedMaxPrice] = useDebounce(maxPrice, 500);
+  const [sort, setSort] = useState(initialSort);
 
   // Data State
   const [categories, setCategories] = useState<Category[]>([]);
@@ -113,10 +115,13 @@ export function ProductFilters() {
     if (debouncedMaxPrice) params.set('maxPrice', debouncedMaxPrice);
     else params.delete('maxPrice');
 
+    if (sort && sort !== 'new') params.set('sort', sort);
+    else params.delete('sort');
+
     if (params.toString() !== searchParams.toString()) {
       router.push(`?${params.toString()}`);
     }
-  }, [debouncedSearch, categoryId, debouncedMinPrice, debouncedMaxPrice, router, searchParams]);
+  }, [debouncedSearch, categoryId, debouncedMinPrice, debouncedMaxPrice, sort, router, searchParams]);
 
   const parseJson = (str: string) => {
     try {
@@ -127,7 +132,7 @@ export function ProductFilters() {
     }
   };
 
-  const hasActiveFilters = search || categoryId || minPrice || maxPrice || Object.keys(selectedAttributes).length > 0;
+  const hasActiveFilters = search || categoryId || minPrice || maxPrice || Object.keys(selectedAttributes).length > 0 || (sort && sort !== 'new');
 
   const clearFilters = () => {
     setSearch('');
@@ -140,23 +145,39 @@ export function ProductFilters() {
     params.delete('minPrice');
     params.delete('maxPrice');
     params.delete('attributes');
+    params.delete('sort');
     router.push(`?${params.toString()}`);
   };
 
   return (
     <div className="space-y-8 sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-2 custom-scrollbar">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-          <SlidersHorizontal className="w-5 h-5" /> Filters
-        </h3>
-        {hasActiveFilters && (
-          <button 
-            onClick={clearFilters}
-            className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1 font-medium transition-colors"
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+            <SlidersHorizontal className="w-5 h-5" /> Filters
+          </h3>
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="text-xs border border-zinc-200 dark:border-zinc-700 rounded-md px-2 py-1 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300"
           >
-            <RotateCcw className="w-3 h-3" /> Reset
-          </button>
-        )}
+            <option value="new">Newest</option>
+            <option value="sales">Best Sellers</option>
+            <option value="hot">Hot (Sales + Virtual)</option>
+            <option value="priceAsc">Price: Low to High</option>
+            <option value="priceDesc">Price: High to Low</option>
+          </select>
+          {hasActiveFilters && (
+            <button 
+              onClick={clearFilters}
+              className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1 font-medium transition-colors"
+            >
+              <RotateCcw className="w-3 h-3" /> Reset
+            </button>
+          )}
+        </div>
       </div>
       
       {/* Search */}

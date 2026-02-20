@@ -42,6 +42,38 @@ export class CreateOrderDto {
   @IsString()
   type?: string; // 'STANDARD' | 'SAMPLE'
 
+   @IsOptional()
+   @IsString()
+   consigneeName?: string;
+
+   @IsOptional()
+   @IsString()
+   consigneePhone?: string;
+
+   @IsOptional()
+   @IsString()
+   consigneeCountry?: string;
+
+   @IsOptional()
+   @IsString()
+   consigneeState?: string;
+
+   @IsOptional()
+   @IsString()
+   consigneeCity?: string;
+
+   @IsOptional()
+   @IsString()
+   consigneePostalCode?: string;
+
+   @IsOptional()
+   @IsString()
+   consigneeAddress1?: string;
+
+   @IsOptional()
+   @IsString()
+   consigneeAddress2?: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemDto)
