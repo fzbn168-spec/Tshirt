@@ -229,38 +229,57 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
       };
 
       // Determine SKUs: Matrix vs Simple
-      let skusToSubmit = [];
+      let skusToSubmit: any[] = [];
       if (generatedSkus.length > 0) {
         // Use generated matrix
-        skusToSubmit = generatedSkus.map(sku => ({
-          skuCode: sku.skuCode,
-          price: Number(sku.price),
-          moq: Number(sku.moq),
-          stock: Number(sku.stock),
-          image: sku.imageUrl || undefined, // Add image per SKU
-          specs: JSON.stringify({}), // We could store attribute map here if needed
-          // Map attributes to backend format (attributeValueIds)
-          attributeValueIds: sku.attributes.map(a => a.valueId),
-          ...packingData, // Apply default packing info to all SKUs for now
-        }));
+        skusToSubmit = generatedSkus.map((sku) => {
+          const baseSku = {
+            skuCode: sku.skuCode,
+            price: Number(sku.price),
+            moq: Number(sku.moq),
+            stock: Number(sku.stock),
+            image: sku.imageUrl || undefined,
+            specs: JSON.stringify({}),
+            attributeValueIds: sku.attributes.map((a) => a.valueId),
+            ...packingData,
+          };
+
+          // Preserve existing SKU id when editing
+          if (mode === 'edit' && (sku as any).id) {
+            return {
+              id: (sku as any).id,
+              ...baseSku,
+            };
+          }
+
+          return baseSku;
+        });
       } else {
         // Use simple single SKU
-        skusToSubmit = [{
-          skuCode: payload.skuCode,
-          price: Number(payload.basePrice),
-          moq: Number(payload.moq),
-          stock: 100,
-          specs: JSON.stringify({}),
-          ...packingData,
-        }];
+        skusToSubmit = [
+          {
+            skuCode: payload.skuCode,
+            price: Number(payload.basePrice),
+            moq: Number(payload.moq),
+            stock: 100,
+            specs: JSON.stringify({}),
+            ...packingData,
+          },
+        ];
       }
 
+      // Map selected attributes to backend format
+      const attributeIds =
+        selectedAttributes.length > 0
+          ? selectedAttributes.map((a) => a.attributeId)
+          : undefined;
+
+      submitData.attributeIds = attributeIds;
+      submitData.skus = skusToSubmit;
+
       if (mode === 'create') {
-        submitData.skus = skusToSubmit;
         return api.post('/products', submitData);
       } else {
-        // For edit, naive update: update product fields only
-        // Complex SKU sync logic is needed for full edit support
         return api.patch(`/products/${initialData.id}`, submitData);
       }
     },

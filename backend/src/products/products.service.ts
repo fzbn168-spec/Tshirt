@@ -453,10 +453,50 @@ export class ProductsService {
         category: true,
         sizeChart: true,
         // Include summary of reviews or just count?
-        // Let's include basic stats if needed, or rely on ReviewsService.
         // For now, product.soldCount and fakeSoldCount are already fetched by default.
       },
     });
+
+    if (
+      product &&
+      product.attributes.length === 0 &&
+      product.skus.some((sku) => sku.attributeValues.length > 0)
+    ) {
+      const attrIdSet = new Set<string>();
+      product.skus.forEach((sku) => {
+        sku.attributeValues.forEach((av) => {
+          if (av.attributeValue.attributeId) {
+            attrIdSet.add(av.attributeValue.attributeId);
+          }
+        });
+      });
+
+      const attributeIds = Array.from(attrIdSet);
+
+      if (attributeIds.length > 0) {
+        await this.prisma.productAttribute.createMany({
+          data: attributeIds.map((attributeId) => ({
+            productId: id,
+            attributeId,
+          })),
+        });
+
+        const attributes = await this.prisma.productAttribute.findMany({
+          where: { productId: id },
+          include: {
+            attribute: {
+              include: { values: true },
+            },
+          },
+        });
+
+        return {
+          ...product,
+          attributes,
+        };
+      }
+    }
+
     return product;
   }
 
