@@ -130,7 +130,7 @@ export class ProductsController {
         sort,
         skip,
         take: limitNum,
-      ids,
+        ids,
       });
     } catch (error) {
       console.error('FindAll Products Error:', error);

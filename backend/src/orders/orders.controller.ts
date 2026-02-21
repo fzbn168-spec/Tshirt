@@ -121,7 +121,11 @@ export class OrdersController {
           .map((field) => {
             if (field == null) return '';
             const value = String(field);
-            if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+            if (
+              value.includes(',') ||
+              value.includes('"') ||
+              value.includes('\n')
+            ) {
               return `"${value.replace(/"/g, '""')}"`;
             }
             return value;

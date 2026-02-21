@@ -34,6 +34,8 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
     title: '',
     description: '',
     basePrice: '',
+    singlePrice: '',
+    singleStock: '',
     categoryId: '',
     sizeChartId: '',
     sizeChartImage: '', // Alternative to sizeChartId
@@ -76,29 +78,19 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
         imgs = JSON.parse(initialData.images || '[]');
       } catch (e) {}
 
-      const parseTierPricesForInput = (tier: any) => {
-        if (!tier) return '';
-        try {
-          const parsed = typeof tier === 'string' ? JSON.parse(tier) : tier;
-          if (!Array.isArray(parsed)) return '';
-          return parsed
-            .map((t: any) => {
-              const minQty = Number(t.minQty);
-              const price = Number(t.price);
-              if (!minQty || !price) return null;
-              return `${minQty}:${price}`;
-            })
-            .filter(Boolean)
-            .join(',');
-        } catch {
-          return '';
-        }
-      };
-
       setFormData({
         title: initialData.title ? JSON.parse(initialData.title).en : '',
         description: initialData.description ? JSON.parse(initialData.description).en : '',
-        basePrice: initialData.basePrice || '',
+        basePrice:
+          initialData.skus && initialData.skus.length > 0
+            ? String(
+                Math.min(
+                  ...initialData.skus.map((s: any) => Number(s.price) || 0),
+                ),
+              )
+            : initialData.basePrice || '',
+        singlePrice: initialData.skus?.[0]?.price?.toString() || '',
+        singleStock: initialData.skus?.[0]?.stock?.toString() || '',
         categoryId: initialData.categoryId || '',
         sizeChartId: initialData.sizeChartId || '',
         sizeChartImage: initialData.sizeChartImage || '',
@@ -153,7 +145,6 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
            });
            setSelectedAttributes(reconstructedAttrs);
 
-           // 2. Reconstruct SKU Matrix Rows
            const reconstructedSkus = initialData.skus.map((sku: any) => {
                const key = sku.attributeValues
                   .map((av: any) => av.attributeValue.id)
@@ -165,7 +156,6 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                   key,
                   skuCode: sku.skuCode,
                   price: sku.price.toString(),
-                  tierPrices: parseTierPricesForInput(sku.tierPrices),
                   stock: sku.stock.toString(),
                   moq: sku.moq.toString(),
                   imageUrl: sku.image || '',
@@ -216,23 +206,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
   const mutation = useMutation({
     mutationFn: async (payload: any) => {
       // Transform payload for backend
-      const submitData: any = {
-        title: JSON.stringify({ en: payload.title }),
-        description: JSON.stringify({ en: payload.description }),
-        basePrice: Number(payload.basePrice),
-        categoryId: payload.categoryId, // UUID required
-        sizeChartId: payload.sizeChartId || undefined,
-        sizeChartImage: payload.sizeChartImage || undefined,
-        images: JSON.stringify(payload.images),
-        specsTemplate: JSON.stringify({}),
-        fakeSoldCount: Number(payload.fakeSoldCount),
-        // New Fields
-        materialDetail: JSON.stringify(payload.materialDetail),
-        originCountry: payload.originCountry,
-        loadingPort: payload.loadingPort,
-        season: payload.season,
-      };
-
+      const submitData: any = {};
       // Packing Data
       const packingData = {
         itemsPerCarton: payload.itemsPerCarton ? Number(payload.itemsPerCarton) : undefined,
@@ -248,28 +222,6 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
         cartonGrossWeight: payload.cartonGrossWeight ? Number(payload.cartonGrossWeight) : undefined,
       };
 
-      const serializeTierPrices = (input?: string) => {
-        if (!input) return undefined;
-        const parts = input
-          .split(',')
-          .map((p: string) => p.trim())
-          .filter(Boolean);
-        if (parts.length === 0) return undefined;
-
-        const tiers = parts
-          .map((p) => {
-            const [qtyStr, priceStr] = p.split(':').map((v) => v.trim());
-            const minQty = Number(qtyStr);
-            const price = Number(priceStr);
-            if (!minQty || !price) return null;
-            return { minQty, price };
-          })
-          .filter(Boolean) as { minQty: number; price: number }[];
-
-        if (tiers.length === 0) return undefined;
-        return JSON.stringify(tiers);
-      };
-
       // Determine SKUs: Matrix vs Simple
       let skusToSubmit: any[] = [];
       if (generatedSkus.length > 0) {
@@ -282,7 +234,6 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
             stock: Number(sku.stock),
             image: sku.imageUrl || undefined,
             specs: JSON.stringify({}),
-            tierPrices: serializeTierPrices((sku as any).tierPrices),
             attributeValueIds: sku.attributes.map((a) => a.valueId),
             ...packingData,
           };
@@ -302,9 +253,9 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
         skusToSubmit = [
           {
             skuCode: payload.skuCode,
-            price: Number(payload.basePrice),
+            price: Number(payload.singlePrice),
             moq: Number(payload.moq),
-            stock: 100,
+            stock: payload.singleStock ? Number(payload.singleStock) : 0,
             specs: JSON.stringify({}),
             ...packingData,
           },
@@ -317,6 +268,24 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
           ? selectedAttributes.map((a) => a.attributeId)
           : undefined;
 
+      const basePriceFromSkus =
+        skusToSubmit.length > 0
+          ? Math.min(...skusToSubmit.map((s) => Number(s.price) || 0))
+          : 0;
+
+      submitData.title = JSON.stringify({ en: payload.title });
+      submitData.description = JSON.stringify({ en: payload.description });
+      submitData.basePrice = basePriceFromSkus;
+      submitData.categoryId = payload.categoryId;
+      submitData.sizeChartId = payload.sizeChartId || undefined;
+      submitData.sizeChartImage = payload.sizeChartImage || undefined;
+      submitData.images = JSON.stringify(payload.images);
+      submitData.specsTemplate = JSON.stringify({});
+      submitData.fakeSoldCount = Number(payload.fakeSoldCount);
+      submitData.materialDetail = JSON.stringify(payload.materialDetail);
+      submitData.originCountry = payload.originCountry;
+      submitData.loadingPort = payload.loadingPort;
+      submitData.season = payload.season;
       submitData.attributeIds = attributeIds;
       submitData.skus = skusToSubmit;
 
@@ -337,13 +306,15 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
   });
 
   const handleSubmit = () => {
-    if (!formData.title || !formData.basePrice) {
-      addToast('Please fill in title and base price', 'error');
+    if (!formData.title) {
+      addToast('Please fill in title', 'error');
       return;
     }
-    if (generatedSkus.length === 0 && !formData.skuCode) {
-      addToast('Please either add Attributes or set a SKU Code', 'error');
-      return;
+    if (generatedSkus.length === 0) {
+      if (!formData.skuCode || !formData.singlePrice) {
+        addToast('Please fill in SKU code and unit price', 'error');
+        return;
+      }
     }
     mutation.mutate(formData);
   };
@@ -397,16 +368,6 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Base Price (USD)</label>
-                  <Input 
-                    type="number"
-                    value={formData.basePrice}
-                    onChange={(e) => setFormData({ ...formData, basePrice: e.target.value })}
-                    placeholder="0.00"
-                  />
-                </div>
-
-                <div>
                   <label className="block text-sm font-medium mb-1">Category</label>
                   <select 
                     className="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300"
@@ -436,7 +397,6 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
               <SkuMatrix 
                 attributes={selectedAttributes}
                 baseProductCode={formData.skuCode}
-                basePrice={formData.basePrice}
                 onChange={setGeneratedSkus}
                 initialSkus={generatedSkus}
               />
@@ -449,6 +409,35 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                       onChange={(e) => setFormData({ ...formData, skuCode: e.target.value })}
                       placeholder="e.g. SNK-001"
                     />
+                    <div className="mt-3 grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Unit Price (USD)</label>
+                        <Input 
+                          type="number"
+                          value={formData.singlePrice}
+                          onChange={(e) => setFormData({ ...formData, singlePrice: e.target.value })}
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1">MOQ</label>
+                        <Input 
+                          type="number"
+                          value={formData.moq}
+                          onChange={(e) => setFormData({ ...formData, moq: e.target.value })}
+                          placeholder="1"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Stock</label>
+                        <Input 
+                          type="number"
+                          value={formData.singleStock}
+                          onChange={(e) => setFormData({ ...formData, singleStock: e.target.value })}
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
                     <p className="text-xs text-zinc-500 mt-1">
                       Use this if the product has no variants (no color/size options).
                     </p>

@@ -644,33 +644,7 @@ export class OrdersService {
           data: { stock: { decrement: item.quantity } },
         });
 
-        // Determine Unit Price (Tiered Pricing Logic)
-        let unitPrice = Number(sku.price);
-
-        // Tiered Pricing Strategy:
-        // Parse JSON config: [{minQty: 10, price: 90}, {minQty: 50, price: 80}]
-        // Sort descending by minQty to find the highest applicable tier.
-        if (sku.tierPrices) {
-          try {
-            const tiers = JSON.parse(sku.tierPrices);
-            if (Array.isArray(tiers)) {
-              // Sort tiers by minQty descending to find the best match
-              const sortedTiers = tiers.sort((a, b) => b.minQty - a.minQty);
-              const matchedTier = sortedTiers.find(
-                (t) => item.quantity >= t.minQty,
-              );
-
-              if (matchedTier) {
-                unitPrice = Number(matchedTier.price);
-              }
-            }
-          } catch (e) {
-            console.warn(
-              `Failed to parse tier prices for SKU ${sku.skuCode}`,
-              e,
-            );
-          }
-        }
+        const unitPrice = Number(sku.price);
 
         const totalPrice = unitPrice * item.quantity;
         calculatedTotalAmount += totalPrice;

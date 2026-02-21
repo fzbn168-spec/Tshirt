@@ -46,10 +46,7 @@ export class PaymentsController {
   }
 
   @Get('export/orders')
-  async exportForUser(
-    @Request() req: RequestWithUser,
-    @Res() res: Response,
-  ) {
+  async exportForUser(@Request() req: RequestWithUser, @Res() res: Response) {
     const { id: userId } = req.user;
     const payments = await this.paymentsService.findForUser(userId);
 
@@ -72,9 +69,7 @@ export class PaymentsController {
     ];
 
     const rows = payments.map((p: any) => {
-      const createdAt = p.createdAt
-        ? new Date(p.createdAt).toISOString()
-        : '';
+      const createdAt = p.createdAt ? new Date(p.createdAt).toISOString() : '';
       const orderDate = p.order?.createdAt
         ? new Date(p.order.createdAt).toISOString()
         : '';
@@ -105,7 +100,11 @@ export class PaymentsController {
           .map((field) => {
             if (field == null) return '';
             const value = String(field);
-            if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+            if (
+              value.includes(',') ||
+              value.includes('"') ||
+              value.includes('\n')
+            ) {
               return `"${value.replace(/"/g, '""')}"`;
             }
             return value;

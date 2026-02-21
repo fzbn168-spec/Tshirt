@@ -95,8 +95,7 @@ export class PlatformService {
       if (value === null || typeof value === 'undefined') {
         return '';
       }
-      const str =
-        value instanceof Date ? value.toISOString() : String(value);
+      const str = value instanceof Date ? value.toISOString() : String(value);
       const escaped = str.replace(/"/g, '""').replace(/\r?\n/g, ' ');
       return `"${escaped}"`;
     };

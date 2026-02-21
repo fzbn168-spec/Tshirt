@@ -219,6 +219,10 @@ export class InquiriesService {
             quantity: item.quantity,
             targetPrice: item.price,
             quotedPrice: item.quotedPrice,
+            paymentTerms: item.paymentTerms,
+            quoteValidUntil: item.quoteValidUntil
+              ? new Date(item.quoteValidUntil)
+              : null,
           })),
         });
       }
@@ -407,7 +411,6 @@ export class InquiriesService {
       let totalAmount = 0;
 
       inquiry.items.forEach((item) => {
-        // If page break needed
         if (currentY > 700) {
           doc.addPage();
           currentY = 50;
@@ -443,6 +446,31 @@ export class InquiriesService {
         currentY,
         { width: 100, align: 'right' },
       );
+
+      currentY += 30;
+
+      const termsItem = inquiry.items.find((i) => i.paymentTerms);
+      const validItem = inquiry.items.find((i) => i.quoteValidUntil);
+
+      if (termsItem || validItem) {
+        doc.fontSize(10).font('Helvetica-Bold');
+        doc.text('Quote Terms', 50, currentY);
+        doc.moveDown(0.5);
+        doc.font('Helvetica');
+
+        if (termsItem) {
+          doc.text(String(termsItem.paymentTerms), {
+            width: 500,
+          });
+          doc.moveDown(0.5);
+        }
+
+        if (validItem) {
+          const d = new Date(validItem.quoteValidUntil as any);
+          const iso = d.toISOString().split('T')[0];
+          doc.text(`Valid until: ${iso}`);
+        }
+      }
 
       doc.end();
     });

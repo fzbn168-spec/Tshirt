@@ -41,6 +41,16 @@ export class CreateInquiryItemDto {
   @IsNumber()
   @IsOptional()
   quotedPrice?: number;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  paymentTerms?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  quoteValidUntil?: string;
 }
 
 export class CreateInquiryDto {

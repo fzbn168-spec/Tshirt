@@ -19,6 +19,8 @@ interface InquiryItem {
   quantity: number;
   targetPrice: number;
   quotedPrice?: number;
+  paymentTerms?: string;
+  quoteValidUntil?: string;
 }
 
 interface Inquiry {
@@ -41,6 +43,8 @@ export default function InquiryQuotePage() {
   const [inquiry, setInquiry] = useState<Inquiry | null>(null);
   const [items, setItems] = useState<InquiryItem[]>([]);
   const [message, setMessage] = useState('');
+  const [quoteTerms, setQuoteTerms] = useState('');
+  const [quoteValidUntil, setQuoteValidUntil] = useState('');
 
   useEffect(() => {
     if (!id) return;
@@ -61,6 +65,10 @@ export default function InquiryQuotePage() {
               item.quotedPrice !== null && item.quotedPrice !== undefined
                 ? Number(item.quotedPrice)
                 : undefined,
+            paymentTerms: item.paymentTerms || undefined,
+            quoteValidUntil: item.quoteValidUntil
+              ? new Date(item.quoteValidUntil).toISOString().split('T')[0]
+              : undefined,
           }),
         );
         setInquiry({
@@ -71,6 +79,10 @@ export default function InquiryQuotePage() {
           items: normalizedItems,
         });
         setItems(normalizedItems);
+        const firstWithTerms = normalizedItems.find((i) => i.paymentTerms);
+        const firstWithValid = normalizedItems.find((i) => i.quoteValidUntil);
+        setQuoteTerms(firstWithTerms?.paymentTerms || '');
+        setQuoteValidUntil(firstWithValid?.quoteValidUntil || '');
       } catch (err: any) {
         setError(err.response?.data?.message || err.message || 'Failed to load inquiry');
       } finally {
@@ -110,6 +122,8 @@ export default function InquiryQuotePage() {
           price: item.targetPrice,
           quotedPrice:
             item.quotedPrice !== undefined ? item.quotedPrice : item.targetPrice,
+          paymentTerms: quoteTerms || undefined,
+          quoteValidUntil: quoteValidUntil || undefined,
         })),
       };
       await api.patch(`/platform/inquiries/${inquiry.id}`, payload);
@@ -260,6 +274,27 @@ export default function InquiryQuotePage() {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Explain your pricing, MOQ, lead time, etc. This will be visible to the buyer."
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                Quote description / terms
+              </label>
+              <textarea
+                className="flex w-full rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300 min-h-[80px]"
+                value={quoteTerms}
+                onChange={(e) => setQuoteTerms(e.target.value)}
+                placeholder="Payment terms, validity, shipping terms, etc."
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                Quote valid until
+              </label>
+              <Input
+                type="date"
+                value={quoteValidUntil}
+                onChange={(e) => setQuoteValidUntil(e.target.value)}
               />
             </div>
             <Button

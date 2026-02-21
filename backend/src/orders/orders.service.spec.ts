@@ -73,10 +73,7 @@ describe('OrdersService', () => {
       price: 100,
       stock: 50,
       moq: 5,
-      tierPrices: JSON.stringify([
-        { minQty: 20, price: 90 },
-        { minQty: 50, price: 80 },
-      ]),
+      tierPrices: null,
       product: {
         title: JSON.stringify({ en: 'Product 1' }),
       },

@@ -20,10 +20,9 @@ interface SelectedAttribute {
 }
 
 export interface SkuRow {
-  key: string; // Unique key based on attribute value IDs
+  key: string;
   skuCode: string;
   price: string;
-  tierPrices?: string;
   stock: string;
   moq: string;
   imageUrl: string;
@@ -38,7 +37,6 @@ export interface SkuRow {
 interface SkuMatrixProps {
   attributes: SelectedAttribute[];
   baseProductCode: string;
-  basePrice: string;
   onChange: (skus: SkuRow[]) => void;
   initialSkus?: SkuRow[];
 }
@@ -46,7 +44,7 @@ interface SkuMatrixProps {
 import api from '@/lib/axios';
 import { useToastStore } from '@/store/useToastStore';
 
-export default function SkuMatrix({ attributes, baseProductCode, basePrice, onChange, initialSkus = [] }: SkuMatrixProps) {
+export default function SkuMatrix({ attributes, baseProductCode, onChange, initialSkus = [] }: SkuMatrixProps) {
   const { addToast } = useToastStore();
   const [rows, setRows] = useState<SkuRow[]>(initialSkus);
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
@@ -98,7 +96,6 @@ export default function SkuMatrix({ attributes, baseProductCode, basePrice, onCh
       
       if (existing) return existing;
 
-      // Generate default SKU Code: PRODUCT-COLOR-SIZE
       const suffix = combo.map((c: any) => {
           const val = parseName(c.value);
           return val.replace(/\s+/g, '').toUpperCase().substring(0, 3);
@@ -109,8 +106,7 @@ export default function SkuMatrix({ attributes, baseProductCode, basePrice, onCh
       return {
         key,
         skuCode: defaultSku,
-        price: basePrice || '0',
-        tierPrices: '',
+        price: '0',
         stock: '100',
         moq: '1',
         imageUrl: '',
@@ -125,7 +121,7 @@ export default function SkuMatrix({ attributes, baseProductCode, basePrice, onCh
 
     setRows(newRows);
     onChange(newRows);
-  }, [attributes, baseProductCode]); // Depend on attributes change
+  }, [attributes, baseProductCode]);
 
   const parseName = (jsonOrString: string) => {
     try {
@@ -177,7 +173,6 @@ export default function SkuMatrix({ attributes, baseProductCode, basePrice, onCh
               <th className="px-4 py-3">Variant</th>
               <th className="px-4 py-3 w-48">SKU Code (Editable)</th>
               <th className="px-4 py-3 w-32">Price ($)</th>
-              <th className="px-4 py-3 w-40">Tier Prices (Qty:Price)</th>
               <th className="px-4 py-3 w-24">Stock</th>
               <th className="px-4 py-3 w-24">MOQ</th>
               <th className="px-4 py-3 w-64">Image URL</th>
@@ -208,14 +203,6 @@ export default function SkuMatrix({ attributes, baseProductCode, basePrice, onCh
                     value={row.price} 
                     onChange={(e) => updateRow(idx, 'price', e.target.value)}
                     className="h-8"
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  <Input
-                    value={row.tierPrices || ''}
-                    onChange={(e) => updateRow(idx, 'tierPrices', e.target.value)}
-                    placeholder="e.g. 10:95,50:90"
-                    className="h-8 text-xs"
                   />
                 </td>
                 <td className="px-4 py-3">
