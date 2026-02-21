@@ -24,6 +24,8 @@ interface InquiryItem {
   quantity: number;
   targetPrice?: number;
   quotedPrice?: number;
+  paymentTerms?: string;
+  quoteValidUntil?: string;
 }
 
 interface Inquiry {
@@ -188,7 +190,6 @@ export default function InquiryDetailPage() {
                 </div>
             </div>
 
-            {/* Notes Card */}
             {inquiry.notes && (
                 <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
                     <h3 className="font-medium mb-2 text-zinc-900 dark:text-zinc-100">Notes</h3>
@@ -197,6 +198,37 @@ export default function InquiryDetailPage() {
                     </p>
                 </div>
             )}
+
+            {inquiry.status === 'QUOTED' && (() => {
+                const termsItem = inquiry.items.find(item => item.paymentTerms);
+                const validUntilItem = inquiry.items.find(item => item.quoteValidUntil);
+                const paymentTerms = termsItem?.paymentTerms;
+                const quoteValidUntil = validUntilItem?.quoteValidUntil;
+
+                if (!paymentTerms && !quoteValidUntil) return null;
+
+                return (
+                    <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 space-y-3">
+                        <h3 className="font-medium text-zinc-900 dark:text-zinc-100">Quote Details</h3>
+                        {paymentTerms && (
+                            <div className="text-sm">
+                                <div className="text-zinc-500 mb-1">Description / Terms</div>
+                                <p className="text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">
+                                    {paymentTerms}
+                                </p>
+                            </div>
+                        )}
+                        {quoteValidUntil && (
+                            <div className="text-sm">
+                                <div className="text-zinc-500 mb-1">Valid Until</div>
+                                <p className="text-zinc-700 dark:text-zinc-300">
+                                    {new Date(quoteValidUntil).toLocaleDateString()}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                );
+            })()}
         </div>
 
         {/* Chat Section */}

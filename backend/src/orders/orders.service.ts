@@ -624,17 +624,9 @@ export class OrdersService {
           throw new NotFoundException(`SKU not found: ${item.skuId}`);
         }
 
-        // Critical Stock Check
         if (sku.stock < item.quantity) {
           throw new BadRequestException(
             `Insufficient stock for SKU: ${sku.skuCode} (Requested: ${item.quantity}, Available: ${sku.stock})`,
-          );
-        }
-
-        // MOQ Check (Skip for Sample Orders)
-        if (type !== 'SAMPLE' && item.quantity < sku.moq) {
-          throw new BadRequestException(
-            `Quantity below MOQ for SKU: ${sku.skuCode} (Requested: ${item.quantity}, MOQ: ${sku.moq})`,
           );
         }
 

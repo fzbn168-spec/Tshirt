@@ -7,6 +7,7 @@ import {
   UseGuards,
   Req,
   Res,
+  BadRequestException,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { OrdersService } from './orders.service';
@@ -26,7 +27,7 @@ export class OrdersController {
   @Roles('MEMBER', 'ADMIN')
   create(@Req() req: RequestWithUser, @Body() createOrderDto: CreateOrderDto) {
     if (!req.user.companyId) {
-      throw new Error('User does not belong to a company');
+      throw new BadRequestException('User does not belong to a company');
     }
     // req.user is populated by JwtStrategy (Prisma User object)
     return this.ordersService.create(
@@ -40,7 +41,7 @@ export class OrdersController {
   @Roles('MEMBER', 'ADMIN')
   findAll(@Req() req: RequestWithUser) {
     if (!req.user.companyId) {
-      throw new Error('User does not belong to a company');
+      throw new BadRequestException('User does not belong to a company');
     }
     return this.ordersService.findAll(req.user.companyId);
   }
@@ -49,7 +50,7 @@ export class OrdersController {
   @Roles('MEMBER', 'ADMIN')
   async export(@Req() req: RequestWithUser, @Res() res: Response) {
     if (!req.user.companyId) {
-      throw new Error('User does not belong to a company');
+      throw new BadRequestException('User does not belong to a company');
     }
     const { companyId } = req.user;
     const orders = await this.ordersService.findAll(companyId);
@@ -148,7 +149,7 @@ export class OrdersController {
   @Roles('MEMBER', 'ADMIN')
   findOne(@Req() req: RequestWithUser, @Param('id') id: string) {
     if (!req.user.companyId) {
-      throw new Error('User does not belong to a company');
+      throw new BadRequestException('User does not belong to a company');
     }
     return this.ordersService.findOne(id, req.user.companyId);
   }

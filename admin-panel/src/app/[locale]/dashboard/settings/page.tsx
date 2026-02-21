@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/axios';
 import { Button } from '@/components/button';
@@ -271,15 +271,21 @@ export default function SettingsPage() {
     },
   });
 
-  if (settings && Object.keys(formData).length === 0 && !isLoading) {
+  useEffect(() => {
+    if (!settings || isLoading) return;
+    if (Object.keys(formData).length > 0) return;
+
     const initialData: Record<string, string> = {};
     settings.forEach((s) => {
       initialData[s.key] = s.value;
     });
     setFormData(initialData);
-  }
+  }, [settings, isLoading, formData]);
 
-  if (settings && !layoutConfig && !isLoading) {
+  useEffect(() => {
+    if (!settings || isLoading) return;
+    if (layoutConfig) return;
+
     const existing = settings.find((s) => s.key === 'layout_config');
     if (existing && existing.value) {
       try {
@@ -330,16 +336,19 @@ export default function SettingsPage() {
     } else {
       setLayoutConfig(getDefaultLayoutConfig());
     }
-  }
+  }, [settings, isLoading, layoutConfig]);
 
-  if (exchangeRates && localRates.length === 0 && !isRatesLoading) {
+  useEffect(() => {
+    if (!exchangeRates || isRatesLoading) return;
+    if (localRates.length > 0) return;
+
     setLocalRates(
       exchangeRates.map((r) => ({
         currency: r.currency,
         rate: r.rate,
       })),
     );
-  }
+  }, [exchangeRates, isRatesLoading, localRates]);
 
   const mutation = useMutation({
     mutationFn: async (data: Record<string, string>) => {
