@@ -107,11 +107,11 @@ export class OrdersService {
       // Define X coordinates for each column to ensure alignment
       const startY = doc.y;
       const colX = {
-        product: 50, // Product Name
-        sku: 200, // SKU/Specs
-        qty: 350, // Quantity
-        price: 400, // Unit Price
-        total: 480, // Total Price
+        product: 50,
+        sku: 180,
+        qty: 350,
+        price: 400,
+        total: 480,
       };
 
       doc.font('Helvetica-Bold');
@@ -140,12 +140,13 @@ export class OrdersService {
 
         const productName = item.productName;
         const specs = item.skuSpecs || '-';
+        const currency = order.currency || 'USD';
 
         doc.text(productName.substring(0, 30), colX.product, y);
         doc.text(specs.substring(0, 30), colX.sku, y);
         doc.text(item.quantity.toString(), colX.qty, y);
-        doc.text(`$${Number(item.unitPrice).toFixed(2)}`, colX.price, y);
-        doc.text(`$${Number(item.totalPrice).toFixed(2)}`, colX.total, y);
+        doc.text(`${currency} ${Number(item.unitPrice).toFixed(2)}`, colX.price, y);
+        doc.text(`${currency} ${Number(item.totalPrice).toFixed(2)}`, colX.total, y);
 
         y += 20; // Move down for next row
       });
@@ -155,9 +156,10 @@ export class OrdersService {
       y += 10;
 
       // Totals
+      const currency = order.currency || 'USD';
       doc.font('Helvetica-Bold');
       doc.text(
-        `Total Amount: $${Number(order.totalAmount).toFixed(2)}`,
+        `Total Amount: ${currency} ${Number(order.totalAmount).toFixed(2)}`,
         350,
         y,
         { align: 'right', width: 200 },
@@ -320,13 +322,14 @@ export class OrdersService {
         const specs = item.skuSpecs || '-';
         // Get HS Code from Product (via OrderItem relation)
         const hsCode = item.product?.hsCode || '-';
+        const currency = order.currency || 'USD';
 
         doc.text(productName.substring(0, 25), colX.product, y);
         doc.text(specs.substring(0, 25), colX.sku, y);
         doc.text(hsCode, colX.hsCode, y);
         doc.text(item.quantity.toString(), colX.qty, y);
-        doc.text(`$${Number(item.unitPrice).toFixed(2)}`, colX.price, y);
-        doc.text(`$${Number(item.totalPrice).toFixed(2)}`, colX.total, y);
+        doc.text(`${currency} ${Number(item.unitPrice).toFixed(2)}`, colX.price, y);
+        doc.text(`${currency} ${Number(item.totalPrice).toFixed(2)}`, colX.total, y);
 
         y += 20;
       });
@@ -336,9 +339,10 @@ export class OrdersService {
       y += 10;
 
       // Totals
+      const currency = order.currency || 'USD';
       doc.font('Helvetica-Bold');
       doc.text(
-        `Total Amount: $${Number(order.totalAmount).toFixed(2)}`,
+        `Total Amount: ${currency} ${Number(order.totalAmount).toFixed(2)}`,
         350,
         y,
         { align: 'right', width: 200 },

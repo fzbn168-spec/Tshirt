@@ -268,13 +268,13 @@ export function SkuSelector({
                    {(() => {
                      const raw = matchingSku ? Number(matchingSku.price) : Number(basePrice);
                      const value = !raw || raw <= 0 ? Number(basePrice) : raw;
-                     return `$${value.toFixed(2)}`;
+                     return format(value);
                    })()}
                  </div>
              {tierPrices.map((tier, idx: number) => (
                 <div key={idx} className={cn("contents", quantity >= tier.minQty && "font-bold text-blue-600")}>
                     <div className="text-zinc-500">{tier.minQty}+</div>
-                    <div className="text-right">${Number(tier.price).toFixed(2)}</div>
+                    <div className="text-right">{format(Number(tier.price))}</div>
                 </div>
              ))}
           </div>

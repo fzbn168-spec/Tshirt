@@ -453,7 +453,7 @@ export default function SettingsPage() {
               <Input
                 value={formData['weight_unit'] || ''}
                 onChange={(e) => setFormData({ ...formData, weight_unit: e.target.value })}
-                placeholder="kg"
+                placeholder="e.g. kg"
               />
             </div>
 
@@ -465,7 +465,7 @@ export default function SettingsPage() {
               <Input
                 value={formData['dimension_unit'] || ''}
                 onChange={(e) => setFormData({ ...formData, dimension_unit: e.target.value })}
-                placeholder="cm"
+                placeholder="e.g. cm"
               />
             </div>
 
@@ -477,7 +477,7 @@ export default function SettingsPage() {
               <Input
                 value={formData['currency'] || ''}
                 onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                placeholder="USD"
+                placeholder="e.g. USD"
               />
             </div>
           </div>

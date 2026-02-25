@@ -411,7 +411,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                     />
                     <div className="mt-3 grid grid-cols-3 gap-3">
                       <div>
-                        <label className="block text-xs font-medium mb-1">Unit Price (USD)</label>
+                        <label className="block text-xs font-medium mb-1">Unit Price</label>
                         <Input 
                           type="number"
                           value={formData.singlePrice}
@@ -508,7 +508,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                          />
                        </div>
                        <div>
-                         <label className="block text-xs mb-1">Unit N.W (kg)</label>
+                         <label className="block text-xs mb-1">Unit N.W</label>
                          <Input 
                            type="number"
                            value={formData.netWeight}
@@ -517,7 +517,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                          />
                        </div>
                        <div>
-                         <label className="block text-xs mb-1">Unit G.W (kg)</label>
+                         <label className="block text-xs mb-1">Unit G.W</label>
                          <Input 
                            type="number"
                            value={formData.grossWeight}
@@ -528,7 +528,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                        <div />
                        <div className="col-span-4 grid grid-cols-4 gap-4">
                          <div>
-                           <label className="block text-xs mb-1">Pkg Length (cm)</label>
+                           <label className="block text-xs mb-1">Pkg Length</label>
                            <Input 
                              type="number"
                              value={formData.length}
@@ -537,7 +537,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                            />
                          </div>
                          <div>
-                           <label className="block text-xs mb-1">Pkg Width (cm)</label>
+                           <label className="block text-xs mb-1">Pkg Width</label>
                            <Input 
                              type="number"
                              value={formData.width}
@@ -546,7 +546,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                            />
                          </div>
                          <div>
-                           <label className="block text-xs mb-1">Pkg Height (cm)</label>
+                           <label className="block text-xs mb-1">Pkg Height</label>
                            <Input 
                              type="number"
                              value={formData.height}
@@ -557,7 +557,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                          <div />
                        </div>
                         <div>
-                          <label className="block text-xs mb-1">Length (cm)</label>
+                          <label className="block text-xs mb-1">Length</label>
                           <Input 
                             type="number"
                             value={formData.cartonLength}
@@ -566,7 +566,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                           />
                         </div>
                         <div>
-                          <label className="block text-xs mb-1">Width (cm)</label>
+                          <label className="block text-xs mb-1">Width</label>
                           <Input 
                             type="number"
                             value={formData.cartonWidth}
@@ -575,7 +575,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                           />
                         </div>
                         <div>
-                          <label className="block text-xs mb-1">Height (cm)</label>
+                          <label className="block text-xs mb-1">Height</label>
                           <Input 
                             type="number"
                             value={formData.cartonHeight}
@@ -584,7 +584,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                           />
                         </div>
                         <div>
-                          <label className="block text-xs mb-1">G.W (kg)</label>
+                          <label className="block text-xs mb-1">G.W</label>
                           <Input 
                             type="number"
                             value={formData.cartonGrossWeight}
