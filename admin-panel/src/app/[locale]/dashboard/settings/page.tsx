@@ -261,6 +261,7 @@ export default function SettingsPage() {
       const res = await api.get<SystemSetting[]>('/system-settings');
       return res.data;
     },
+    staleTime: 0, // Always fetch fresh data
   });
 
   const { data: exchangeRates, isLoading: isRatesLoading } = useQuery({
@@ -418,10 +419,16 @@ export default function SettingsPage() {
     mutation.mutate(formData);
   };
 
-  if (isLoading || isRatesLoading) return <div className="p-8">Loading settings...</div>;
+  if (isLoading || isRatesLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+      </div>
+    );
+  }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="p-8 max-w-4xl mx-auto pb-32">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold">System Settings</h1>
