@@ -372,7 +372,9 @@ export default function Home() {
     let cancelled = false;
     const loadLayout = async () => {
       try {
-        const res = await api.get<{ key: string; value: string }[]>('/system-settings');
+        const res = await api.get<{ key: string; value: string }[]>('/system-settings', {
+          headers: { 'Cache-Control': 'no-cache' }
+        });
         const setting = res.data.find((s) => s.key === 'layout_config');
         if (!setting || !setting.value || cancelled) return;
         
