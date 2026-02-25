@@ -58,17 +58,37 @@ $ npm run test:cov
 ```
 
 ## Deployment
+When deploying this service (backend) please follow the repository deployment guidance in [DEPLOYMENT_SOP.md](../DEPLOYMENT_SOP.md#L1) and the quick checklist below.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Quick deploy checklist
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+- Ensure `backend/.env` or environment secrets are populated (see `backend/.env.example`).
+- Ensure `prisma/migrations` are reviewed and included in the release branch.
+- Backup production database before applying migrations (see `DEPLOYMENT_SOP.md`).
+
+Common commands
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# generate client (local/CI)
+cd backend
+npm ci
+npx prisma generate
+
+# create migration locally (DEV/STAGING only)
+npx prisma migrate dev --name <describe_change>
+
+# apply migrations in production (CI or manual)
+npx prisma migrate deploy
+
+# run seed (optional, be cautious in prod)
+npx prisma db seed
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+CI integration
+
+- A GitHub Actions workflow `./github/workflows/prisma-deploy.yml` (created in this repo) runs `prisma migrate deploy` and `prisma db seed` using the `DATABASE_URL` secret. Add required secrets (`DATABASE_URL`, `JWT_SECRET`, `STRIPE_*`, `SMTP_*`) in your CI provider before running.
+
+For a complete step-by-step SOP, rollback procedures and backup commands, see: [DEPLOYMENT_SOP.md](../DEPLOYMENT_SOP.md#L1).
 
 ## Resources
 

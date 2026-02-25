@@ -399,7 +399,7 @@ async function main() {
              });
 
              if (!existingProduct) {
-                 const product = await prisma.product.create({
+                const product = await prisma.product.create({
                      data: {
                          categoryId: childCategory.id,
                          title: JSON.stringify(prodData.title),
@@ -408,7 +408,7 @@ async function main() {
                              zh: `<p>${prodData.title.zh} - 高品质产品。</p>`
                          }),
                          images: JSON.stringify([prodData.image]),
-                         basePrice: prodData.price,
+                    basePrice: String(prodData.price),
                          specsTemplate: JSON.stringify({ colors: ["Black", "White"], sizes: ["40", "41", "42"] }),
                          hsCode: "64039111",
                          isPublished: true,
@@ -425,14 +425,14 @@ async function main() {
                     sizes = ["S", "M", "L", "XL"];
                  }
                  
-                 for (const color of colors) {
+             for (const color of colors) {
                      for (const size of sizes) {
                          await prisma.sku.create({
                              data: {
                                  productId: product.id,
                                  skuCode: `${childCategory.slug.substring(0,3).toUpperCase()}-${product.id.substring(0,4)}-${color.substring(0,1)}-${size}`,
                                  specs: JSON.stringify({ color, size }),
-                                 price: prodData.price,
+                     price: String(prodData.price),
                                  moq: 10,
                                  stock: 100
                              }

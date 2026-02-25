@@ -1,0 +1,27 @@
+- name: Rollback deploy
+  hosts: web
+  gather_facts: false
+  vars_files:
+    - ../vars/production.yml
+  tasks:
+    - name: Ensure previous_image_tag is provided
+      assert:
+        that: previous_image_tag is defined
+        fail_msg: "previous_image_tag must be provided for rollback"
+
+    - name: Pull previous images on host
+      shell: |
+        docker pull {{ registry }}/{{ image_namespace }}/backend:{{ previous_image_tag }} || true
+        docker pull {{ registry }}/{{ image_namespace }}/frontend:{{ previous_image_tag }} || true
+        docker pull {{ registry }}/{{ image_namespace }}/admin-panel:{{ previous_image_tag }} || true
+
+    - name: Update compose to use previous tag and restart
+      shell: |
+        cd {{ deploy_path }}
+        # Assumes compose references image tags via env or templating; override and restart
+        docker-compose pull || true
+        docker-compose up -d --remove-orphans
+
+    - name: Run healthcheck after rollback
+      include_role:
+        name: healthcheck

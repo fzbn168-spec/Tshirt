@@ -1,0 +1,138 @@
+name: Prisma Migrate & Seed
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    env:
+      IMAGE_NAMESPACE: ${{ secrets.IMAGE_NAMESPACE }} # e.g. dockerhub username or ghcr.io/org
+      REGISTRY: ${{ secrets.REGISTRY }} # e.g. ghcr.io or docker.io
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/backend:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/backend:${{ github.sha }}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/frontend:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/frontend:${{ github.sha }}
+
+      - name: Build and push admin-panel image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./admin-panel
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/admin-panel:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/admin-panel:${{ github.sha }}
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: backend
+        run: npx prisma generate
+
+      - name: Run Prisma migrations (deploy)
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npx prisma migrate deploy
+
+      - name: Run database seed
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npx prisma db seed
+
+  ansible-deploy:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create deploy key file
+        run: |
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+
+      - name: Install Ansible
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install ansible
+
+      - name: Disable host key checking
+        run: echo "export ANSIBLE_HOST_KEY_CHECKING=False" >> $GITHUB_ENV
+      - name: Generate dynamic inventory from secrets
+        run: |
+          chmod +x deploy/ansible/generate_inventory.sh
+          DEPLOY_HOSTS='${{ secrets.DEPLOY_HOSTS }}' DEPLOY_USER='${{ secrets.DEPLOY_USER }}' DEPLOY_PATH='${{ secrets.DEPLOY_PATH }}' REGISTRY='${{ secrets.REGISTRY }}' IMAGE_NAMESPACE='${{ secrets.IMAGE_NAMESPACE }}' COMPOSE_FILE='${{ secrets.COMPOSE_FILE }}' ./deploy/ansible/generate_inventory.sh
+
+      - name: Show generated inventory for audit
+        run: |
+          echo "--- BEGIN GENERATED INVENTORY ---"
+          cat deploy/ansible/inventory.yml
+          echo "--- END GENERATED INVENTORY ---"
+
+      - name: Copy healthcheck script to hosts
+        run: |
+          ansible all -i deploy/ansible/inventory.yml -m copy -a "src=deploy/ansible/files/check_health.sh dest={{ deploy_path }}/deploy_check_health.sh mode=0755" -u ${{ secrets.DEPLOY_USER }} --private-key /tmp/deploy_key
+
+      - name: Run Ansible bluegreen deploy
+        run: |
+          ansible-playbook -i deploy/ansible/inventory.yml deploy/ansible/playbooks/bluegreen-deploy.yml -e "deploy_color=blue" -u ${{ secrets.DEPLOY_USER }} --private-key /tmp/deploy_key
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: 'False'
+
+      - name: Deploy to production server via SSH
+        if: github.ref == 'refs/heads/main'
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          # path on the remote server where docker-compose.prod.yml is located
+          script: |
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}"
+            # Pull latest images and restart services
+            docker-compose pull || true
+            docker-compose up -d --remove-orphans
+            # Optional: run migrations and seed on server (idempotent)
+            docker-compose exec -T backend npx prisma migrate deploy || true
+            docker-compose exec -T backend npx prisma db seed || true

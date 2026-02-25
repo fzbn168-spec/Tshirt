@@ -1,0 +1,14 @@
+- name: Switch nginx upstream to color
+  vars:
+    upstream_name: "app_upstream"
+  block:
+    - name: Render nginx upstream file for color
+      template:
+        src: upstream.j2
+        dest: /etc/nginx/conf.d/{{ upstream_name }}.conf
+      notify: Reload nginx
+
+  handlers:
+    - name: Reload nginx
+      become: yes
+      shell: nginx -s reload || systemctl reload nginx || true

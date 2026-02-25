@@ -1,0 +1,19 @@
+- name: Ensure deploy path exists
+  file:
+    path: "{{ deploy_path }}"
+    state: directory
+    owner: "{{ ansible_user | default('deployer') }}"
+
+- name: Copy compose file (if templated) or ensure available
+  debug:
+    msg: "Using compose file {{ compose_file }} in {{ deploy_path }}"
+
+- name: Pull images and start compose
+  shell: |
+    set -e
+    cd {{ deploy_path }}
+    # If a color-specific file is used, it should be present in the path
+    docker-compose -f {{ compose_file }} pull || true
+    docker-compose -f {{ compose_file }} up -d --remove-orphans
+  args:
+    warn: false

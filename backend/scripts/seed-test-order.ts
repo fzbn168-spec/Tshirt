@@ -22,7 +22,7 @@ async function main() {
     data: {
       title: JSON.stringify({ en: 'Test Product', zh: '测试商品' }),
       description: JSON.stringify({ en: 'This is a test product', zh: '这是一个测试商品' }),
-      basePrice: 100,
+      basePrice: '100',
       images: JSON.stringify(['https://via.placeholder.com/150']),
       categoryId: category.id,
       isPublished: true,
@@ -37,7 +37,7 @@ async function main() {
       productId: product.id,
       skuCode: `TEST-SKU-${Date.now()}`,
       specs: JSON.stringify({ color: 'Red', size: '42' }),
-      price: 100,
+      price: '100',
       stock: 1000,
     },
   });
@@ -74,7 +74,7 @@ async function main() {
       companyId: company.id,
       userId: user.id,
       status: 'PENDING_PAYMENT',
-      totalAmount: 200,
+      totalAmount: '200',
       currency: 'USD',
       items: {
         create: [
@@ -84,8 +84,8 @@ async function main() {
             productName: 'Test Product',
             skuSpecs: 'Color: Red, Size: 42',
             quantity: 2,
-            unitPrice: 100,
-            totalPrice: 200,
+            unitPrice: '100',
+            totalPrice: '200',
           },
         ],
       },

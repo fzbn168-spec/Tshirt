@@ -1,0 +1,31 @@
+- name: Blue-Green deploy
+  hosts: web
+  gather_facts: false
+  vars_files:
+    - ../vars/production.yml
+  tasks:
+    - name: Ensure deploy color is set
+      assert:
+        that: deploy_color is defined
+        fail_msg: "deploy_color must be provided (blue or green)"
+
+    - name: Prepare compose file name for color
+      set_fact:
+        color_compose_file: "{{ compose_file }}.{{ deploy_color }}"
+
+    - name: Deploy compose for color
+      include_role:
+        name: compose-deploy
+      vars:
+        compose_file: "{{ color_compose_file }}"
+
+    - name: Run health checks on new color
+      include_role:
+        name: healthcheck
+      vars:
+        check_url: "http://localhost:3001/health"
+
+    - name: Switch traffic to new color (nginx)
+      include_role:
+        name: nginx-switch
+      when: healthcheck_result is defined and healthcheck_result == 'ok'

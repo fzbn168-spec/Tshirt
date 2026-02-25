@@ -1,0 +1,16 @@
+- name: Run remote healthcheck script
+  shell: |
+    set -e
+    {{ deploy_path }}/deploy_check_health.sh {{ check_url | default('http://localhost:3001/health') }}
+  register: hc
+  ignore_errors: yes
+
+- name: Set healthcheck_result fact
+  set_fact:
+    healthcheck_result: "ok"
+  when: hc.rc == 0
+
+- name: Fail when healthcheck failed
+  fail:
+    msg: "Healthcheck failed: {{ hc.stderr }}"
+  when: hc.rc != 0

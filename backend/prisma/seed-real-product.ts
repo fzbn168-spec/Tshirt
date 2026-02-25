@@ -66,14 +66,20 @@ async function main() {
       en: "Premium full-grain leather upper with waterproof membrane. Durable rubber outsole for traction.", 
       zh: "优质全粒面真皮鞋面，配有防水膜。耐用的橡胶大底提供抓地力。" 
     }),
-    basePrice: 85.00,
+    basePrice: '85.00',
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80",
       "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?auto=format&fit=crop&w=800&q=80"
     ]),
     specsTemplate: JSON.stringify({}),
     isPublished: true,
-    categoryId: (await prisma.category.findFirst())?.id || '', // Just pick first category
+    // Ensure we have a category; create a default one if none exists
+    categoryId: (await (async () => {
+      const c = await prisma.category.findFirst();
+      if (c) return c.id;
+      const nc = await prisma.category.create({ data: { slug: 'uncategorized', name: JSON.stringify({ en: 'Uncategorized', zh: '未分类' }) } });
+      return nc.id;
+    })()),
   };
 
   // Generate SKUs (Cartesian Product of Color x Size)
@@ -89,7 +95,7 @@ async function main() {
       skus.push({
         skuCode,
         specs: JSON.stringify({ color: colorName, size: sizeName }),
-        price: 85.00,
+        price: '85.00',
         stock: 100,
         moq: 10,
         tierPrices: JSON.stringify([

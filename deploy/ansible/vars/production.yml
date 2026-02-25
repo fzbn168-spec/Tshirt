@@ -1,0 +1,5 @@
+---
+deploy_path: /srv/soletrade
+compose_file: docker-compose.prod.yml
+registry: ghcr.io/myorg
+image_namespace: myorg

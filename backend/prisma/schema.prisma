@@ -7,7 +7,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
+  // 使用生产环境的 DATABASE_URL（例如: postgresql://user:pass@postgres:5432/dbname）
   url      = env("DATABASE_URL")
 }
 

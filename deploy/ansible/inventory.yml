@@ -1,0 +1,10 @@
+
+# inventory.yml
+# This file is intended to be generated dynamically by CI using secrets.
+# Do NOT commit sensitive host entries here. Use deploy/ansible/generate_inventory.sh
+# to produce this file at runtime from environment variables (DEPLOY_HOSTS, DEPLOY_USER, DEPLOY_PATH, etc.).
+
+# Example of generated content:
+# [web]
+# host1 ansible_host=1.2.3.4 ansible_user=deployer ansible_ssh_private_key_file=/tmp/deploy_key deploy_path=/srv/soletrade compose_file=docker-compose.prod.yml registry=ghcr.io/myorg image_namespace=myorg
+#
