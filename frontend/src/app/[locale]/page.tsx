@@ -273,7 +273,100 @@ function CollectionSection(section: LayoutSection) {
 
 export default function Home() {
   const t = useTranslations('Home');
-  const [layoutConfig, setLayoutConfig] = useState<LayoutConfig | null>(null);
+  const defaultLayoutConfig: LayoutConfig = {
+    heroBanners: [
+      {
+        id: 'default-hero',
+        imageUrl:
+          'https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=2012&auto=format&fit=crop',
+        href: '/products',
+        enabled: true,
+        sortOrder: 1,
+      },
+    ],
+    homeCategoryCards: [
+      {
+        id: 'cat-men-sneakers',
+        label: "Men's Sneakers",
+        imageUrl:
+          'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=500&q=80',
+        href: '/products?search=Men',
+        enabled: true,
+        sortOrder: 1,
+      },
+      {
+        id: 'cat-hiking',
+        label: 'Hiking Boots',
+        imageUrl:
+          'https://images.unsplash.com/photo-1520639888713-78db11c5dd59?auto=format&fit=crop&w=500&q=80',
+        href: '/products?search=Hiking',
+        enabled: true,
+        sortOrder: 2,
+      },
+      {
+        id: 'cat-women-heels',
+        label: "Women's Heels",
+        imageUrl:
+          'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=500&q=80',
+        href: '/products?search=Heels',
+        enabled: true,
+        sortOrder: 3,
+      },
+      {
+        id: 'cat-kids-active',
+        label: "Kids' Active",
+        imageUrl:
+          'https://images.unsplash.com/photo-1514989940723-e8e51635b782?auto=format&fit=crop&w=500&q=80',
+        href: '/products?search=Kids',
+        enabled: true,
+        sortOrder: 4,
+      },
+    ],
+    rankingSection: {
+      enabled: true,
+      title: '热销 TOP 10 · 新品推荐',
+      subtitle: '帮助买家快速发现热卖款和最新上架款，提升转化。',
+    },
+    brandWall: {
+      enabled: false,
+      title: '合作品牌',
+      subtitle: '展示重点合作工厂与品牌买家，增强背书。',
+      logos: [],
+    },
+    textBlocks: [],
+    sections: [
+      {
+        id: 'sec-hero',
+        type: 'hero',
+        title: 'Hero',
+        enabled: true,
+        sortOrder: 1,
+      },
+      {
+        id: 'sec-ranking',
+        type: 'ranking',
+        title: 'Ranking',
+        enabled: true,
+        sortOrder: 2,
+      },
+      {
+        id: 'sec-category',
+        type: 'categoryGrid',
+        title: 'Categories',
+        enabled: true,
+        sortOrder: 3,
+      },
+      {
+        id: 'sec-brand-wall',
+        type: 'brandWall',
+        title: 'Brand Wall',
+        enabled: false,
+        sortOrder: 4,
+      },
+    ],
+  };
+
+  const [layoutConfig, setLayoutConfig] = useState<LayoutConfig>(defaultLayoutConfig);
 
   useEffect(() => {
     let cancelled = false;
@@ -282,17 +375,25 @@ export default function Home() {
         const res = await api.get<{ key: string; value: string }[]>('/system-settings');
         const setting = res.data.find((s) => s.key === 'layout_config');
         if (!setting || !setting.value || cancelled) return;
-        const parsed = JSON.parse(setting.value) as Partial<LayoutConfig>;
-        if (cancelled) return;
-        setLayoutConfig({
-          heroBanners: parsed.heroBanners || [],
-          homeCategoryCards: parsed.homeCategoryCards || [],
-          rankingSection: parsed.rankingSection || {},
-          brandWall: parsed.brandWall || {},
-          textBlocks: parsed.textBlocks || [],
-          sections: parsed.sections || [],
-        });
-      } catch {
+        
+        try {
+          const parsed = JSON.parse(setting.value) as Partial<LayoutConfig>;
+          if (cancelled) return;
+          
+          // Merge with defaults to ensure structure integrity
+          setLayoutConfig({
+            heroBanners: parsed.heroBanners || defaultLayoutConfig.heroBanners,
+            homeCategoryCards: parsed.homeCategoryCards || defaultLayoutConfig.homeCategoryCards,
+            rankingSection: parsed.rankingSection || defaultLayoutConfig.rankingSection,
+            brandWall: parsed.brandWall || defaultLayoutConfig.brandWall,
+            textBlocks: parsed.textBlocks || [],
+            sections: parsed.sections || defaultLayoutConfig.sections,
+          });
+        } catch (e) {
+          console.error('Failed to parse layout config:', e);
+        }
+      } catch (e) {
+        console.error('Failed to load system settings:', e);
       }
     };
     loadLayout();

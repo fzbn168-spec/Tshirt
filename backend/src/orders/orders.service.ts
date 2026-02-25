@@ -614,6 +614,10 @@ export class OrdersService {
         [];
 
       for (const item of items) {
+        if (!item.skuId) {
+          throw new BadRequestException('SKU ID is required for order items');
+        }
+
         // Fetch SKU to get real price and stock (Locking strategy relies on Prisma default isolation)
         const sku = await tx.sku.findUnique({
           where: { id: item.skuId },
@@ -641,12 +645,19 @@ export class OrdersService {
         const totalPrice = unitPrice * item.quantity;
         calculatedTotalAmount += totalPrice;
 
+        let productName = 'Product';
+        try {
+          productName = sku.product.title
+            ? JSON.parse(sku.product.title).en
+            : 'Product';
+        } catch (e) {
+          productName = sku.product.title || 'Product';
+        }
+
         orderItemsData.push({
           productId: item.productId,
           skuId: item.skuId,
-          productName: sku.product.title
-            ? JSON.parse(sku.product.title).en
-            : 'Product', // Source of Truth: DB
+          productName, // Source of Truth: DB
           skuSpecs: item.skuSpecs, // Note: Specs string is currently from frontend, consider reconstructing from DB attributes for stricter consistency
           quantity: item.quantity,
           unitPrice: new Prisma.Decimal(unitPrice), // Source of Truth: Backend Calculation
@@ -693,30 +704,38 @@ export class OrdersService {
     });
 
     // Notify Admin
-    await this.notificationsService.notifyAdmin(
-      'ORDER',
-      `New Order Received: ${order.orderNo}`,
-      EmailTemplates.adminNewOrder(order.orderNo, Number(order.totalAmount)),
-      order.id,
-      'ORDER',
-    );
-
-    // Notify User
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (user && user.email) {
-      await this.notificationsService.notifyUser(
-        userId,
-        user.email,
+    try {
+      await this.notificationsService.notifyAdmin(
         'ORDER',
-        `Order Confirmation: ${order.orderNo}`,
-        EmailTemplates.orderConfirmation(
-          user.fullName || 'Customer',
-          order.orderNo,
-          Number(order.totalAmount),
-        ),
+        `New Order Received: ${order.orderNo}`,
+        EmailTemplates.adminNewOrder(order.orderNo, Number(order.totalAmount)),
         order.id,
         'ORDER',
       );
+    } catch (error) {
+      console.error('Failed to send admin notification:', error);
+    }
+
+    // Notify User
+    try {
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (user && user.email) {
+        await this.notificationsService.notifyUser(
+          userId,
+          user.email,
+          'ORDER',
+          `Order Confirmation: ${order.orderNo}`,
+          EmailTemplates.orderConfirmation(
+            user.fullName || 'Customer',
+            order.orderNo,
+            Number(order.totalAmount),
+          ),
+          order.id,
+          'ORDER',
+        );
+      }
+    } catch (error) {
+      console.error('Failed to send user notification:', error);
     }
 
     return order;
