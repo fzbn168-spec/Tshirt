@@ -381,6 +381,19 @@ export default function SettingsPage() {
     },
   });
 
+  const deleteRateMutation = useMutation({
+    mutationFn: async (currency: string) => {
+      return api.delete(`/exchange-rates/${currency}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['exchange-rates'] });
+      addToast('Exchange rate removed', 'success');
+    },
+    onError: () => {
+      addToast('Failed to remove exchange rate', 'error');
+    },
+  });
+
   const layoutMutation = useMutation({
     mutationFn: async (config: LayoutConfig) => {
       const payload = [
@@ -532,7 +545,7 @@ export default function SettingsPage() {
                         placeholder="1"
                       />
                     </td>
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-4 py-2 text-right space-x-2">
                       <Button
                         type="button"
                         size="sm"
@@ -543,6 +556,22 @@ export default function SettingsPage() {
                           <Loader2 className="h-4 w-4 mr-1 animate-spin" />
                         )}
                         Save
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={!rate.currency || deleteRateMutation.isPending}
+                        onClick={() => {
+                          if (!rate.currency) {
+                            const next = localRates.filter((_, i) => i !== index);
+                            setLocalRates(next);
+                            return;
+                          }
+                          deleteRateMutation.mutate(rate.currency);
+                        }}
+                      >
+                        Remove
                       </Button>
                     </td>
                   </tr>
@@ -571,17 +600,27 @@ export default function SettingsPage() {
                   Configure navigation menu, hero banner, and homepage category cards.
                 </p>
               </div>
-              <Button
-                type="button"
-                size="sm"
-                disabled={layoutMutation.isPending}
-                onClick={() => layoutMutation.mutate(layoutConfig)}
-              >
-                {layoutMutation.isPending && (
-                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                )}
-                Save Layout
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLayoutConfig(getDefaultLayoutConfig())}
+                >
+                  Reset Layout
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={layoutMutation.isPending}
+                  onClick={() => layoutMutation.mutate(layoutConfig)}
+                >
+                  {layoutMutation.isPending && (
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  )}
+                  Save Layout
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -602,6 +641,9 @@ export default function SettingsPage() {
                         </th>
                         <th className="px-3 py-2 text-center text-xs font-medium text-zinc-500">
                           Enabled
+                        </th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-zinc-500">
+                          Actions
                         </th>
                       </tr>
                     </thead>
@@ -666,6 +708,22 @@ export default function SettingsPage() {
                                 });
                               }}
                             />
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const next = layoutConfig.navItems.filter((_, i) => i !== index);
+                                setLayoutConfig({
+                                  ...layoutConfig,
+                                  navItems: next,
+                                });
+                              }}
+                            >
+                              Remove
+                            </Button>
                           </td>
                         </tr>
                       ))}
@@ -884,6 +942,9 @@ export default function SettingsPage() {
                           <th className="px-3 py-2 text-center text-xs font-medium text-zinc-500">
                             Enabled
                           </th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-zinc-500">
+                            Actions
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -976,6 +1037,27 @@ export default function SettingsPage() {
                                 }}
                               />
                             </td>
+                            <td className="px-3 py-2 text-right">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const next = layoutConfig.brandWall.logos.filter(
+                                    (_, i) => i !== index,
+                                  );
+                                  setLayoutConfig({
+                                    ...layoutConfig,
+                                    brandWall: {
+                                      ...layoutConfig.brandWall,
+                                      logos: next,
+                                    },
+                                  });
+                                }}
+                              >
+                                Remove
+                              </Button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -1029,6 +1111,9 @@ export default function SettingsPage() {
                           </th>
                           <th className="px-3 py-2 text-center text-xs font-medium text-zinc-500">
                             Enabled
+                          </th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-zinc-500">
+                            Actions
                           </th>
                         </tr>
                       </thead>
@@ -1095,6 +1180,24 @@ export default function SettingsPage() {
                                 }}
                               />
                             </td>
+                            <td className="px-3 py-2 text-right w-24">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const next = layoutConfig.textBlocks.filter(
+                                    (_, i) => i !== index,
+                                  );
+                                  setLayoutConfig({
+                                    ...layoutConfig,
+                                    textBlocks: next,
+                                  });
+                                }}
+                              >
+                                Remove
+                              </Button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -1150,6 +1253,9 @@ export default function SettingsPage() {
                         </th>
                         <th className="px-3 py-2 text-center text-xs font-medium text-zinc-500">
                           Enabled
+                        </th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-zinc-500">
+                          Actions
                         </th>
                       </tr>
                     </thead>
@@ -1242,6 +1348,24 @@ export default function SettingsPage() {
                                 });
                               }}
                             />
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const next = layoutConfig.homeCategoryCards.filter(
+                                  (_, i) => i !== index,
+                                );
+                                setLayoutConfig({
+                                  ...layoutConfig,
+                                  homeCategoryCards: next,
+                                });
+                              }}
+                            >
+                              Remove
+                            </Button>
                           </td>
                         </tr>
                       ))}

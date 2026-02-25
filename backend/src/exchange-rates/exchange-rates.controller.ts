@@ -1,4 +1,12 @@
-import { Controller, Get, Put, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Put,
+  Body,
+  UseGuards,
+  Delete,
+  Param,
+} from '@nestjs/common';
 import { ExchangeRatesService } from './exchange-rates.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -18,5 +26,12 @@ export class ExchangeRatesController {
   @Roles('ADMIN', 'PLATFORM_ADMIN')
   update(@Body() body: { currency: string; rate: number }) {
     return this.exchangeRatesService.upsert(body.currency, body.rate);
+  }
+
+  @Delete(':currency')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'PLATFORM_ADMIN')
+  remove(@Param('currency') currency: string) {
+    return this.exchangeRatesService.remove(currency);
   }
 }

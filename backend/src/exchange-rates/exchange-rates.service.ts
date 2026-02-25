@@ -16,4 +16,10 @@ export class ExchangeRatesService {
       create: { currency, rate },
     });
   }
+
+  async remove(currency: string) {
+    return this.prisma.exchangeRate.delete({
+      where: { currency },
+    });
+  }
 }
