@@ -43,6 +43,10 @@ export default function AttributeSelector({ onChange, initialAttributes = [] }: 
   // Quick Add Value State
   const [addingValueTo, setAddingValueTo] = useState<string | null>(null); // attributeId
   const [newValueName, setNewValueName] = useState('');
+  
+  // Create New Attribute State
+  const [isCreatingAttribute, setIsCreatingAttribute] = useState(false);
+  const [newAttributeName, setNewAttributeName] = useState('');
 
   // Fetch all available attributes
   const { data: availableAttributes, isLoading } = useQuery({
@@ -71,9 +75,46 @@ export default function AttributeSelector({ onChange, initialAttributes = [] }: 
     }
   });
 
+  const createAttributeMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const payload = {
+        name: JSON.stringify({ en: name, zh: name }),
+        code: name, // Simple code generation, backend might need to sanitize
+        type: 'text'
+      };
+      return api.post<Attribute>('/attributes', payload);
+    },
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['attributes'] });
+      addToast('Attribute created successfully', 'success');
+      setIsCreatingAttribute(false);
+      setNewAttributeName('');
+      
+      // Auto-select the newly created attribute
+      const newAttr = res.data;
+      setSelectedAttributes([
+        ...selectedAttributes,
+        {
+          attributeId: newAttr.id,
+          attributeName: parseName(newAttr.name),
+          attributeCode: newAttr.code,
+          selectedValues: []
+        }
+      ]);
+    },
+    onError: () => {
+      addToast('Failed to create attribute', 'error');
+    }
+  });
+
   const handleAddValue = (attrId: string) => {
     if (!newValueName.trim()) return;
     addValueMutation.mutate({ attrId, value: newValueName });
+  };
+  
+  const handleCreateAttribute = () => {
+    if (!newAttributeName.trim()) return;
+    createAttributeMutation.mutate(newAttributeName);
   };
 
   useEffect(() => {
@@ -100,7 +141,8 @@ export default function AttributeSelector({ onChange, initialAttributes = [] }: 
         }
       ]);
     } else {
-      addToast('No more attributes available to add', 'error');
+      // If no unselected attributes are available, prompt to create a new one
+      setIsCreatingAttribute(true);
     }
   };
 
@@ -181,14 +223,38 @@ export default function AttributeSelector({ onChange, initialAttributes = [] }: 
                Add {parseName(attr.name)}
              </Button>
            ))}
-           <Button size="sm" variant="ghost" className="h-8 px-2 text-xs" onClick={handleAddAttribute}>
+           <Button size="sm" variant="ghost" className="h-8 px-2 text-xs" onClick={() => setIsCreatingAttribute(true)}>
             <Plus className="h-3 w-3 mr-1" />
             Add another option
           </Button>
         </div>
       </div>
 
-      {selectedAttributes.length === 0 && (
+      {isCreatingAttribute && (
+        <div className="mb-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-blue-200 dark:border-blue-900 animate-in fade-in slide-in-from-top-2">
+           <label className="block text-sm font-medium mb-2">New Option Name</label>
+           <div className="flex gap-2">
+             <Input 
+               value={newAttributeName}
+               onChange={(e) => setNewAttributeName(e.target.value)}
+               placeholder="e.g. Material, Fabric, Style"
+               autoFocus
+               onKeyDown={(e) => {
+                 if (e.key === 'Enter') handleCreateAttribute();
+                 if (e.key === 'Escape') setIsCreatingAttribute(false);
+               }}
+             />
+             <Button onClick={handleCreateAttribute} disabled={createAttributeMutation.isPending}>
+               {createAttributeMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create'}
+             </Button>
+             <Button variant="ghost" onClick={() => setIsCreatingAttribute(false)}>
+               Cancel
+             </Button>
+           </div>
+        </div>
+      )}
+
+      {selectedAttributes.length === 0 && !isCreatingAttribute && (
         <div className="text-sm text-zinc-500 py-4 px-4 bg-zinc-50 dark:bg-zinc-800/50 rounded border border-zinc-100 dark:border-zinc-800">
           <p className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
@@ -199,35 +265,28 @@ export default function AttributeSelector({ onChange, initialAttributes = [] }: 
 
       <div className="space-y-4">
         {selectedAttributes.map((sa, idx) => {
-          const fullAttr = availableAttributes?.find(a => a.id === sa.attributeId);
-          
-          return (
+        const fullAttr = availableAttributes?.find(a => a.id === sa.attributeId) || {
+          values: sa.selectedValues // Fallback if newly created and not yet re-fetched perfectly or optimistic
+        };
+        
+        return (
             <div key={idx} className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
-              <div className="flex items-center justify-between p-3 bg-zinc-50/50 dark:bg-zinc-800/50 border-b border-zinc-100 dark:border-zinc-800">
-                <div className="flex items-center gap-2">
-                  <div className="cursor-grab text-zinc-400 hover:text-zinc-600">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>
-                  </div>
-                  <select
-                    className="bg-transparent font-medium text-sm focus:outline-none cursor-pointer hover:underline underline-offset-4 decoration-zinc-300"
-                    value={sa.attributeId}
-                    onChange={(e) => handleAttributeChange(idx, e.target.value)}
-                  >
-                    {availableAttributes?.map(attr => (
-                      <option key={attr.id} value={attr.id}>
-                        {parseName(attr.name)}
-                      </option>
-                    ))}
-                  </select>
+            <div className="flex items-center justify-between p-3 bg-zinc-50/50 dark:bg-zinc-800/50 border-b border-zinc-100 dark:border-zinc-800">
+              <div className="flex items-center gap-2">
+                <div className="cursor-grab text-zinc-400 hover:text-zinc-600">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>
                 </div>
-                <button onClick={() => handleRemoveAttribute(idx)} className="text-zinc-400 hover:text-red-500 p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                <div className="font-medium text-sm">{sa.attributeName}</div>
+              </div>
+              <button onClick={() => handleRemoveAttribute(idx)} className="text-zinc-400 hover:text-red-500 p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
 
               <div className="p-4">
                 <div className="flex flex-wrap gap-2">
-                  {fullAttr?.values.map(val => {
+                  {fullAttr?.values && fullAttr.values.length > 0 ? (
+                    fullAttr.values.map(val => {
                     const isSelected = sa.selectedValues.some(v => v.id === val.id);
                     const label = parseName(val.value);
                     
@@ -246,7 +305,10 @@ export default function AttributeSelector({ onChange, initialAttributes = [] }: 
                         {isSelected && <Check className="h-3 w-3 ml-0.5" />}
                       </button>
                     );
-                  })}
+                  })
+                  ) : (
+                    <span className="text-xs text-zinc-400 italic flex items-center">No options yet. Add one below.</span>
+                  )}
                   
                   {/* Quick Add Value Button */}
                   {addingValueTo === sa.attributeId ? (
