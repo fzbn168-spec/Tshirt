@@ -347,9 +347,9 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
            <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-6">
               <h2 className="font-semibold text-lg">Basic Information</h2>
               
-              <div className="grid grid-cols-2 gap-6">
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium mb-1">Product Title (EN)</label>
+              <div className="grid grid-cols-1 gap-6">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Title</label>
                   <Input 
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -357,37 +357,70 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                   />
                 </div>
 
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium mb-1">Description (EN)</label>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Description</label>
                   <textarea 
-                    className="flex w-full rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300 min-h-[100px]"
+                    className="flex w-full rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300 min-h-[160px]"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Product description..."
                   />
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Category</label>
-                  <select 
-                    className="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300"
-                    value={formData.categoryId}
-                    onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                  >
-                    <option value="">Select Category</option>
-                    {categories?.map((cat: any) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name ? (JSON.parse(cat.name).en || 'Category') : 'Category'}
-                      </option>
-                    ))}
-                  </select>
-                </div>
               </div>
            </div>
 
+           {/* Media */}
+           <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-4">
+            <h2 className="font-semibold text-lg">Media</h2>
+            <div className="space-y-4">
+               <div className="grid grid-cols-4 gap-4">
+                 {formData.images.map((img, idx) => (
+                   <div key={idx} className="relative group aspect-square border rounded-lg overflow-hidden bg-zinc-50">
+                     <img src={img} alt="Product" className="w-full h-full object-cover" />
+                     {idx === 0 && (
+                        <div className="absolute top-0 left-0 bg-zinc-900 text-white text-[10px] px-2 py-0.5 rounded-br font-medium z-10">
+                          Main
+                        </div>
+                     )}
+                     <button 
+                       onClick={() => removeImage(idx)}
+                       className="absolute top-1 right-1 p-1.5 bg-white/90 text-red-600 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                     >
+                       <Trash2 className="h-4 w-4" />
+                     </button>
+                   </div>
+                 ))}
+                 
+                 <div className="aspect-square border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-lg flex flex-col items-center justify-center hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                    <FileUpload 
+                      onUpload={addImage}
+                      label="Add Media"
+                      className="w-full h-full opacity-0 absolute cursor-pointer"
+                    />
+                    <div className="pointer-events-none flex flex-col items-center gap-2 text-zinc-500">
+                        <Plus className="h-6 w-6" />
+                        <span className="text-xs font-medium">Add Media</span>
+                    </div>
+                 </div>
+               </div>
+               
+               <div className="flex gap-2">
+                  <Input 
+                    value={newImageUrl} 
+                    onChange={(e) => setNewImageUrl(e.target.value)}
+                    placeholder="Or paste image URL..."
+                    className="flex-1"
+                  />
+                  <Button size="sm" variant="secondary" onClick={() => addImage(newImageUrl)}>
+                    Add URL
+                  </Button>
+               </div>
+            </div>
+          </div>
+
            {/* Attributes & SKU Matrix */}
            <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-6">
-              <h2 className="font-semibold text-lg">Variants & Inventory</h2>
+              <h2 className="font-semibold text-lg">Variants</h2>
               
               <AttributeSelector 
                 initialAttributes={selectedAttributes}
@@ -402,34 +435,50 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
               />
               
               {selectedAttributes.length === 0 && (
-                <div className="bg-zinc-50 dark:bg-zinc-800 p-4 rounded border border-zinc-200 dark:border-zinc-800">
-                    <label className="block text-sm font-medium mb-1">Single SKU Code</label>
-                    <Input 
-                      value={formData.skuCode}
-                      onChange={(e) => setFormData({ ...formData, skuCode: e.target.value })}
-                      placeholder="e.g. SNK-001"
-                    />
-                    <div className="mt-3 grid grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-xs font-medium mb-1">Unit Price</label>
-                        <Input 
-                          type="number"
-                          value={formData.singlePrice}
-                          onChange={(e) => setFormData({ ...formData, singlePrice: e.target.value })}
-                          placeholder="0.00"
-                        />
+                <div className="bg-zinc-50 dark:bg-zinc-800/50 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-medium text-sm">Pricing & Inventory</h3>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="col-span-2">
+                         <label className="block text-sm font-medium mb-1">SKU Code</label>
+                         <Input 
+                           value={formData.skuCode}
+                           onChange={(e) => setFormData({ ...formData, skuCode: e.target.value })}
+                           placeholder="e.g. PROD-001"
+                         />
                       </div>
+                      
                       <div>
-                        <label className="block text-xs font-medium mb-1">MOQ</label>
-                        <Input 
-                          type="number"
-                          value={formData.moq}
-                          onChange={(e) => setFormData({ ...formData, moq: e.target.value })}
-                          placeholder="1"
-                        />
+                        <label className="block text-sm font-medium mb-1">Price</label>
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">$</span>
+                            <Input 
+                              type="number"
+                              value={formData.singlePrice}
+                              onChange={(e) => setFormData({ ...formData, singlePrice: e.target.value })}
+                              placeholder="0.00"
+                              className="pl-7"
+                            />
+                        </div>
                       </div>
+
                       <div>
-                        <label className="block text-xs font-medium mb-1">Stock</label>
+                        <label className="block text-sm font-medium mb-1">Compare at price</label>
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">$</span>
+                            <Input 
+                              type="number"
+                              placeholder="0.00"
+                              className="pl-7"
+                              disabled
+                            />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Stock</label>
                         <Input 
                           type="number"
                           value={formData.singleStock}
@@ -437,17 +486,24 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                           placeholder="0"
                         />
                       </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-1">MOQ</label>
+                        <Input 
+                          type="number"
+                          value={formData.moq}
+                          onChange={(e) => setFormData({ ...formData, moq: e.target.value })}
+                          placeholder="1"
+                        />
+                      </div>
                     </div>
-                    <p className="text-xs text-zinc-500 mt-1">
-                      Use this if the product has no variants (no color/size options).
-                    </p>
                 </div>
               )}
            </div>
 
            {/* Material Details */}
            <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-6">
-              <h2 className="font-semibold text-lg">Material Details</h2>
+              <h2 className="font-semibold text-lg">Material Specifications</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {(Object.keys(MATERIAL_OPTIONS) as Array<keyof typeof MATERIAL_OPTIONS>).map((key) => (
                   <div key={key}>
@@ -459,7 +515,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                         ...formData, 
                         materialDetail: { ...formData.materialDetail, [key]: e.target.value } 
                       })}
-                      placeholder={`Select or type ${key}...`}
+                      placeholder={`Select or type...`}
                     />
                     <datalist id={`material-options-${key}`}>
                       {MATERIAL_OPTIONS[key].map((opt) => (
@@ -473,9 +529,16 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
 
            {/* Trade & Logistics */}
            <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-6">
-              <h2 className="font-semibold text-lg">Trade & Logistics</h2>
+              <h2 className="font-semibold text-lg">Shipping</h2>
               
               <div className="grid grid-cols-2 gap-6">
+                <div className="col-span-2">
+                    <div className="flex items-center gap-2 mb-4">
+                        <input type="checkbox" id="shipping-required" className="rounded border-zinc-300" defaultChecked />
+                        <label htmlFor="shipping-required" className="text-sm">This is a physical product</label>
+                    </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium mb-1">Origin Country</label>
                   <Input 
@@ -494,26 +557,16 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                   />
                 </div>
 
-                <div className="col-span-2">
-                  <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded border border-zinc-100 dark:border-zinc-800">
-                    <div className="text-sm font-medium mb-3">Packing / Boxing (Default for SKUs)</div>
-                    <div className="grid grid-cols-4 gap-4">
-                       <div>
-                         <label className="block text-xs mb-1">Items / Carton</label>
-                         <Input 
-                           type="number"
-                           value={formData.itemsPerCarton}
-                           onChange={(e) => setFormData({ ...formData, itemsPerCarton: e.target.value })}
-                           placeholder="e.g. 12"
-                         />
-                       </div>
+                <div className="col-span-2 border-t pt-4 mt-2">
+                  <h3 className="text-sm font-medium mb-4">Packing Info (Default)</h3>
+                  <div className="grid grid-cols-3 gap-4">
                        <div>
                          <label className="block text-xs mb-1">Unit N.W</label>
                          <Input 
                            type="number"
                            value={formData.netWeight}
                            onChange={(e) => setFormData({ ...formData, netWeight: e.target.value })}
-                           placeholder="e.g. 0.8"
+                           placeholder="kg"
                          />
                        </div>
                        <div>
@@ -522,183 +575,131 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                            type="number"
                            value={formData.grossWeight}
                            onChange={(e) => setFormData({ ...formData, grossWeight: e.target.value })}
-                           placeholder="e.g. 1.0"
+                           placeholder="kg"
                          />
                        </div>
-                       <div />
-                       <div className="col-span-4 grid grid-cols-4 gap-4">
-                         <div>
-                           <label className="block text-xs mb-1">Pkg Length</label>
-                           <Input 
-                             type="number"
-                             value={formData.length}
-                             onChange={(e) => setFormData({ ...formData, length: e.target.value })}
-                             placeholder="L"
-                           />
-                         </div>
-                         <div>
-                           <label className="block text-xs mb-1">Pkg Width</label>
-                           <Input 
-                             type="number"
-                             value={formData.width}
-                             onChange={(e) => setFormData({ ...formData, width: e.target.value })}
-                             placeholder="W"
-                           />
-                         </div>
-                         <div>
-                           <label className="block text-xs mb-1">Pkg Height</label>
-                           <Input 
-                             type="number"
-                             value={formData.height}
-                             onChange={(e) => setFormData({ ...formData, height: e.target.value })}
-                             placeholder="H"
-                           />
-                         </div>
-                         <div />
+                       <div>
+                         <label className="block text-xs mb-1">Items / Carton</label>
+                         <Input 
+                           type="number"
+                           value={formData.itemsPerCarton}
+                           onChange={(e) => setFormData({ ...formData, itemsPerCarton: e.target.value })}
+                           placeholder="12"
+                         />
                        </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-4 mt-4">
                         <div>
-                          <label className="block text-xs mb-1">Length</label>
+                          <label className="block text-xs mb-1">Carton Length</label>
                           <Input 
                             type="number"
                             value={formData.cartonLength}
                             onChange={(e) => setFormData({ ...formData, cartonLength: e.target.value })}
-                            placeholder="L"
+                            placeholder="cm"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs mb-1">Width</label>
+                          <label className="block text-xs mb-1">Carton Width</label>
                           <Input 
                             type="number"
                             value={formData.cartonWidth}
                             onChange={(e) => setFormData({ ...formData, cartonWidth: e.target.value })}
-                            placeholder="W"
+                            placeholder="cm"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs mb-1">Height</label>
+                          <label className="block text-xs mb-1">Carton Height</label>
                           <Input 
                             type="number"
                             value={formData.cartonHeight}
                             onChange={(e) => setFormData({ ...formData, cartonHeight: e.target.value })}
-                            placeholder="H"
+                            placeholder="cm"
                           />
                         </div>
-                        <div>
-                          <label className="block text-xs mb-1">G.W</label>
-                          <Input 
-                            type="number"
-                            value={formData.cartonGrossWeight}
-                            onChange={(e) => setFormData({ ...formData, cartonGrossWeight: e.target.value })}
-                            placeholder="kg"
-                          />
-                        </div>
-                     </div>
-                   </div>
+                  </div>
                 </div>
               </div>
            </div>
         </div>
 
-        {/* Right Column: Media & Meta */}
+        {/* Right Column: Sidebar */}
         <div className="space-y-6">
-          {/* Images */}
+          
+          {/* Status */}
           <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-4">
-            <h2 className="font-semibold text-lg">Product Images</h2>
-            
-            <div className="space-y-3">
-               <div className="flex gap-2">
-                  <Input 
-                    value={newImageUrl} 
-                    onChange={(e) => setNewImageUrl(e.target.value)}
-                    placeholder="Paste image URL..."
-                    className="flex-1"
-                  />
-                  <Button size="sm" variant="secondary" onClick={() => addImage(newImageUrl)}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
-               </div>
-               
-               <div className="text-xs text-zinc-400 text-center">- OR -</div>
-
-               <FileUpload 
-                 onUpload={addImage}
-                 label="Upload Image"
-               />
-
-               <div className="grid grid-cols-2 gap-2 mt-4">
-                 {formData.images.map((img, idx) => (
-                   <div key={idx} className="relative group aspect-square border rounded-md overflow-hidden bg-zinc-100">
-                     <img src={img} alt="Product" className="w-full h-full object-cover" />
-                     {idx === 0 && (
-                        <div className="absolute top-0 left-0 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-br font-medium">
-                          Main
-                        </div>
-                     )}
-                     <button 
-                       onClick={() => removeImage(idx)}
-                       className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                     >
-                       <Trash2 className="h-3 w-3" />
-                     </button>
-                   </div>
-                 ))}
-               </div>
-            </div>
+            <h2 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">Status</h2>
+            <select className="w-full rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-sm">
+                <option value="active">Active</option>
+                <option value="draft">Draft</option>
+                <option value="archived">Archived</option>
+            </select>
           </div>
 
-          {/* Material Specs */}
+          {/* Publishing */}
           <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-4">
-            <h2 className="font-semibold text-lg">Material Specifications</h2>
-            
-            {Object.entries(MATERIAL_OPTIONS).map(([key, options]) => (
-              <div key={key}>
-                <label className="block text-sm font-medium mb-1 capitalize">{key} Material</label>
-                <div className="relative">
-                  <Input 
-                    value={(formData.materialDetail as any)[key]}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      materialDetail: { ...formData.materialDetail, [key]: e.target.value } 
-                    })}
-                    placeholder={`Select or type...`}
-                    list={`list-${key}`}
-                  />
-                  <datalist id={`list-${key}`}>
-                    {options.map(opt => (
-                      <option key={opt} value={opt} />
-                    ))}
-                  </datalist>
+             <div className="flex items-center justify-between">
+                <h2 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">Publishing</h2>
+                <Button variant="ghost" size="sm" className="h-auto p-0 text-blue-600">Manage</Button>
+             </div>
+             <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    Online Store
                 </div>
-              </div>
-            ))}
+                <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+                    <div className="w-2 h-2 rounded-full bg-zinc-300"></div>
+                    POS (Point of Sale)
+                </div>
+             </div>
           </div>
 
-          {/* Additional Settings */}
+          {/* Product Organization */}
           <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-4">
-            <h2 className="font-semibold text-lg">Settings</h2>
-
+            <h2 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">Product Organization</h2>
+            
             <div>
-              <label className="block text-sm font-medium mb-1">MOQ</label>
-              <Input 
-                type="number"
-                value={formData.moq}
-                onChange={(e) => setFormData({ ...formData, moq: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Virtual Sales</label>
-              <Input 
-                type="number"
-                value={formData.fakeSoldCount}
-                onChange={(e) => setFormData({ ...formData, fakeSoldCount: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Size Chart</label>
+              <label className="block text-xs font-medium mb-1.5 text-zinc-500">Category</label>
               <select 
-                className="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm"
+                className="flex w-full rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                value={formData.categoryId}
+                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+              >
+                <option value="">Select Category</option>
+                {categories?.map((cat: any) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name ? (JSON.parse(cat.name).en || 'Category') : 'Category'}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+               <label className="block text-xs font-medium mb-1.5 text-zinc-500">Product Type</label>
+               <Input placeholder="e.g. Sneaker" />
+            </div>
+
+            <div>
+               <label className="block text-xs font-medium mb-1.5 text-zinc-500">Vendor</label>
+               <Input placeholder="e.g. Nike" />
+            </div>
+
+            <div>
+               <label className="block text-xs font-medium mb-1.5 text-zinc-500">Collections</label>
+               <Input placeholder="Search collections..." />
+            </div>
+
+            <div>
+               <label className="block text-xs font-medium mb-1.5 text-zinc-500">Tags</label>
+               <Input placeholder="Vintage, Summer, Sale" />
+            </div>
+          </div>
+
+          {/* Size Chart */}
+          <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-4">
+            <h2 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">Size Chart</h2>
+            <select 
+                className="flex w-full rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-sm shadow-sm"
                 value={formData.sizeChartId}
                 onChange={(e) => setFormData({ ...formData, sizeChartId: e.target.value })}
               >
@@ -708,18 +709,25 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                     {sc.name}
                   </option>
                 ))}
-              </select>
-              
-              <div className="mt-2 text-xs text-center text-zinc-500">- OR -</div>
+            </select>
+            
+            <div className="relative">
+                 <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-zinc-200 dark:border-zinc-800" />
+                 </div>
+                 <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white dark:bg-zinc-900 px-2 text-zinc-500">Or upload image</span>
+                 </div>
+            </div>
 
-              <div className="mt-2">
-                 <label className="block text-sm font-medium mb-1">Upload Size Chart Image</label>
+            <div>
                  <FileUpload 
-                   label="Upload Size Chart"
+                   label="Upload Image"
                    onUpload={(url) => setFormData({ ...formData, sizeChartImage: url })}
+                   className="h-24"
                  />
                  {formData.sizeChartImage && (
-                    <div className="mt-2 relative group w-32 aspect-[3/4] border rounded-md overflow-hidden bg-zinc-100">
+                    <div className="mt-2 relative group w-full aspect-[3/4] border rounded-md overflow-hidden bg-zinc-100">
                       <img src={formData.sizeChartImage} alt="Size Chart" className="w-full h-full object-cover" />
                       <button 
                         onClick={() => setFormData({ ...formData, sizeChartImage: '' })}
@@ -729,15 +737,16 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                       </button>
                     </div>
                  )}
-              </div>
             </div>
           </div>
-
-          <Button onClick={handleSubmit} disabled={mutation.isPending} className="w-full" size="lg">
-            {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            <Save className="mr-2 h-4 w-4" />
-            Save Product
-          </Button>
+          
+          <div className="sticky top-6">
+              <Button onClick={handleSubmit} disabled={mutation.isPending} className="w-full shadow-lg" size="lg">
+                {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Save className="mr-2 h-4 w-4" />
+                Save Product
+              </Button>
+          </div>
         </div>
       </div>
     </div>

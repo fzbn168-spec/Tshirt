@@ -10,9 +10,10 @@ interface FileUploadProps {
   onUpload: (url: string) => void;
   label?: string;
   accept?: string;
+  className?: string;
 }
 
-export function FileUpload({ value, onUpload, label = "Upload File", accept = "image/*,application/pdf" }: FileUploadProps) {
+export function FileUpload({ value, onUpload, label = "Upload File", accept = "image/*,application/pdf", className }: FileUploadProps) {
   const [loading, setLoading] = useState(false);
   const { token } = useAuthStore();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -53,13 +54,20 @@ export function FileUpload({ value, onUpload, label = "Upload File", accept = "i
   };
 
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+    <div className={`space-y-2 ${className}`}>
+      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 sr-only">
         {label}
       </label>
+      <input 
+        ref={inputRef}
+        type="file" 
+        accept={accept} 
+        onChange={handleFileChange} 
+        className="hidden" 
+      />
       
       {value ? (
-        <div className="relative group w-full h-48 border rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+        <div className="relative group w-full h-full min-h-[120px] border rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
             {value.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
                  <Image 
                    src={value} 
@@ -77,7 +85,7 @@ export function FileUpload({ value, onUpload, label = "Upload File", accept = "i
           <button
             type="button"
             onClick={clearFile}
-            className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
           >
             <X className="w-4 h-4" />
           </button>
@@ -85,7 +93,7 @@ export function FileUpload({ value, onUpload, label = "Upload File", accept = "i
       ) : (
         <div 
             onClick={() => inputRef.current?.click()}
-            className="border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 transition-colors bg-zinc-50 dark:bg-zinc-900/50"
+            className="w-full h-full min-h-[120px] border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 transition-colors bg-zinc-50 dark:bg-zinc-900/50"
         >
           {loading ? (
             <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
@@ -98,14 +106,6 @@ export function FileUpload({ value, onUpload, label = "Upload File", accept = "i
           )}
         </div>
       )}
-
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        onChange={handleFileChange}
-        className="hidden"
-      />
     </div>
   );
 }
