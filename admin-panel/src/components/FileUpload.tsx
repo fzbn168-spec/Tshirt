@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Upload, X, Loader2, FileIcon } from 'lucide-react';
+import { Upload, X, Loader2, FileIcon, Video } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import Image from 'next/image';
 
@@ -13,40 +13,19 @@ interface FileUploadProps {
   className?: string;
 }
 
-export function FileUpload({ value, onUpload, label = "Upload File", accept = "image/*,application/pdf", className }: FileUploadProps) {
+export function FileUpload({ value, onUpload, label = "Upload File", accept = "image/*,video/*,application/pdf", className }: FileUploadProps) {
   const [loading, setLoading] = useState(false);
   const { token } = useAuthStore();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // ... existing code ...
 
-    setLoading(true);
-    const formData = new FormData();
-    formData.append('file', file);
+  const isVideo = (url: string) => {
+    return url.match(/\.(mp4|webm|ogg|mov)$/i);
+  };
 
-    try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${API_URL}/uploads`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
-
-      if (!res.ok) throw new Error('Upload failed');
-
-      const data = await res.json();
-      onUpload(data.url);
-    } catch (error) {
-      console.error(error);
-      alert('Upload failed');
-    } finally {
-      setLoading(false);
-      if (inputRef.current) inputRef.current.value = '';
-    }
+  const isImage = (url: string) => {
+    return url.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i);
   };
 
   const clearFile = () => {
@@ -55,26 +34,19 @@ export function FileUpload({ value, onUpload, label = "Upload File", accept = "i
 
   return (
     <div className={`space-y-2 ${className}`}>
-      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 sr-only">
-        {label}
-      </label>
-      <input 
-        ref={inputRef}
-        type="file" 
-        accept={accept} 
-        onChange={handleFileChange} 
-        className="hidden" 
-      />
+      {/* ... existing code ... */}
       
       {value ? (
         <div className="relative group w-full h-full min-h-[120px] border rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-            {value.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+            {isImage(value) ? (
                  <Image 
                    src={value} 
                    alt="Uploaded file" 
                    fill 
                    className="object-contain"
                  />
+            ) : isVideo(value) ? (
+                <video src={value} className="w-full h-full object-contain" controls />
             ) : (
                 <div className="flex flex-col items-center text-zinc-500">
                     <FileIcon className="w-12 h-12 mb-2" />
@@ -101,7 +73,7 @@ export function FileUpload({ value, onUpload, label = "Upload File", accept = "i
             <>
               <Upload className="w-8 h-8 text-zinc-400 mb-2" />
               <p className="text-sm text-zinc-500 font-medium">Click to upload</p>
-              <p className="text-xs text-zinc-400 mt-1">Images or PDF (max 5MB)</p>
+              <p className="text-xs text-zinc-400 mt-1">Images, Videos or PDF</p>
             </>
           )}
         </div>

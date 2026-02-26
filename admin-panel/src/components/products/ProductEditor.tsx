@@ -13,6 +13,7 @@ import { useToastStore } from '@/store/useToastStore';
 import AttributeSelector from './AttributeSelector';
 import SkuMatrix, { SkuRow } from './SkuMatrix';
 import { FileUpload } from '@/components/FileUpload';
+import RichTextEditor from '@/components/RichTextEditor';
 
 const MATERIAL_OPTIONS = {
   upper: ['Genuine Leather', 'PU Leather', 'Mesh', 'Canvas', 'Suede', 'Microfiber', 'Synthetic', 'Flyknit'],
@@ -331,6 +332,10 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
     setFormData({ ...formData, images: newImages });
   };
 
+  const isVideo = (url: string) => {
+    return url.match(/\.(mp4|webm|ogg)$/i);
+  };
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-20">
       <div className="flex items-center gap-4">
@@ -359,10 +364,9 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
 
                 <div>
                   <label className="block text-sm font-medium mb-1">Description</label>
-                  <textarea 
-                    className="flex w-full rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300 min-h-[160px]"
+                  <RichTextEditor 
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={(val) => setFormData({ ...formData, description: val })}
                     placeholder="Product description..."
                   />
                 </div>
@@ -376,15 +380,20 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                <div className="grid grid-cols-4 gap-4">
                  {formData.images.map((img, idx) => (
                    <div key={idx} className="relative group aspect-square border rounded-lg overflow-hidden bg-zinc-50">
-                     <img src={img} alt="Product" className="w-full h-full object-cover" />
+                     {isVideo(img) ? (
+                        <video src={img} className="w-full h-full object-cover" controls />
+                     ) : (
+                        <img src={img} alt="Product" className="w-full h-full object-cover" />
+                     )}
                      {idx === 0 && (
                         <div className="absolute top-0 left-0 bg-zinc-900 text-white text-[10px] px-2 py-0.5 rounded-br font-medium z-10">
                           Main
                         </div>
                      )}
                      <button 
+                       type="button"
                        onClick={() => removeImage(idx)}
-                       className="absolute top-1 right-1 p-1.5 bg-white/90 text-red-600 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                       className="absolute top-1 right-1 p-1.5 bg-white/90 text-red-600 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-20"
                      >
                        <Trash2 className="h-4 w-4" />
                      </button>
@@ -411,7 +420,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                     placeholder="Or paste image URL..."
                     className="flex-1"
                   />
-                  <Button size="sm" variant="secondary" onClick={() => addImage(newImageUrl)}>
+                  <Button size="sm" variant="secondary" type="button" onClick={() => addImage(newImageUrl)}>
                     Add URL
                   </Button>
                </div>
@@ -465,19 +474,6 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium mb-1">Compare at price</label>
-                        <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">$</span>
-                            <Input 
-                              type="number"
-                              placeholder="0.00"
-                              className="pl-7"
-                              disabled
-                            />
-                        </div>
-                      </div>
-                      
-                      <div>
                         <label className="block text-sm font-medium mb-1">Stock</label>
                         <Input 
                           type="number"
@@ -486,47 +482,13 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                           placeholder="0"
                         />
                       </div>
-
-                      <div>
-                        <label className="block text-sm font-medium mb-1">MOQ</label>
-                        <Input 
-                          type="number"
-                          value={formData.moq}
-                          onChange={(e) => setFormData({ ...formData, moq: e.target.value })}
-                          placeholder="1"
-                        />
-                      </div>
                     </div>
                 </div>
               )}
            </div>
 
-           {/* Material Details */}
-           <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-6">
-              <h2 className="font-semibold text-lg">Material Specifications</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {(Object.keys(MATERIAL_OPTIONS) as Array<keyof typeof MATERIAL_OPTIONS>).map((key) => (
-                  <div key={key}>
-                    <label className="block text-sm font-medium mb-1 capitalize">{key} Material</label>
-                    <Input 
-                      list={`material-options-${key}`}
-                      value={formData.materialDetail[key]}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
-                        materialDetail: { ...formData.materialDetail, [key]: e.target.value } 
-                      })}
-                      placeholder={`Select or type...`}
-                    />
-                    <datalist id={`material-options-${key}`}>
-                      {MATERIAL_OPTIONS[key].map((opt) => (
-                        <option key={opt} value={opt} />
-                      ))}
-                    </datalist>
-                  </div>
-                ))}
-              </div>
-           </div>
-
+           {/* Material Details (Hidden as per request) */}
+           
            {/* Trade & Logistics (Hidden/Defaulted for now as per request) */}
         </div>
 

@@ -3,9 +3,11 @@
 
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/input';
-import { Trash2, Link as LinkIcon, Upload } from 'lucide-react';
+import { Trash2, Link as LinkIcon, Upload, Image as ImageIcon, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/button';
+import { FileUpload } from '@/components/FileUpload';
 
+// ... existing interfaces ...
 interface AttributeValue {
   id: string;
   value: string;
@@ -24,7 +26,7 @@ export interface SkuRow {
   skuCode: string;
   price: string;
   stock: string;
-  moq: string;
+  // moq: string; // Removed as per request
   imageUrl: string;
   attributes: {
     attributeId: string;
@@ -48,9 +50,13 @@ export default function SkuMatrix({ attributes, baseProductCode, onChange, initi
   const { addToast } = useToastStore();
   const [rows, setRows] = useState<SkuRow[]>(initialSkus);
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+  
+  // Grouping State
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   // Generate rows based on attributes
   useEffect(() => {
+    // ... existing generation logic ...
     if (attributes.length === 0) {
       setRows([]);
       return;
@@ -72,28 +78,18 @@ export default function SkuMatrix({ attributes, baseProductCode, onChange, initi
       return r;
     };
 
-    // Prepare arrays of values [ [val1, val2], [val3, val4] ]
     const attrValues = attributes.map(a => a.selectedValues.map(v => ({
       ...v,
       _parentAttr: a
     })));
 
-    // If any attribute has no values selected, we can't generate complete SKUs yet
-    if (attrValues.some(arr => arr.length === 0)) {
-       // Optional: Decide if we want to show nothing or partial. 
-       // Usually we wait until at least one value is selected for each attr.
-       return;
-    }
+    if (attrValues.some(arr => arr.length === 0)) return;
 
     const combinations = cartesian(attrValues);
 
     const newRows: SkuRow[] = combinations.map(combo => {
-      // Create a unique key for this combination: "valId1-valId2"
       const key = combo.map((c: any) => c.id).sort().join('-');
-      
-      // Check if we already have this row (preserve user edits)
       const existing = rows.find(r => r.key === key);
-      
       if (existing) return existing;
 
       const suffix = combo.map((c: any) => {
@@ -108,7 +104,7 @@ export default function SkuMatrix({ attributes, baseProductCode, onChange, initi
         skuCode: defaultSku,
         price: '0',
         stock: '100',
-        moq: '1',
+        // moq: '1', // Removed
         imageUrl: '',
         attributes: combo.map((c: any) => ({
           attributeId: c._parentAttr.attributeId,
@@ -121,6 +117,15 @@ export default function SkuMatrix({ attributes, baseProductCode, onChange, initi
 
     setRows(newRows);
     onChange(newRows);
+    
+    // Auto-expand all groups initially
+    const groups = new Set<string>();
+    newRows.forEach(r => {
+        const groupKey = r.attributes[0]?.valueName || 'Default';
+        groups.add(groupKey);
+    });
+    setExpandedGroups(groups);
+
   }, [attributes, baseProductCode]);
 
   const parseName = (jsonOrString: string) => {
@@ -132,133 +137,163 @@ export default function SkuMatrix({ attributes, baseProductCode, onChange, initi
     }
   };
 
-  const updateRow = (index: number, field: keyof SkuRow, value: string) => {
-    const newRows = [...rows];
-    // @ts-ignore
-    newRows[index][field] = value;
+  const updateRow = (key: string, field: keyof SkuRow, value: string) => {
+    const newRows = rows.map(r => r.key === key ? { ...r, [field]: value } : r);
     setRows(newRows);
     onChange(newRows);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleGroupImageUpload = (groupValue: string, url: string) => {
+     // Apply image to all rows in this group
+     const newRows = rows.map(r => {
+         if (r.attributes[0]?.valueName === groupValue) {
+             return { ...r, imageUrl: url };
+         }
+         return r;
+     });
+     setRows(newRows);
+     onChange(newRows);
+  };
 
-    const formData = new FormData();
-    formData.append('file', file);
-
-    setUploadingIdx(idx);
-    try {
-      const res = await api.post('/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      updateRow(idx, 'imageUrl', res.data.url);
-      addToast('Image uploaded successfully', 'success');
-    } catch (error) {
-      addToast('Failed to upload image', 'error');
-    } finally {
-      setUploadingIdx(null);
-    }
+  const toggleGroup = (groupKey: string) => {
+      const newExpanded = new Set(expandedGroups);
+      if (newExpanded.has(groupKey)) {
+          newExpanded.delete(groupKey);
+      } else {
+          newExpanded.add(groupKey);
+      }
+      setExpandedGroups(newExpanded);
   };
 
   if (attributes.length === 0) return null;
 
+  // Group rows by the first attribute (e.g. Color)
+  const groupedRows = rows.reduce((acc, row) => {
+      const groupKey = row.attributes[0]?.valueName || 'Default';
+      if (!acc[groupKey]) acc[groupKey] = [];
+      acc[groupKey].push(row);
+      return acc;
+  }, {} as Record<string, SkuRow[]>);
+
+  const firstAttrName = attributes[0]?.attributeName || 'Variant';
+
   return (
     <div className="space-y-4">
-      <h3 className="font-medium">SKU Matrix</h3>
-      <div className="overflow-x-auto border rounded-md">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 font-medium">
-            <tr>
-              <th className="px-4 py-3">Variant</th>
-              <th className="px-4 py-3 w-48">SKU Code (Editable)</th>
-              <th className="px-4 py-3 w-32">Price ($)</th>
-              <th className="px-4 py-3 w-24">Stock</th>
-              <th className="px-4 py-3 w-24">MOQ</th>
-              <th className="px-4 py-3 w-64">Image URL</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-            {rows.map((row, idx) => (
-              <tr key={row.key} className="bg-white dark:bg-zinc-900">
-                <td className="px-4 py-3">
-                  <div className="flex flex-col gap-1">
-                    {row.attributes.map(a => (
-                      <span key={a.attributeId} className="text-xs px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 w-fit">
-                        {a.attributeName}: {a.valueName}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <Input 
-                    value={row.skuCode} 
-                    onChange={(e) => updateRow(idx, 'skuCode', e.target.value)}
-                    className="h-8"
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  <Input 
-                    type="number" 
-                    value={row.price} 
-                    onChange={(e) => updateRow(idx, 'price', e.target.value)}
-                    className="h-8"
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  <Input 
-                    type="number" 
-                    value={row.stock} 
-                    onChange={(e) => updateRow(idx, 'stock', e.target.value)}
-                    className="h-8"
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  <Input 
-                    type="number" 
-                    value={row.moq} 
-                    onChange={(e) => updateRow(idx, 'moq', e.target.value)}
-                    className="h-8"
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-2 items-center">
-                    <div className="relative flex-1">
-                      <Input 
-                        value={row.imageUrl} 
-                        onChange={(e) => updateRow(idx, 'imageUrl', e.target.value)}
-                        placeholder="https://..."
-                        className="h-8 text-xs pr-8"
-                      />
-                       <label className="absolute right-1 top-1 p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded cursor-pointer">
-                          {uploadingIdx === idx ? (
-                            <span className="h-3 w-3 block animate-spin rounded-full border-2 border-zinc-400 border-t-transparent"></span>
-                          ) : (
-                            <Upload className="h-3 w-3 text-zinc-500" />
-                          )}
-                          <input 
-                            type="file" 
-                            className="hidden" 
-                            accept="image/*"
-                            onChange={(e) => handleFileUpload(e, idx)}
-                          />
-                       </label>
-                    </div>
-                    {row.imageUrl && (
-                       <img src={row.imageUrl} alt="Preview" className="h-8 w-8 rounded object-cover border bg-white" />
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="flex items-center justify-between">
+          <h3 className="font-medium text-sm">Variants</h3>
+          <div className="text-xs text-zinc-500">
+              Total {rows.length} variants
+          </div>
       </div>
-      {rows.length === 0 && (
-         <div className="text-center py-4 text-zinc-500 border rounded-md border-dashed">
-            Select attribute values above to generate SKUs.
-         </div>
-      )}
+      
+      <div className="border rounded-lg divide-y divide-zinc-200 dark:divide-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+          {Object.entries(groupedRows).map(([groupValue, groupRows]) => {
+              const isExpanded = expandedGroups.has(groupValue);
+              const firstRow = groupRows[0];
+              const groupImage = firstRow.imageUrl; // Use first row's image as group image representation
+
+              return (
+                  <div key={groupValue} className="bg-white dark:bg-zinc-900">
+                      {/* Group Header */}
+                      <div className="flex items-center p-3 bg-zinc-50/50 dark:bg-zinc-800/30 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                          <button 
+                            onClick={() => toggleGroup(groupValue)}
+                            className="mr-3 p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-500"
+                          >
+                              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          </button>
+                          
+                          <div className="flex items-center gap-3 flex-1">
+                              {/* Group Image Uploader */}
+                              <div className="relative group/img h-10 w-10 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden flex-shrink-0">
+                                  {groupImage ? (
+                                      <img src={groupImage} alt={groupValue} className="h-full w-full object-cover" />
+                                  ) : (
+                                      <ImageIcon className="h-4 w-4 text-zinc-300 m-auto" />
+                                  )}
+                                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity cursor-pointer">
+                                      <FileUpload 
+                                        onUpload={(url) => handleGroupImageUpload(groupValue, url)}
+                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                      />
+                                      <Upload className="h-3 w-3 text-white pointer-events-none" />
+                                  </div>
+                              </div>
+                              
+                              <span className="font-medium text-sm">{groupValue}</span>
+                              <span className="text-xs text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
+                                  {groupRows.length} variants
+                              </span>
+                          </div>
+                      </div>
+
+                      {/* Group Rows */}
+                      {isExpanded && (
+                          <div className="border-t border-zinc-100 dark:border-zinc-800">
+                              <table className="w-full text-sm text-left">
+                                  <thead className="text-xs text-zinc-500 bg-zinc-50/30 dark:bg-zinc-800/30 border-b border-zinc-100 dark:border-zinc-800">
+                                      <tr>
+                                          <th className="px-4 py-2 font-medium">Variant</th>
+                                          <th className="px-4 py-2 font-medium">Price</th>
+                                          <th className="px-4 py-2 font-medium">Quantity</th>
+                                          <th className="px-4 py-2 font-medium">SKU</th>
+                                          <th className="px-4 py-2 font-medium w-10"></th>
+                                      </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
+                                      {groupRows.map((row) => (
+                                          <tr key={row.key} className="group hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30">
+                                              <td className="px-4 py-2">
+                                                  <div className="flex flex-col">
+                                                      {row.attributes.filter(a => a.attributeName !== firstAttrName).map(a => (
+                                                          <span key={a.attributeId} className="text-sm">
+                                                              {a.valueName}
+                                                          </span>
+                                                      ))}
+                                                      {row.attributes.length === 1 && <span className="text-zinc-400 text-xs">Default</span>}
+                                                  </div>
+                                              </td>
+                                              <td className="px-4 py-2 w-32">
+                                                  <div className="relative">
+                                                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-zinc-400 text-xs">$</span>
+                                                      <Input 
+                                                          type="number" 
+                                                          value={row.price} 
+                                                          onChange={(e) => updateRow(row.key, 'price', e.target.value)}
+                                                          className="h-8 pl-5 bg-transparent border-transparent hover:border-zinc-200 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-all text-right"
+                                                          placeholder="0.00"
+                                                      />
+                                                  </div>
+                                              </td>
+                                              <td className="px-4 py-2 w-24">
+                                                  <Input 
+                                                      type="number" 
+                                                      value={row.stock} 
+                                                      onChange={(e) => updateRow(row.key, 'stock', e.target.value)}
+                                                      className="h-8 bg-transparent border-transparent hover:border-zinc-200 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-all text-right"
+                                                      placeholder="0"
+                                                  />
+                                              </td>
+                                              <td className="px-4 py-2 w-40">
+                                                  <Input 
+                                                      value={row.skuCode} 
+                                                      onChange={(e) => updateRow(row.key, 'skuCode', e.target.value)}
+                                                      className="h-8 bg-transparent border-transparent hover:border-zinc-200 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-all"
+                                                  />
+                                              </td>
+                                              <td className="px-4 py-2 text-center">
+                                                  {/* Optional: Add delete variant button here if needed */}
+                                              </td>
+                                          </tr>
+                                      ))}
+                                  </tbody>
+                              </table>
+                          </div>
+                      )}
+                  </div>
+              );
+          })}
+      </div>
     </div>
   );
 }
