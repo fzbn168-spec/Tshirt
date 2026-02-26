@@ -462,6 +462,7 @@ export class ProductsService {
           },
         },
         category: true,
+        sizeChart: true,
       },
       orderBy,
       skip,
