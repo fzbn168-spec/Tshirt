@@ -76,9 +76,11 @@ export default function ProductsPage() {
   }
 
   if (error) {
+    console.error('Products Query Error:', error); // Log error to console for debugging
     return (
       <div className="p-8 text-center text-red-500">
         {t('loadError')}
+        <div className="text-xs text-zinc-400 mt-2">{error instanceof Error ? error.message : 'Unknown Error'}</div>
       </div>
     );
   }
