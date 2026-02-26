@@ -158,7 +158,6 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                   skuCode: sku.skuCode,
                   price: sku.price.toString(),
                   stock: sku.stock.toString(),
-                  moq: sku.moq.toString(),
                   imageUrl: sku.image || '',
                   attributes: sku.attributeValues.map((av: any) => {
                      const attrId = av.attributeValue.attributeId;
@@ -231,7 +230,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
           const baseSku = {
             skuCode: sku.skuCode,
             price: Number(sku.price),
-            moq: Number(sku.moq),
+            moq: 1,
             stock: Number(sku.stock),
             image: sku.imageUrl || undefined,
             specs: JSON.stringify({}),
