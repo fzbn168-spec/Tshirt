@@ -399,11 +399,11 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                    </div>
                  ))}
                  
-                 <div className="aspect-square border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-lg flex flex-col items-center justify-center hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                 <div className="relative aspect-square border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-lg flex flex-col items-center justify-center hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <FileUpload 
                       onUpload={addImage}
                       label="Add Media"
-                      className="w-full h-full opacity-0 absolute cursor-pointer"
+                      className="w-full h-full opacity-0 absolute inset-0 cursor-pointer"
                     />
                     <div className="pointer-events-none flex flex-col items-center gap-2 text-zinc-500">
                         <Plus className="h-6 w-6" />
