@@ -49,6 +49,14 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
     originCountry: 'China',
     loadingPort: 'Xiamen',
     season: '',
+    // Product Org
+    vendor: '',
+    productType: '',
+    tags: '',
+    isPublished: false,
+    // Single SKU Extras
+    barcode: '',
+    continueSelling: false,
     // Packing Info (for default SKU)
     itemsPerCarton: '',
     netWeight: '',
@@ -103,6 +111,12 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
         originCountry: initialData.originCountry || 'China',
         loadingPort: initialData.loadingPort || 'Xiamen',
         season: initialData.season || '',
+        vendor: initialData.vendor || '',
+        productType: initialData.productType || '',
+        tags: initialData.tags || '',
+        isPublished: initialData.isPublished || false,
+        barcode: initialData.skus?.[0]?.barcode || '',
+        continueSelling: initialData.skus?.[0]?.specs ? JSON.parse(initialData.skus[0].specs).continueSelling : false,
         itemsPerCarton: initialData.skus?.[0]?.itemsPerCarton?.toString() || '',
         netWeight: initialData.skus?.[0]?.netWeight?.toString() || '',
         grossWeight: initialData.skus?.[0]?.grossWeight?.toString() || '',
@@ -158,6 +172,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                   skuCode: sku.skuCode,
                   price: sku.price.toString(),
                   stock: sku.stock.toString(),
+                  barcode: sku.barcode || '',
                   imageUrl: sku.image || '',
                   attributes: sku.attributeValues.map((av: any) => {
                      const attrId = av.attributeValue.attributeId;
@@ -232,6 +247,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
             price: Number(sku.price),
             moq: 1,
             stock: Number(sku.stock),
+            barcode: sku.barcode,
             image: sku.imageUrl || undefined,
             specs: JSON.stringify({}),
             attributeValueIds: sku.attributes.map((a) => a.valueId),
@@ -256,7 +272,8 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
             price: Number(payload.singlePrice),
             moq: Number(payload.moq),
             stock: payload.singleStock ? Number(payload.singleStock) : 0,
-            specs: JSON.stringify({}),
+            barcode: payload.barcode,
+            specs: JSON.stringify({ continueSelling: payload.continueSelling }),
             ...packingData,
           },
         ];
@@ -287,6 +304,10 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
       submitData.loadingPort = payload.loadingPort;
       submitData.season = payload.season;
       submitData.attributeIds = attributeIds;
+      submitData.vendor = payload.vendor;
+      submitData.productType = payload.productType;
+      submitData.tags = payload.tags;
+      submitData.isPublished = payload.isPublished;
       submitData.skus = skusToSubmit;
 
       if (mode === 'create') {
@@ -369,6 +390,25 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                     placeholder="Product description..."
                   />
                 </div>
+
+                <div>
+                   <label className="block text-sm font-medium mb-1">Category</label>
+                   <select 
+                      className="flex w-full rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                      value={formData.categoryId}
+                      onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                   >
+                     <option value="">Select Category</option>
+                     {categories?.map((cat: any) => (
+                       <option key={cat.id} value={cat.id}>
+                         {cat.name ? (JSON.parse(cat.name).en || 'Category') : 'Category'}
+                       </option>
+                     ))}
+                   </select>
+                   <p className="text-xs text-zinc-500 mt-1">
+                      Determines tax rates and adds metafields to improve search, filtering, and cross-channel sales.
+                   </p>
+                </div>
               </div>
            </div>
 
@@ -399,15 +439,22 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                    </div>
                  ))}
                  
-                 <div className="relative aspect-square border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-lg flex flex-col items-center justify-center hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                    <FileUpload 
-                      onUpload={addImage}
-                      label="Add Media"
-                      className="w-full h-full opacity-0 absolute inset-0 cursor-pointer"
-                    />
-                    <div className="pointer-events-none flex flex-col items-center gap-2 text-zinc-500">
-                        <Plus className="h-6 w-6" />
-                        <span className="text-xs font-medium">Add Media</span>
+                 <div className="relative aspect-square border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-lg flex flex-col items-center justify-center hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors p-4 text-center">
+                    <div className="flex flex-col items-center gap-2 mb-2">
+                        <Button size="sm" variant="secondary" className="relative w-full text-xs h-7">
+                           Upload New
+                           <FileUpload 
+                              onUpload={addImage}
+                              label=""
+                              className="absolute inset-0 opacity-0 cursor-pointer"
+                           />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="w-full text-xs h-7">
+                           Select Existing
+                        </Button>
+                    </div>
+                    <div className="text-[10px] text-zinc-400">
+                        Supports Image, Video, 3D
                     </div>
                  </div>
                </div>
@@ -443,21 +490,10 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
               />
               
               {selectedAttributes.length === 0 && (
-                <div className="bg-zinc-50 dark:bg-zinc-800/50 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-medium text-sm">Pricing & Inventory</h3>
-                    </div>
+                <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-6">
+                    <h3 className="font-semibold text-lg">Pricing</h3>
                     
                     <div className="grid grid-cols-2 gap-6">
-                      <div className="col-span-2">
-                         <label className="block text-sm font-medium mb-1">SKU Code</label>
-                         <Input 
-                           value={formData.skuCode}
-                           onChange={(e) => setFormData({ ...formData, skuCode: e.target.value })}
-                           placeholder="e.g. PROD-001"
-                         />
-                      </div>
-                      
                       <div>
                         <label className="block text-sm font-medium mb-1">Price</label>
                         <div className="relative">
@@ -471,9 +507,52 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                             />
                         </div>
                       </div>
+                      <div>
+                         <label className="block text-sm font-medium mb-1">Compare-at Price</label>
+                         <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">$</span>
+                            <Input placeholder="0.00" className="pl-7" disabled />
+                         </div>
+                      </div>
+                    </div>
+                </div>
+              )}
+
+              {selectedAttributes.length === 0 && (
+                <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-6">
+                    <h3 className="font-semibold text-lg">Inventory</h3>
+                    
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="col-span-2">
+                         <label className="block text-sm font-medium mb-1">SKU (Stock Keeping Unit)</label>
+                         <Input 
+                           value={formData.skuCode}
+                           onChange={(e) => setFormData({ ...formData, skuCode: e.target.value })}
+                           placeholder="e.g. PROD-001"
+                         />
+                      </div>
+                      
+                      <div className="col-span-2">
+                         <label className="block text-sm font-medium mb-1">Barcode (ISBN, UPC, GTIN, etc.)</label>
+                         <Input 
+                           value={formData.barcode}
+                           onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
+                           placeholder=""
+                         />
+                      </div>
+
+                      <div className="flex items-center gap-2 col-span-2">
+                          <input 
+                            type="checkbox" 
+                            checked={formData.continueSelling}
+                            onChange={(e) => setFormData({ ...formData, continueSelling: e.target.checked })}
+                            className="rounded border-zinc-300"
+                          />
+                          <span className="text-sm">Continue selling when out of stock</span>
+                      </div>
 
                       <div>
-                        <label className="block text-sm font-medium mb-1">Stock</label>
+                        <label className="block text-sm font-medium mb-1">Quantity</label>
                         <Input 
                           type="number"
                           value={formData.singleStock}
@@ -484,6 +563,34 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                     </div>
                 </div>
               )}
+
+              {/* Shipping */}
+              <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-6">
+                  <h3 className="font-semibold text-lg">Shipping</h3>
+                  
+                  <div className="flex items-center gap-2 mb-4">
+                     <input type="checkbox" checked readOnly className="rounded border-zinc-300" />
+                     <span className="text-sm">This is a physical product</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Weight</label>
+                        <div className="flex gap-2">
+                           <Input 
+                             type="number"
+                             value={formData.netWeight}
+                             onChange={(e) => setFormData({ ...formData, netWeight: e.target.value })}
+                             placeholder="0.0"
+                           />
+                           <select className="rounded-md border border-zinc-200 bg-transparent px-3 text-sm">
+                             <option>kg</option>
+                             <option>lb</option>
+                           </select>
+                        </div>
+                      </div>
+                  </div>
+              </div>
            </div>
 
            {/* Material Details (Hidden as per request) */}
@@ -494,34 +601,39 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
         {/* Right Column: Sidebar */}
         <div className="space-y-6">
           
+          {/* Status */}
+          <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-4">
+             <h2 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">Status</h2>
+             <select 
+                className="flex w-full rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                value={formData.isPublished ? 'active' : 'draft'}
+                onChange={(e) => setFormData({ ...formData, isPublished: e.target.value === 'active' })}
+             >
+                <option value="active">Active</option>
+                <option value="draft">Draft</option>
+             </select>
+          </div>
+
           {/* Product Organization */}
           <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-4">
             <h2 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">Product Organization</h2>
             
             <div>
-              <label className="block text-xs font-medium mb-1.5 text-zinc-500">Category</label>
-              <select 
-                className="flex w-full rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
-                value={formData.categoryId}
-                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-              >
-                <option value="">Select Category</option>
-                {categories?.map((cat: any) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name ? (JSON.parse(cat.name).en || 'Category') : 'Category'}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
                <label className="block text-xs font-medium mb-1.5 text-zinc-500">Product Type</label>
-               <Input placeholder="e.g. Sneaker" />
+               <Input 
+                 value={formData.productType}
+                 onChange={(e) => setFormData({ ...formData, productType: e.target.value })}
+                 placeholder="e.g. Sneaker"
+               />
             </div>
 
             <div>
                <label className="block text-xs font-medium mb-1.5 text-zinc-500">Vendor</label>
-               <Input placeholder="e.g. Nike" />
+               <Input 
+                 value={formData.vendor}
+                 onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+                 placeholder="e.g. Nike"
+               />
             </div>
 
             <div>
@@ -531,7 +643,11 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
 
             <div>
                <label className="block text-xs font-medium mb-1.5 text-zinc-500">Tags</label>
-               <Input placeholder="Vintage, Summer, Sale" />
+               <Input 
+                 value={formData.tags}
+                 onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                 placeholder="Vintage, Summer, Sale"
+               />
             </div>
           </div>
 

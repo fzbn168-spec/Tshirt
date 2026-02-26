@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+// import { Inter } from "next/font/google";
 import "../globals.css";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
@@ -7,7 +7,7 @@ import { notFound } from 'next/navigation';
 import QueryProvider from '@/components/providers/QueryProvider';
 import { ToastContainer } from '@/components/ToastContainer';
 
-const inter = Inter({ subsets: ["latin"] });
+// const inter = Inter({ subsets: ["latin"] });
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -43,7 +43,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale}>
-      <body className={`${inter.className} antialiased min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-900`}>
+      <body className={`font-sans antialiased min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-900`}>
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
             <main className="flex-grow">

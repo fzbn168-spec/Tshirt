@@ -1,3 +1,4 @@
+
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -7,8 +8,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  // 使用生产环境的 DATABASE_URL（例如: postgresql://user:pass@postgres:5432/dbname）
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -157,6 +157,11 @@ model Product {
   hsCode        String?  // 海关编码 (用于报关)
   material      String?  // 材质成分
   
+  // 组织信息 (Shopify-like)
+  vendor        String?  // 厂商
+  productType   String?  // 产品类型
+  tags          String?  // 标签 (逗号分隔 or JSON)
+
   isPublished   Boolean  @default(false) // 上架状态
   
   // 关联 SKU (具体变体)
@@ -215,6 +220,7 @@ model Sku {
   product   Product  @relation(fields: [productId], references: [id])
 
   skuCode   String   @unique // 商家唯一编码 (如: HB-RED-40)
+  barcode   String?  // 条码 (ISBN, UPC, GTIN)
   
   // 规格快照 (冗余存储，方便查询)
   specs     String   // JSON: {"color": "Red", "size": "40"}

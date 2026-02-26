@@ -26,7 +26,7 @@ export interface SkuRow {
   skuCode: string;
   price: string;
   stock: string;
-  // moq: string; // Removed as per request
+  barcode: string;
   imageUrl: string;
   attributes: {
     attributeId: string;
@@ -104,7 +104,7 @@ export default function SkuMatrix({ attributes, baseProductCode, onChange, initi
         skuCode: defaultSku,
         price: '0',
         stock: '100',
-        // moq: '1', // Removed
+        barcode: '',
         imageUrl: '',
         attributes: combo.map((c: any) => ({
           attributeId: c._parentAttr.attributeId,
@@ -237,7 +237,7 @@ export default function SkuMatrix({ attributes, baseProductCode, onChange, initi
                                           <th className="px-4 py-2 font-medium">Price</th>
                                           <th className="px-4 py-2 font-medium">Quantity</th>
                                           <th className="px-4 py-2 font-medium">SKU</th>
-                                          <th className="px-4 py-2 font-medium w-10"></th>
+                                          <th className="px-4 py-2 font-medium">Barcode</th>
                                       </tr>
                                   </thead>
                                   <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
@@ -281,8 +281,13 @@ export default function SkuMatrix({ attributes, baseProductCode, onChange, initi
                                                       className="h-8 bg-transparent border-transparent hover:border-zinc-200 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-all"
                                                   />
                                               </td>
-                                              <td className="px-4 py-2 text-center">
-                                                  {/* Optional: Add delete variant button here if needed */}
+                                              <td className="px-4 py-2 w-40">
+                                                  <Input 
+                                                      value={row.barcode} 
+                                                      onChange={(e) => updateRow(row.key, 'barcode', e.target.value)}
+                                                      className="h-8 bg-transparent border-transparent hover:border-zinc-200 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-all"
+                                                      placeholder="ISBN/UPC"
+                                                  />
                                               </td>
                                           </tr>
                                       ))}
