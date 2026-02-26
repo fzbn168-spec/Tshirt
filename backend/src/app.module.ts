@@ -23,6 +23,7 @@ import { SizeChartsModule } from './size-charts/size-charts.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { SystemSettingsModule } from './system-settings/system-settings.module';
+import { PackagesModule } from './packages/packages.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { SystemSettingsModule } from './system-settings/system-settings.module';
     SizeChartsModule,
     ReviewsModule,
     AnalyticsModule,
+    PackagesModule,
   ],
   controllers: [],
   providers: [

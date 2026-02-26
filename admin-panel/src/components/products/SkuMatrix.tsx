@@ -53,10 +53,14 @@ export default function SkuMatrix({ attributes, baseProductCode, onChange, initi
   
   // Grouping State
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [groupByAttributeId, setGroupByAttributeId] = useState<string>('');
 
   // Generate rows based on attributes
   useEffect(() => {
     // ... existing generation logic ...
+    if (attributes.length > 0 && !groupByAttributeId) {
+        setGroupByAttributeId(attributes[0].attributeId);
+    }
     if (attributes.length === 0) {
       setRows([]);
       return;
@@ -146,7 +150,8 @@ export default function SkuMatrix({ attributes, baseProductCode, onChange, initi
   const handleGroupImageUpload = (groupValue: string, url: string) => {
      // Apply image to all rows in this group
      const newRows = rows.map(r => {
-         if (r.attributes[0]?.valueName === groupValue) {
+         const attr = r.attributes.find(a => a.attributeId === groupingAttrId);
+         if (attr?.valueName === groupValue) {
              return { ...r, imageUrl: url };
          }
          return r;
@@ -167,22 +172,37 @@ export default function SkuMatrix({ attributes, baseProductCode, onChange, initi
 
   if (attributes.length === 0) return null;
 
-  // Group rows by the first attribute (e.g. Color)
+  // Group rows based on selected attribute
+  const groupingAttrId = groupByAttributeId || attributes[0]?.attributeId;
+  const groupingAttrName = attributes.find(a => a.attributeId === groupingAttrId)?.attributeName || 'Variant';
+
+  const totalStock = rows.reduce((sum, r) => sum + (Number(r.stock) || 0), 0);
+
   const groupedRows = rows.reduce((acc, row) => {
-      const groupKey = row.attributes[0]?.valueName || 'Default';
+      const attr = row.attributes.find(a => a.attributeId === groupingAttrId);
+      const groupKey = attr?.valueName || 'Default';
+      
       if (!acc[groupKey]) acc[groupKey] = [];
       acc[groupKey].push(row);
       return acc;
   }, {} as Record<string, SkuRow[]>);
 
-  const firstAttrName = attributes[0]?.attributeName || 'Variant';
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
           <h3 className="font-medium text-sm">Variants</h3>
-          <div className="text-xs text-zinc-500">
-              Total {rows.length} variants
+          
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-zinc-500">Group by:</span>
+            <select 
+              className="text-xs border-none bg-transparent font-medium focus:ring-0 cursor-pointer"
+              value={groupByAttributeId}
+              onChange={(e) => setGroupByAttributeId(e.target.value)}
+            >
+              {attributes.map(a => (
+                <option key={a.attributeId} value={a.attributeId}>{a.attributeName}</option>
+              ))}
+            </select>
           </div>
       </div>
       
@@ -190,7 +210,7 @@ export default function SkuMatrix({ attributes, baseProductCode, onChange, initi
           {Object.entries(groupedRows).map(([groupValue, groupRows]) => {
               const isExpanded = expandedGroups.has(groupValue);
               const firstRow = groupRows[0];
-              const groupImage = firstRow.imageUrl; // Use first row's image as group image representation
+              const groupImage = firstRow.imageUrl; 
 
               return (
                   <div key={groupValue} className="bg-white dark:bg-zinc-900">
@@ -245,7 +265,7 @@ export default function SkuMatrix({ attributes, baseProductCode, onChange, initi
                                           <tr key={row.key} className="group hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30">
                                               <td className="px-4 py-2">
                                                   <div className="flex flex-col">
-                                                      {row.attributes.filter(a => a.attributeName !== firstAttrName).map(a => (
+                                                      {row.attributes.filter(a => a.attributeName !== groupingAttrName).map(a => (
                                                           <span key={a.attributeId} className="text-sm">
                                                               {a.valueName}
                                                           </span>
@@ -298,6 +318,10 @@ export default function SkuMatrix({ attributes, baseProductCode, onChange, initi
                   </div>
               );
           })}
+      </div>
+      
+      <div className="flex justify-end p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg text-sm text-zinc-600 dark:text-zinc-400">
+         Total inventory at all locations: <span className="font-semibold text-zinc-900 dark:text-zinc-100 ml-1">{totalStock} available</span>
       </div>
     </div>
   );

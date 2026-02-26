@@ -11,10 +11,12 @@ import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import Color from '@tiptap/extension-color';
 import { TextStyle } from '@tiptap/extension-text-style';
+import Underline from '@tiptap/extension-underline';
+import TextAlign from '@tiptap/extension-text-align';
 import { 
-  Bold, Italic, List, ListOrdered, Link as LinkIcon, Image as ImageIcon, 
+  Bold, Italic, Underline as UnderlineIcon, List, ListOrdered, Link as LinkIcon, Image as ImageIcon, 
   Youtube as YoutubeIcon, Table as TableIcon, AlignLeft, AlignCenter, AlignRight,
-  Heading1, Heading2, Quote, Undo, Redo, Eraser
+  Heading1, Heading2, Quote, Undo, Redo, Eraser, Baseline, Code, MoreHorizontal
 } from 'lucide-react';
 import { Button } from '@/components/button';
 import { useState } from 'react';
@@ -67,7 +69,32 @@ const MenuBar = ({ editor }: { editor: any }) => {
   };
 
   return (
-    <div className="border-b border-zinc-200 dark:border-zinc-800 p-2 flex flex-wrap gap-1 bg-zinc-50 dark:bg-zinc-900/50">
+    <div className="border-b border-zinc-200 dark:border-zinc-800 p-2 flex flex-wrap items-center gap-1 bg-zinc-50 dark:bg-zinc-900/50">
+      
+      {/* Paragraph / Heading Dropdown */}
+      <select
+        className="h-8 rounded-md border border-zinc-200 bg-transparent px-2 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-950 mr-2"
+        onChange={(e) => {
+           const val = e.target.value;
+           if (val === 'p') editor.chain().focus().setParagraph().run();
+           else if (val === 'h1') editor.chain().focus().toggleHeading({ level: 1 }).run();
+           else if (val === 'h2') editor.chain().focus().toggleHeading({ level: 2 }).run();
+           else if (val === 'h3') editor.chain().focus().toggleHeading({ level: 3 }).run();
+        }}
+        value={
+           editor.isActive('heading', { level: 1 }) ? 'h1' :
+           editor.isActive('heading', { level: 2 }) ? 'h2' :
+           editor.isActive('heading', { level: 3 }) ? 'h3' : 'p'
+        }
+      >
+        <option value="p">Paragraph</option>
+        <option value="h1">Heading 1</option>
+        <option value="h2">Heading 2</option>
+        <option value="h3">Heading 3</option>
+      </select>
+
+      <div className="w-px h-6 bg-zinc-300 dark:bg-zinc-700 mx-1" />
+
       <Button
         size="sm"
         variant="ghost"
@@ -89,35 +116,56 @@ const MenuBar = ({ editor }: { editor: any }) => {
       <Button
         size="sm"
         variant="ghost"
-        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        className={editor.isActive('heading', { level: 2 }) ? 'bg-zinc-200 dark:bg-zinc-800' : ''}
-        title="Heading"
+        onClick={() => editor.chain().focus().toggleUnderline().run()}
+        className={editor.isActive('underline') ? 'bg-zinc-200 dark:bg-zinc-800' : ''}
+        title="Underline"
       >
-        <Heading1 className="h-4 w-4" />
+        <UnderlineIcon className="h-4 w-4" />
       </Button>
       
-      <div className="w-px h-6 bg-zinc-300 dark:bg-zinc-700 mx-1 self-center" />
-
+      {/* Color (A) - Simplified as toggle for now or could be a picker */}
       <Button
         size="sm"
         variant="ghost"
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
-        className={editor.isActive('bulletList') ? 'bg-zinc-200 dark:bg-zinc-800' : ''}
-        title="Bullet List"
+        onClick={() => editor.chain().focus().setColor('#958DF1').run()}
+        className={editor.isActive('textStyle', { color: '#958DF1' }) ? 'bg-zinc-200 dark:bg-zinc-800' : ''}
+        title="Text Color"
       >
-        <List className="h-4 w-4" />
+        <Baseline className="h-4 w-4" />
+      </Button>
+
+      <div className="w-px h-6 bg-zinc-300 dark:bg-zinc-700 mx-1" />
+
+      {/* Alignment */}
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={() => editor.chain().focus().setTextAlign('left').run()}
+        className={editor.isActive({ textAlign: 'left' }) ? 'bg-zinc-200 dark:bg-zinc-800' : ''}
+        title="Align Left"
+      >
+        <AlignLeft className="h-4 w-4" />
       </Button>
       <Button
         size="sm"
         variant="ghost"
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        className={editor.isActive('orderedList') ? 'bg-zinc-200 dark:bg-zinc-800' : ''}
-        title="Ordered List"
+        onClick={() => editor.chain().focus().setTextAlign('center').run()}
+        className={editor.isActive({ textAlign: 'center' }) ? 'bg-zinc-200 dark:bg-zinc-800' : ''}
+        title="Align Center"
       >
-        <ListOrdered className="h-4 w-4" />
+        <AlignCenter className="h-4 w-4" />
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={() => editor.chain().focus().setTextAlign('right').run()}
+        className={editor.isActive({ textAlign: 'right' }) ? 'bg-zinc-200 dark:bg-zinc-800' : ''}
+        title="Align Right"
+      >
+        <AlignRight className="h-4 w-4" />
       </Button>
 
-      <div className="w-px h-6 bg-zinc-300 dark:bg-zinc-700 mx-1 self-center" />
+      <div className="w-px h-6 bg-zinc-300 dark:bg-zinc-700 mx-1" />
 
       <Button
         size="sm"
@@ -178,7 +226,27 @@ const MenuBar = ({ editor }: { editor: any }) => {
         <TableIcon className="h-4 w-4" />
       </Button>
 
-      <div className="w-px h-6 bg-zinc-300 dark:bg-zinc-700 mx-1 self-center" />
+      <div className="w-px h-6 bg-zinc-300 dark:bg-zinc-700 mx-1" />
+      
+      <Button
+        size="sm"
+        variant="ghost"
+        title="More"
+      >
+        <MoreHorizontal className="h-4 w-4" />
+      </Button>
+
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+        className={editor.isActive('codeBlock') ? 'bg-zinc-200 dark:bg-zinc-800' : ''}
+        title="Code"
+      >
+        <Code className="h-4 w-4" />
+      </Button>
+
+      <div className="flex-1" />
 
       <Button
         size="sm"
@@ -221,6 +289,10 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
       TableCell,
       TextStyle,
       Color,
+      Underline,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
     ],
     content: value,
     onUpdate: ({ editor }) => {

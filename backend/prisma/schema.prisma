@@ -1,4 +1,3 @@
-
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -160,7 +159,13 @@ model Product {
   // 组织信息 (Shopify-like)
   vendor        String?  // 厂商
   productType   String?  // 产品类型
+  collection    String?  // 产品系列
   tags          String?  // 标签 (逗号分隔 or JSON)
+
+  // 物流属性
+  weight        Decimal?  // 产品重量 (kg)
+  packageId     String?   
+  package       Package?  @relation(fields: [packageId], references: [id])
 
   isPublished   Boolean  @default(false) // 上架状态
   
@@ -221,6 +226,7 @@ model Sku {
 
   skuCode   String   @unique // 商家唯一编码 (如: HB-RED-40)
   barcode   String?  // 条码 (ISBN, UPC, GTIN)
+  allowBackorder Boolean @default(false) // 缺货时继续销售
   
   // 规格快照 (冗余存储，方便查询)
   specs     String   // JSON: {"color": "Red", "size": "40"}
@@ -505,4 +511,21 @@ model SystemSetting {
   value       String   // e.g., "kg", "cm"
   description String?
   updatedAt   DateTime @updatedAt
+}
+
+// 16. 包装规格 (Package)
+// 管理发货包装箱的规格
+model Package {
+  id        String    @id @default(uuid())
+  name      String    // 包装名称 (如: "Sample Box")
+  length    Decimal   // 长 (cm)
+  width     Decimal   // 宽 (cm)
+  height    Decimal   // 高 (cm)
+  weight    Decimal   // 空箱重量 (kg)
+  isDefault Boolean   @default(false) // 是否为默认包装
+  
+  products  Product[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }

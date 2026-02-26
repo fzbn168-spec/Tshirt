@@ -12,6 +12,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToastStore } from '@/store/useToastStore';
 import AttributeSelector from './AttributeSelector';
 import SkuMatrix, { SkuRow } from './SkuMatrix';
+import AddPackageModal from './AddPackageModal';
 import { FileUpload } from '@/components/FileUpload';
 import RichTextEditor from '@/components/RichTextEditor';
 
@@ -52,6 +53,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
     // Product Org
     vendor: '',
     productType: '',
+    collection: '',
     tags: '',
     isPublished: false,
     // Single SKU Extras
@@ -68,6 +70,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
     cartonWidth: '',
     cartonHeight: '',
     cartonGrossWeight: '',
+    packageId: '',
   });
 
   // Attribute & SKU State
@@ -113,10 +116,11 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
         season: initialData.season || '',
         vendor: initialData.vendor || '',
         productType: initialData.productType || '',
+        collection: initialData.collection || '',
         tags: initialData.tags || '',
         isPublished: initialData.isPublished || false,
         barcode: initialData.skus?.[0]?.barcode || '',
-        continueSelling: initialData.skus?.[0]?.specs ? JSON.parse(initialData.skus[0].specs).continueSelling : false,
+        continueSelling: initialData.skus?.[0]?.allowBackorder || false,
         itemsPerCarton: initialData.skus?.[0]?.itemsPerCarton?.toString() || '',
         netWeight: initialData.skus?.[0]?.netWeight?.toString() || '',
         grossWeight: initialData.skus?.[0]?.grossWeight?.toString() || '',
@@ -127,6 +131,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
         cartonWidth: initialData.skus?.[0]?.cartonWidth?.toString() || '',
         cartonHeight: initialData.skus?.[0]?.cartonHeight?.toString() || '',
         cartonGrossWeight: initialData.skus?.[0]?.cartonGrossWeight?.toString() || '',
+        packageId: initialData.packageId || '',
       });
 
       // Reconstruct Attributes & SKUs for Edit Mode
@@ -218,6 +223,31 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
     },
   });
 
+  const [isAddPackageModalOpen, setIsAddPackageModalOpen] = useState(false);
+
+  // Fetch Packages
+  const { data: packages } = useQuery({
+    queryKey: ['packages'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/packages');
+        return res.data;
+      } catch (e) {
+        return [];
+      }
+    },
+  });
+
+  // Set default package if not set
+  useEffect(() => {
+    if (!formData.packageId && packages && packages.length > 0) {
+       const defaultPkg = packages.find((p: any) => p.isDefault);
+       if (defaultPkg) {
+          setFormData(prev => ({ ...prev, packageId: defaultPkg.id }));
+       }
+    }
+  }, [packages, formData.packageId]);
+
   const mutation = useMutation({
     mutationFn: async (payload: any) => {
       // Transform payload for backend
@@ -249,6 +279,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
             stock: Number(sku.stock),
             barcode: sku.barcode,
             image: sku.imageUrl || undefined,
+            allowBackorder: false,
             specs: JSON.stringify({}),
             attributeValueIds: sku.attributes.map((a) => a.valueId),
             ...packingData,
@@ -273,7 +304,8 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
             moq: Number(payload.moq),
             stock: payload.singleStock ? Number(payload.singleStock) : 0,
             barcode: payload.barcode,
-            specs: JSON.stringify({ continueSelling: payload.continueSelling }),
+            allowBackorder: payload.continueSelling,
+            specs: JSON.stringify({}),
             ...packingData,
           },
         ];
@@ -306,8 +338,11 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
       submitData.attributeIds = attributeIds;
       submitData.vendor = payload.vendor;
       submitData.productType = payload.productType;
+      submitData.collection = payload.collection;
       submitData.tags = payload.tags;
       submitData.isPublished = payload.isPublished;
+      submitData.weight = payload.netWeight ? Number(payload.netWeight) : undefined;
+      submitData.packageId = payload.packageId === 'default' ? undefined : payload.packageId;
       submitData.skus = skusToSubmit;
 
       if (mode === 'create') {
@@ -361,44 +396,44 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
+          返回
         </Button>
-        <h1 className="text-2xl font-bold">{mode === 'create' ? 'New Product' : 'Edit Product'}</h1>
+        <h1 className="text-2xl font-bold">{mode === 'create' ? '新建商品' : '编辑商品'}</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Main Info */}
         <div className="lg:col-span-2 space-y-6">
            <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-6">
-              <h2 className="font-semibold text-lg">Basic Information</h2>
+              <h2 className="font-semibold text-lg">基本信息</h2>
               
               <div className="grid grid-cols-1 gap-6">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Title</label>
+                  <label className="block text-sm font-medium mb-1">标题</label>
                   <Input 
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="e.g. Men's Casual Sneaker"
+                    placeholder="短袖 T 恤"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <label className="block text-sm font-medium mb-1">描述</label>
                   <RichTextEditor 
                     value={formData.description}
                     onChange={(val) => setFormData({ ...formData, description: val })}
-                    placeholder="Product description..."
+                    placeholder=""
                   />
                 </div>
 
                 <div>
-                   <label className="block text-sm font-medium mb-1">Category</label>
+                   <label className="block text-sm font-medium mb-1">类别</label>
                    <select 
                       className="flex w-full rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
                       value={formData.categoryId}
                       onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                    >
-                     <option value="">Select Category</option>
+                     <option value="">选择产品类别</option>
                      {categories?.map((cat: any) => (
                        <option key={cat.id} value={cat.id}>
                          {cat.name ? (JSON.parse(cat.name).en || 'Category') : 'Category'}
@@ -406,7 +441,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                      ))}
                    </select>
                    <p className="text-xs text-zinc-500 mt-1">
-                      Determines tax rates and adds metafields to improve search, filtering, and cross-channel sales.
+                      确定税率并添加元字段，以改进搜索、筛选和跨渠道销售
                    </p>
                 </div>
               </div>
@@ -414,7 +449,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
 
            {/* Media */}
            <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-4">
-            <h2 className="font-semibold text-lg">Media</h2>
+            <h2 className="font-semibold text-lg">媒体文件</h2>
             <div className="space-y-4">
                <div className="grid grid-cols-4 gap-4">
                  {formData.images.map((img, idx) => (
@@ -426,7 +461,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                      )}
                      {idx === 0 && (
                         <div className="absolute top-0 left-0 bg-zinc-900 text-white text-[10px] px-2 py-0.5 rounded-br font-medium z-10">
-                          Main
+                          主图
                         </div>
                      )}
                      <button 
@@ -442,7 +477,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                  <div className="relative aspect-square border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-lg flex flex-col items-center justify-center hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors p-4 text-center">
                     <div className="flex flex-col items-center gap-2 mb-2">
                         <Button size="sm" variant="secondary" className="relative w-full text-xs h-7">
-                           Upload New
+                           上传新文件
                            <FileUpload 
                               onUpload={addImage}
                               label=""
@@ -450,11 +485,11 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                            />
                         </Button>
                         <Button size="sm" variant="ghost" className="w-full text-xs h-7">
-                           Select Existing
+                           选择现有文件
                         </Button>
                     </div>
                     <div className="text-[10px] text-zinc-400">
-                        Supports Image, Video, 3D
+                        支持图片、视频或 3D 模型
                     </div>
                  </div>
                </div>
@@ -463,11 +498,11 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                   <Input 
                     value={newImageUrl} 
                     onChange={(e) => setNewImageUrl(e.target.value)}
-                    placeholder="Or paste image URL..."
+                    placeholder="或粘贴图片网址..."
                     className="flex-1"
                   />
                   <Button size="sm" variant="secondary" type="button" onClick={() => addImage(newImageUrl)}>
-                    Add URL
+                    添加网址
                   </Button>
                </div>
             </div>
@@ -475,7 +510,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
 
            {/* Attributes & SKU Matrix */}
            <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-6">
-              <h2 className="font-semibold text-lg">Variants</h2>
+              <h2 className="font-semibold text-lg">多属性</h2>
               
               <AttributeSelector 
                 initialAttributes={selectedAttributes}
@@ -491,11 +526,11 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
               
               {selectedAttributes.length === 0 && (
                 <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-6">
-                    <h3 className="font-semibold text-lg">Pricing</h3>
+                    <h3 className="font-semibold text-lg">价格</h3>
                     
                     <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium mb-1">Price</label>
+                        <label className="block text-sm font-medium mb-1">价格</label>
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">$</span>
                             <Input 
@@ -508,7 +543,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                         </div>
                       </div>
                       <div>
-                         <label className="block text-sm font-medium mb-1">Compare-at Price</label>
+                         <label className="block text-sm font-medium mb-1">比较价格</label>
                          <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">$</span>
                             <Input placeholder="0.00" className="pl-7" disabled />
@@ -520,20 +555,40 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
 
               {selectedAttributes.length === 0 && (
                 <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-6">
-                    <h3 className="font-semibold text-lg">Inventory</h3>
+                    <div className="flex items-center justify-between">
+                       <h3 className="font-semibold text-lg">库存</h3>
+                       <div className="flex items-center gap-2">
+                          <span className="text-sm">已跟踪库存</span>
+                          <input type="checkbox" checked readOnly className="rounded border-zinc-300" />
+                       </div>
+                    </div>
                     
                     <div className="grid grid-cols-2 gap-6">
                       <div className="col-span-2">
-                         <label className="block text-sm font-medium mb-1">SKU (Stock Keeping Unit)</label>
+                         <label className="block text-sm font-medium mb-1">数量</label>
+                         <div className="flex items-center justify-between border border-zinc-200 rounded-md px-3 py-2 bg-white dark:bg-zinc-900">
+                             <span className="text-sm">商店地点</span>
+                             <Input 
+                               type="number"
+                               value={formData.singleStock}
+                               onChange={(e) => setFormData({ ...formData, singleStock: e.target.value })}
+                               placeholder="0"
+                               className="w-24 text-right border-none shadow-none focus-visible:ring-0 p-0 h-auto"
+                             />
+                         </div>
+                      </div>
+                      
+                      <div>
+                         <label className="block text-sm font-medium mb-1">SKU (库存单位)</label>
                          <Input 
                            value={formData.skuCode}
                            onChange={(e) => setFormData({ ...formData, skuCode: e.target.value })}
-                           placeholder="e.g. PROD-001"
+                           placeholder=""
                          />
                       </div>
                       
-                      <div className="col-span-2">
-                         <label className="block text-sm font-medium mb-1">Barcode (ISBN, UPC, GTIN, etc.)</label>
+                      <div>
+                         <label className="block text-sm font-medium mb-1">条码 (ISBN, UPC, GTIN 等)</label>
                          <Input 
                            value={formData.barcode}
                            onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
@@ -548,17 +603,7 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                             onChange={(e) => setFormData({ ...formData, continueSelling: e.target.checked })}
                             className="rounded border-zinc-300"
                           />
-                          <span className="text-sm">Continue selling when out of stock</span>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Quantity</label>
-                        <Input 
-                          type="number"
-                          value={formData.singleStock}
-                          onChange={(e) => setFormData({ ...formData, singleStock: e.target.value })}
-                          placeholder="0"
-                        />
+                          <span className="text-sm">缺货时继续销售</span>
                       </div>
                     </div>
                 </div>
@@ -566,28 +611,61 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
 
               {/* Shipping */}
               <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-6">
-                  <h3 className="font-semibold text-lg">Shipping</h3>
-                  
-                  <div className="flex items-center gap-2 mb-4">
-                     <input type="checkbox" checked readOnly className="rounded border-zinc-300" />
-                     <span className="text-sm">This is a physical product</span>
+                  <div className="flex items-center justify-between">
+                     <h3 className="font-semibold text-lg">发货</h3>
+                     <div className="flex items-center gap-2">
+                        <span className="text-sm">实体产品</span>
+                        <input type="checkbox" checked readOnly className="rounded border-zinc-300" />
+                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Weight</label>
-                        <div className="flex gap-2">
-                           <Input 
-                             type="number"
-                             value={formData.netWeight}
-                             onChange={(e) => setFormData({ ...formData, netWeight: e.target.value })}
-                             placeholder="0.0"
-                           />
-                           <select className="rounded-md border border-zinc-200 bg-transparent px-3 text-sm">
-                             <option>kg</option>
-                             <option>lb</option>
-                           </select>
-                        </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                             <label className="block text-sm font-medium mb-1">包装</label>
+                             <div className="relative">
+                                <select 
+                                  className="flex w-full rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 pr-24"
+                                  value={formData.packageId}
+                                  onChange={(e) => {
+                                    if (e.target.value === '_add_new_') {
+                                      setIsAddPackageModalOpen(true);
+                                    } else {
+                                      setFormData({ ...formData, packageId: e.target.value });
+                                    }
+                                  }}
+                                >
+                                  <option value="">Select a package</option>
+                                  {packages?.map((pkg: any) => (
+                                    <option key={pkg.id} value={pkg.id}>
+                                      {pkg.name} - {pkg.length}×{pkg.width}×{pkg.height}cm, {pkg.weight}kg
+                                    </option>
+                                  ))}
+                                  <option value="_add_new_" className="font-semibold text-blue-600">
+                                    + Add New Package
+                                  </option>
+                                </select>
+                                <div className="absolute right-0 top-0 h-full flex items-center pr-2 pointer-events-none">
+                                   {/* Icon or spacer */}
+                                </div>
+                             </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium mb-1">产品重量</label>
+                            <div className="flex gap-2">
+                               <Input 
+                                 type="number"
+                                 value={formData.netWeight}
+                                 onChange={(e) => setFormData({ ...formData, netWeight: e.target.value })}
+                                 placeholder="0.0"
+                               />
+                               <select className="rounded-md border border-zinc-200 bg-transparent px-3 text-sm">
+                                 <option>kg</option>
+                                 <option>lb</option>
+                               </select>
+                            </div>
+                          </div>
                       </div>
                   </div>
               </div>
@@ -603,63 +681,67 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
           
           {/* Status */}
           <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-4">
-             <h2 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">Status</h2>
+             <h2 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">状态</h2>
              <select 
                 className="flex w-full rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
                 value={formData.isPublished ? 'active' : 'draft'}
                 onChange={(e) => setFormData({ ...formData, isPublished: e.target.value === 'active' })}
              >
-                <option value="active">Active</option>
-                <option value="draft">Draft</option>
+                <option value="active">活跃</option>
+                <option value="draft">草稿</option>
              </select>
           </div>
 
           {/* Product Organization */}
           <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-4">
-            <h2 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">Product Organization</h2>
+            <h2 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">商品组织</h2>
             
             <div>
-               <label className="block text-xs font-medium mb-1.5 text-zinc-500">Product Type</label>
+               <label className="block text-xs font-medium mb-1.5 text-zinc-500">商品类型</label>
                <Input 
                  value={formData.productType}
                  onChange={(e) => setFormData({ ...formData, productType: e.target.value })}
-                 placeholder="e.g. Sneaker"
+                 placeholder="例如: 运动鞋"
                />
             </div>
 
             <div>
-               <label className="block text-xs font-medium mb-1.5 text-zinc-500">Vendor</label>
+               <label className="block text-xs font-medium mb-1.5 text-zinc-500">厂商</label>
                <Input 
                  value={formData.vendor}
                  onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-                 placeholder="e.g. Nike"
+                 placeholder="例如: Nike"
                />
             </div>
 
             <div>
-               <label className="block text-xs font-medium mb-1.5 text-zinc-500">Collections</label>
-               <Input placeholder="Search collections..." />
+               <label className="block text-xs font-medium mb-1.5 text-zinc-500">系列</label>
+               <Input 
+                 value={formData.collection}
+                 onChange={(e) => setFormData({ ...formData, collection: e.target.value })}
+                 placeholder="搜索系列..." 
+               />
             </div>
 
             <div>
-               <label className="block text-xs font-medium mb-1.5 text-zinc-500">Tags</label>
+               <label className="block text-xs font-medium mb-1.5 text-zinc-500">标签</label>
                <Input 
                  value={formData.tags}
                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                 placeholder="Vintage, Summer, Sale"
+                 placeholder="复古, 夏季, 促销"
                />
             </div>
           </div>
 
           {/* Size Chart */}
           <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-4">
-            <h2 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">Size Chart</h2>
+            <h2 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">尺码表</h2>
             <select 
                 className="flex w-full rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-sm shadow-sm"
                 value={formData.sizeChartId}
                 onChange={(e) => setFormData({ ...formData, sizeChartId: e.target.value })}
               >
-                <option value="">Select Size Chart</option>
+                <option value="">选择尺码表</option>
                 {sizeCharts?.map((sc: any) => (
                   <option key={sc.id} value={sc.id}>
                     {sc.name}
@@ -672,13 +754,13 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
                     <span className="w-full border-t border-zinc-200 dark:border-zinc-800" />
                  </div>
                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white dark:bg-zinc-900 px-2 text-zinc-500">Or upload image</span>
+                    <span className="bg-white dark:bg-zinc-900 px-2 text-zinc-500">或上传图片</span>
                  </div>
             </div>
 
             <div>
                  <FileUpload 
-                   label="Upload Image"
+                   label="上传图片"
                    onUpload={(url) => setFormData({ ...formData, sizeChartImage: url })}
                    className="h-24"
                  />
@@ -700,11 +782,16 @@ export default function ProductEditor({ initialData, mode }: ProductEditorProps)
               <Button onClick={handleSubmit} disabled={mutation.isPending} className="w-full shadow-lg" size="lg">
                 {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <Save className="mr-2 h-4 w-4" />
-                Save Product
+                保存商品
               </Button>
           </div>
         </div>
       </div>
+      <AddPackageModal 
+        isOpen={isAddPackageModalOpen} 
+        onClose={() => setIsAddPackageModalOpen(false)}
+        onSuccess={(id) => setFormData({ ...formData, packageId: id })}
+      />
     </div>
   );
 }
