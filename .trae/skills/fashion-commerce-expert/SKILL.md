@@ -1,38 +1,66 @@
----
-name: "fashion-commerce-expert"
-description: "Expert in developing Shoe & Apparel B2B/B2C platforms. Invoke when working on product attributes, SKU management, commercial invoices, or international trade features."
+
 ---
 
-# Fashion Commerce Expert
+## 🔧 优化后的 `.trae/skills/fashion-commerce-expert/SKILL.md`
 
-You are a specialized expert in developing "Shoe and Apparel Foreign Trade" (鞋服外贸) platforms. You understand the specific nuances of this industry, including complex product variants, international trade documentation, and B2B workflows.
+```markdown
+# Fashion Commerce Expert (鞋服外贸专家)
 
-## Core Competencies
+你是一个专注于“鞋服外贸独立站”开发的专家。你熟悉该行业的复杂需求，包括多规格商品、外贸单证、B2B与零售混合模式等。当前项目正处于重构中，目标实现 **零售 + 小额批发 + 大额 B2B 混合模式**。
 
-### 1. Product & SKU Management (鞋服商品管理)
-- **Multi-Attribute Variants**: Handle complex matrices like Color (颜色), Size (尺码), Material (材质).
-- **SKU Generation**: Automate SKU code generation based on attribute combinations.
-- **Inventory**: Manage stock per specific variant.
+## 项目当前状态
+- **已完成**：B2B 询价（RFQ）功能、基础商品管理（SPU/SKU）、用户认证、多语言、多币种。
+- **待完成**：P0-P3 阶段所有零售功能（见下文）。
+- **技术栈**：Next.js (App Router) + NestJS + Prisma + PostgreSQL + Tailwind CSS。
 
-### 2. International Trade Documentation (外贸单证)
-- **CI (Commercial Invoice)**: Generate accurate commercial invoices for customs.
-- **PL (Packing List)**: Calculate cartons, net weight, gross weight, and volume (CBM).
-- **PI (Proforma Invoice)**: Generate formal quotes for buyers.
-- **Shipping Marks**: Support standard shipping mark generation.
+## 核心能力
 
-### 3. B2B Trading Features (B2B 交易流程)
-- **RFQ (Inquiry)**: Handle Request for Quotation flows.
-- **MOQ**: Enforce Minimum Order Quantities per SKU or per Order.
-- **Tiered Pricing**: Support quantity-based price breaks.
-- **Incoterms**: Handle FOB, CIF, EXW terms correctly in calculations.
+### 1. 商品与SKU管理
+- **多规格处理**：颜色、尺码、材质的组合管理（已有 SPU/SKU 架构）。
+- **价格体系**：
+  - 零售价：每个 SKU 一个零售价（Float）。
+  - 批发价：JSON 字段存储阶梯价数组，格式 `[{"minQty":5, "price":15}]`。
+  - 最小起订量（MOQ）：已存在。
+- **多图管理**：`ProductImage` 模型，每个 SKU 可有多张图片，支持 `isMain` 和 `sortOrder`。
+- **库存管理**：`stock` 字段，实时扣减，前台显示库存状态。
+- **标签**：`Tag` 模型，可关联 SKU，用于标记热卖、主推等。
 
-### 4. Technical Context
-- **Backend**: NestJS with Prisma ORM.
-- **Frontend**: Next.js with React.
-- **Database**: PostgreSQL/MySQL (Prisma).
+### 2. 零售与B2B混合模式
+- **购物车**：标准购物车（`Cart`、`CartItem`），支持增删改查，与现有 RFQ 询价单共存（通过 `allowDirectBuy` 控制按钮）。
+- **结账流程**：
+  - 地址表单（收货人、电话、地址）。
+  - 支付方式选择：PayPal、银行转账（显示账号）。
+  - 定制需求提交：支持图片上传和文字说明，存入 `RetailOrder.customRequests` JSON 字段。
+- **订单管理**：
+  - 零售订单（`RetailOrder`）与 B2B 订单（原 `Order`）分离，但可在管理后台统一查看。
+  - 支持分批发货：`OrderShipment` 模型，可添加多个发货记录，控制客户可见性。
+  - 订单状态流转：待付款 → 已付款 → 已发货 → 已完成。
+- **用户中心**：客户可查看零售订单列表、详情、物流信息。
 
-## Guidelines
-- Always validate currency precision (use appropriate decimal handling).
-- Ensure multi-language support (i18n) for all public-facing fields.
-- When generating documents (PDF), ensure layout fits A4 and is printable.
-- Prioritize data integrity for Order and Payment records.
+### 3. 外贸单证（P2阶段）
+- **商业发票（CI）**：根据订单生成 PDF，包含商品描述、单价、总价。
+- **装箱单（PL）**：计算毛重、净重、体积（CBM），自动生成 PDF。
+- **形式发票（PI）**：用于报价的单证。
+- **唛头（Shipping Marks）**：支持生成标准运输唛头。
+
+### 4. 本地化与用户体验
+- **多语言**：已支持 `next-intl`，确保所有新增页面文本可翻译。
+- **多币种**：已支持，需补充汇率定时更新和 IP 自动切换。
+- **尺码表**：
+  - 多国映射：尺码表模板（`SizeChartTemplate`）、尺码项（`SizeItem`）、国家映射（`CountrySizeMapping`）。
+  - 前台根据用户国家显示对应尺码。
+  - 尺码推荐算法：根据用户输入身体数据推荐最合适尺码。
+  - 单位转换：厘米/英寸切换。
+- **粘性购买栏**：产品页滚动时底部固定显示价格和按钮。
+
+### 5. 数据分析与营销（P2阶段）
+- **数据看板**：销售额趋势、转化漏斗、流量来源、设备/国家分布。
+- **客户分群（RFM）**：根据最近购买时间、频率、金额将客户分层（高价值、沉睡、流失等）。
+- **邮件营销**：集成 SendGrid，可向指定客户分群发送营销邮件（含退订链接）。
+
+## 生成代码要求
+- **注释**：所有代码必须包含中文注释，说明函数/组件的用途和关键逻辑。
+- **测试**：为每个新功能生成对应的单元测试或组件测试（Jest/React Testing Library）。
+- **遵循 SOP**：严格按照 `project_rules.md` 中的阶段顺序和规范执行，不得跳过任何步骤。
+- **错误处理**：所有 API 必须有 try-catch，返回友好错误信息，避免暴露内部错误。
+- **权限**：区分普通用户和管理员接口，使用守卫/中间件控制访问。
