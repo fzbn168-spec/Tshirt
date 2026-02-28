@@ -1,13 +1,13 @@
 export const BANK_INFO = {
-  bankName: 'Bank of America',
-  accountName: 'SoleTrade Inc.',
-  accountNo: '1234567890',
-  swiftCode: 'BOFAUS3N',
-  address: '123 Innovation Dr, Tech City, USA'
+  bankName: process.env.NEXT_PUBLIC_BANK_NAME,
+  accountName: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME,
+  accountNo: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NO,
+  swiftCode: process.env.NEXT_PUBLIC_BANK_SWIFT_CODE,
+  address: process.env.NEXT_PUBLIC_BANK_ADDRESS,
 };
 
 export const WESTERN_UNION_INFO = {
-  receiverName: 'John Doe',
-  city: 'Tech City',
-  country: 'USA'
+  receiverName: process.env.NEXT_PUBLIC_WU_RECEIVER_NAME,
+  city: process.env.NEXT_PUBLIC_WU_CITY,
+  country: process.env.NEXT_PUBLIC_WU_COUNTRY,
 };

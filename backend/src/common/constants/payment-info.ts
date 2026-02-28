@@ -1,13 +1,13 @@
-export const BANK_INFO = {
-  bankName: 'Bank of America',
-  accountName: 'SoleTrade Inc.',
-  accountNo: '1234567890',
-  swiftCode: 'BOFAUS3N',
-  address: '123 Innovation Dr, Tech City, USA',
-};
+export const getBankInfo = () => ({
+  bankName: process.env.BANK_NAME,
+  accountName: process.env.BANK_ACCOUNT_NAME,
+  accountNo: process.env.BANK_ACCOUNT_NO,
+  swiftCode: process.env.BANK_SWIFT_CODE,
+  address: process.env.BANK_ADDRESS,
+});
 
-export const WESTERN_UNION_INFO = {
-  receiverName: 'John Doe',
-  city: 'Tech City',
-  country: 'USA',
-};
+export const getWesternUnionInfo = () => ({
+  receiverName: process.env.WU_RECEIVER_NAME,
+  city: process.env.WU_CITY,
+  country: process.env.WU_COUNTRY,
+});

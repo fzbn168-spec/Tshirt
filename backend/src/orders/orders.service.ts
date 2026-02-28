@@ -12,7 +12,7 @@ import PDFDocument from 'pdfkit';
 
 import { UpdateOrderDto } from './dto/update-order.dto';
 
-import { BANK_INFO } from '../common/constants/payment-info';
+import { getBankInfo } from '../common/constants/payment-info';
 
 @Injectable()
 export class OrdersService {
@@ -166,15 +166,16 @@ export class OrdersService {
       );
 
       // Payment Terms (Bank Info - Configurable)
+      const bankInfo = getBankInfo();
       doc.moveDown(4);
       doc.text('Payment Terms:', 50);
       doc.font('Helvetica').fontSize(9);
-      doc.text(`Bank: ${BANK_INFO.bankName}`);
-      doc.text(`Account Name: ${BANK_INFO.accountName}`);
-      doc.text(`Account No: ${BANK_INFO.accountNo}`);
-      doc.text(`Swift Code: ${BANK_INFO.swiftCode}`);
-      if (BANK_INFO.address) {
-        doc.text(`Bank Address: ${BANK_INFO.address}`);
+      doc.text(`Bank: ${bankInfo.bankName}`);
+      doc.text(`Account Name: ${bankInfo.accountName}`);
+      doc.text(`Account No: ${bankInfo.accountNo}`);
+      doc.text(`Swift Code: ${bankInfo.swiftCode}`);
+      if (bankInfo.address) {
+        doc.text(`Bank Address: ${bankInfo.address}`);
       }
 
       doc.end();

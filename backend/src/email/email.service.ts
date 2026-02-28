@@ -25,7 +25,7 @@ export class EmailService {
     if (this.transporter) {
       try {
         const info = await this.transporter.sendMail({
-          from: process.env.SMTP_FROM || '"No Reply" <noreply@example.com>',
+          from: process.env.SMTP_FROM,
           to,
           subject,
           html,
