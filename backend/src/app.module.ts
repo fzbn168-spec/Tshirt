@@ -24,6 +24,8 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { SystemSettingsModule } from './system-settings/system-settings.module';
 import { PackagesModule } from './packages/packages.module';
+import { CartModule } from './cart/cart.module';
+import { RetailOrderModule } from './retail-order/retail-order.module';
 
 @Module({
   imports: [
@@ -57,6 +59,8 @@ import { PackagesModule } from './packages/packages.module';
     ReviewsModule,
     AnalyticsModule,
     PackagesModule,
+    CartModule,
+    RetailOrderModule,
   ],
   controllers: [],
   providers: [

@@ -23,6 +23,132 @@ model SizeChart {
   updatedAt DateTime  @updatedAt
 }
 
+// 17. 购物车 (Cart)
+// P0: 零售购物车模型，每个用户唯一
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     @unique // 关联用户 (一对一)
+  user      User       @relation(fields: [userId], references: [id])
+  
+  items     CartItem[] // 购物车中的商品项
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+// 18. 购物车项 (CartItem)
+// P0: 购物车具体商品明细
+model CartItem {
+  id        String   @id @default(uuid())
+  
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  
+  skuId     String
+  sku       Sku      @relation(fields: [skuId], references: [id])
+  
+  quantity  Int      @default(1) // 购买数量
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 复合唯一键：防止同一 SKU 在同一购物车出现多次
+  @@unique([cartId, skuId])
+}
+
+// 19. 零售订单 (RetailOrder)
+// P0: B2C 直接购买订单 (区别于 B2B 询价订单)
+model RetailOrder {
+  id             String            @id @default(uuid())
+  orderNo        String            @unique // 订单号 (RO-2024...)
+  
+  userId         String
+  user           User              @relation(fields: [userId], references: [id])
+  
+  totalAmount    Decimal           // 订单总金额
+  currency       String            @default("USD")
+  
+  // 支付与状态
+  paymentMethod  String            // 支付方式 (Stripe, PayPal)
+  paymentStatus  String            @default("PENDING") // PENDING, PAID, FAILED
+  orderStatus    String            @default("PROCESSING") // PROCESSING, SHIPPED, COMPLETED, CANCELLED
+  
+  // 地址信息 (JSON 存储快照，简化模型)
+  shippingAddress String           // JSON: { "name": "...", "line1": "...", "city": "...", "country": "..." }
+  
+  // 客户需求
+  customRequests  String?          // JSON: { "logoUrl": "...", "note": "..." }
+  
+  items           RetailOrderItem[] // 订单商品
+  shipments       OrderShipment[]   // 发货记录
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+// 20. 零售订单项 (RetailOrderItem)
+// P0: 零售订单商品快照
+model RetailOrderItem {
+  id            String      @id @default(uuid())
+  
+  retailOrderId String
+  retailOrder   RetailOrder @relation(fields: [retailOrderId], references: [id])
+  
+  skuId         String
+  sku           Sku         @relation(fields: [skuId], references: [id])
+  
+  quantity      Int         // 购买数量
+  unitPrice     Decimal     // 下单时的单价 (快照)
+  totalPrice    Decimal     // 总价 (数量 * 单价)
+
+  createdAt     DateTime    @default(now())
+}
+
+// 21. 发货记录 (OrderShipment)
+// P0: 零售订单物流追踪
+model OrderShipment {
+  id                  String      @id @default(uuid())
+  
+  retailOrderId       String
+  retailOrder         RetailOrder @relation(fields: [retailOrderId], references: [id])
+  
+  carrier             String      // 物流商 (DHL, FedEx)
+  trackingNumber      String      // 追踪号
+  shippedAt           DateTime    @default(now()) // 发货时间
+  isVisibleToCustomer Boolean     @default(true)  // 是否对客户可见
+
+  createdAt           DateTime    @default(now())
+}
+
+// 22. 商品标签 (Tag)
+// P0: 用于前台筛选和展示 (如 "New Arrival", "Hot Sale")
+model Tag {
+  id        String   @id @default(uuid())
+  name      String   @unique // 标签名称
+  color     String   @default("#000000") // 标签颜色 (HEX)
+  sortOrder Int      @default(0) // 排序权重 (越大越靠前)
+  
+  skus      Sku[]    // 多对多关联 SKU
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 23. 商品图片 (ProductImage)
+// P0: SKU 级别的多图支持 (解决不同颜色不同图的问题)
+model ProductImage {
+  id        String   @id @default(uuid())
+  
+  skuId     String
+  sku       Sku      @relation(fields: [skuId], references: [id], onDelete: Cascade)
+  
+  url       String   // 图片地址
+  sortOrder Int      @default(0) // 排序
+  isMain    Boolean  @default(false) // 是否为主图
+
+  createdAt DateTime @default(now())
+}
+
 // 1. 商品分类 (Category)
 // 用于管理商品的多级分类结构
 model Category {
@@ -252,6 +378,11 @@ model Sku {
   cartonWidth     Decimal? // 外箱宽
   cartonHeight    Decimal? // 外箱高
   cartonGrossWeight Decimal? // 单箱毛重 (并非单只鞋重)
+  
+  // P0 新增字段：零售与库存
+  retailPrice     Float?   // 零售价 (可为空，空则不支持零售)
+  wholesalePrices String?  // 阶梯批发价 JSON: [{"minQty":5, "price":15}]
+  allowDirectBuy  Boolean  @default(false) // 是否允许直接购买 (不经过询价)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -260,6 +391,12 @@ model Sku {
   inquiryItems InquiryItem[]
   orderItems   OrderItem[]
   attributeValues SkuAttributeValue[]
+
+  // P0 新增关联
+  cartItems    CartItem[]
+  retailOrderItems RetailOrderItem[]
+  images       ProductImage[]
+  tags         Tag[]
 }
 
 // 4. 企业客户 (Company)
@@ -311,6 +448,10 @@ model User {
   // Social Login IDs
   googleId      String?   @unique
   facebookId    String?   @unique
+
+  // P0 新增关联
+  cart          Cart?
+  retailOrders  RetailOrder[]
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
